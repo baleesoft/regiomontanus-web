@@ -10,6 +10,8 @@
     var b = new Uint8Array(buf);
     if (b[0] === 0xFF && b[1] === 0xFE) return new TextDecoder('utf-16le').decode(b.subarray(2));
     if (b[0] === 0xEF && b[1] === 0xBB && b[2] === 0xBF) return new TextDecoder('utf-8').decode(b.subarray(3));
+    // BOM nélkül: ha érvényes UTF-8 (pl. átmentett vagy szerkesztett fájl), akkor az, különben Windows-1250
+    try { return new TextDecoder('utf-8', { fatal: true }).decode(b); } catch (e) { /* nem UTF-8 */ }
     return new TextDecoder('windows-1250').decode(b);
   }
 

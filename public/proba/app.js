@@ -83,8 +83,11 @@
       nev: $('nev').value, y: +$('ev').value, mo: +$('ho').value, d: +$('nap').value,
       h: +$('ora').value, mi: +$('perc').value, s: +$('mp').value,
       lat: +$('szel').value, lon: +$('hossz').value, mod: $('zonamod').value,
-      hsys: $('hsys').value, sid: $('zod').value === 'S', csomo: +$('csomo').value
+      hsys: $('hsys').value, sid: $('zod').value === 'S', csomo: +$('csomo').value,
+      ismeretlen: $('ismeretlen').checked
     };
+    // Ismeretlen születési idő: a Windows-os program helyi délre számol (TSzuletesiKepletInfo.SetTimeIsUnknown)
+    if (b.ismeretlen) { b.h = 12; b.mi = 0; b.s = 0; if (b.nev.indexOf('Kos 0°<') !== 0) b.nev = 'Kos 0°< ' + b.nev; }
     if (b.mod === 'iana') {
       var r = helyiBolUtc(b.y, b.mo, b.d, b.h, b.mi, b.s, $('tz').value.trim());
       b.offset = r.offsetMin / 60;
@@ -97,6 +100,17 @@
       b.zonaInfo = (aktFajl && aktFajl.tzCode ? aktFajl.tzCode + ' (a képletfájlból) → ' : 'Kézi → ') + oraStr(b.offset);
     }
     return b;
+  }
+
+  /*
+   * Kos 0° képlet (TSegedabraCalculator.DoCalculatePlanetaPerspektiva, cKOSNULLAKEPLET):
+   * ASC = 0° Kos, MC = 0° Bak, egyenlő házak a Kostól; a többi tengely (Vertex stb.) a valódi marad.
+   */
+  function kos0(hz) {
+    var u = {}; for (var k in hz) u[k] = hz[k];
+    u.cusps = [0]; for (var i = 1; i <= 12; i++) u.cusps.push((i - 1) * 30);
+    u.asc = 0; u.mc = 270; u.kos0 = true;
+    return u;
   }
 
   /* ---------- számítás ---------- */
@@ -115,6 +129,7 @@
       var t0 = performance.now();
       var flag = SE.FLG_SWIEPH | SE.FLG_SPEED | (b.sid ? SE.FLG_SIDEREAL : 0);
       var hz = se.housesEx(jd, b.sid ? SE.FLG_SIDEREAL : 0, b.lat, b.lon, b.hsys);
+      if (b.ismeretlen) hz = kos0(hz);
       var poz = {}, moshier = false, hianyzo = [];
       SZAMOLT.forEach(function (id) {
         var x = se.calcUt(jd, id, flag);
@@ -131,7 +146,6 @@
       var msg = [];
       if (moshier) msg.push('Egyes testek Moshier-módban számolódtak (hiányzó adatfájl: ' + eph.missing.join(', ') + ').');
       if (hianyzo.length) msg.push('Erre az időpontra nincs adat: ' + hianyzo.join(', ') + '.');
-      if (aktFajl && aktFajl.timeUnknown) msg.push('A születési idő ismeretlen: a Windows-os program ilyenkor Kos 0° képletet mutat – ez még nincs kész, most 12:00-ra számolunk.');
       setStatus('status2', 'warn', msg.join(' '));
       setStatus('status', 'ok', 'Pozíciók kiszámolva. Képlet-elemzés lekérése a szervertől…');
 
@@ -182,7 +196,8 @@
       'ΔT', (se.deltat(k.jd) * 86400).toFixed(2) + ' mp',
       'Helyi csillagidő', pad(sth) + ':' + pad(stm) + ':' + pad(Math.floor(((st - sth) * 60 - stm) * 60)),
       'Földrajzi hely', Math.abs(b.lat).toFixed(4) + '° ' + (b.lat >= 0 ? 'É' : 'D') + ', ' + Math.abs(b.lon).toFixed(4) + '° ' + (b.lon >= 0 ? 'K' : 'Ny'),
-      'Házrendszer', HAZRENDSZER[b.hsys] + (b.sid ? ', sziderikus' : ', tropikus'),
+      'Házrendszer', (hz.kos0 ? 'Kos 0° képlet – ismeretlen születési idő (egyenlő házak a Kostól)' : HAZRENDSZER[b.hsys]) +
+        (b.sid ? ', sziderikus' : ', tropikus'),
       'Számítási idő', k.ms.toFixed(1) + ' ms'
     ].map(function (v) { return '<div>' + v + '</div>'; }).join('');
 
@@ -229,7 +244,7 @@
       hsor.push('<tr><td>' + a[0] + '</td><td class="glyph">' + JEGYGLIF[j.j] + VS + '</td><td>' + JEGYEK[j.j] +
         '</td><td class="num">' + fokStr(j.fok) + '</td><td></td></tr>');
     });
-    $('hazak').innerHTML = '<tr><th>' + HAZRENDSZER[b.hsys] + '</th><th></th><th>Jegy</th><th>Pozíció</th><th>Eltérés</th></tr>' + hsor.join('');
+    $('hazak').innerHTML = '<tr><th>' + (hz.kos0 ? 'Kos 0°' : HAZRENDSZER[b.hsys]) + '</th><th></th><th>Jegy</th><th>Pozíció</th><th>Eltérés</th></tr>' + hsor.join('');
 
     // Állócsillagok
     $('csillagok').innerHTML = '<tr><th>Csillag</th><th></th><th>Jegy</th><th>Pozíció</th><th>Eltérés</th></tr>' +
@@ -255,7 +270,7 @@
     var kerekPl = RegioKerek.ALAP.planets.slice();
     if ($('kerekExtra').checked) kerekPl.push(b.csomo, b.csomo === 11 ? 25 : 24, 15);
     RegioKerek.rajzol($('kerek'), { asc: hz.asc, mc: hz.mc, cusps: hz.cusps, planets: el.planets,
-      aspects: el.aspects, selfMarkers: el.selfMarkers }, { planets: kerekPl });
+      aspects: el.aspects, selfMarkers: el.selfMarkers }, { planets: kerekPl, selfMarkers: !hz.kos0 });
     fenyszogTabla(el, b.csomo, ep);
     enallapotTabla(el, ep);
     eletstratTabla(el.lifeStrategy);
@@ -359,6 +374,11 @@
     $('szel').value = +(+o.lat).toFixed(6); $('hossz').value = +(+o.lon).toFixed(6);
     $('zonamod').value = o.mod; if (o.tz) $('tz').value = o.tz; if (o.kezi !== undefined) $('kezi').value = o.kezi;
     $('zod').value = 'T'; zonaMod();
+    $('ismeretlen').checked = !!(o.fajl && o.fajl.timeUnknown); idoMod();
+  }
+  function idoMod() {
+    var x = $('ismeretlen').checked;
+    ['ora', 'perc', 'mp'].forEach(function (id) { $(id).disabled = x; if (x) $(id).value = id === 'ora' ? 12 : 0; });
   }
   function teszt1848() {
     beallit({ nev: '1848.03.15', y: 1848, mo: 3, d: 15, h: 12, mi: 0, telep: '47.5|19.0666667|Europe/Budapest',
@@ -383,13 +403,14 @@
   $('frm').addEventListener('submit', function (e) { e.preventDefault(); szamol(); });
   $('zonamod').addEventListener('change', function () { zonaMod(); szamol(); });
   ['hsys', 'zod', 'csomo', 'kerekExtra'].forEach(function (id) { $(id).addEventListener('change', szamol); });
+  $('ismeretlen').addEventListener('change', function () { idoMod(); szamol(); });
   $('telep').addEventListener('change', function () {
     var v = $('telep').value; if (v === 'custom') return;
     var p = v.split('|'); $('szel').value = p[0]; $('hossz').value = p[1]; $('tz').value = p[2];
     $('zonamod').value = 'iana'; aktFajl = null; zonaMod(); szamol();
   });
   $('most').addEventListener('click', function () {
-    var n = new Date(); aktFajl = null;
+    var n = new Date(); aktFajl = null; $('ismeretlen').checked = false; idoMod();
     $('ev').value = n.getFullYear(); $('ho').value = n.getMonth() + 1; $('nap').value = n.getDate();
     $('ora').value = n.getHours(); $('perc').value = n.getMinutes(); $('mp').value = n.getSeconds();
     $('nev').value = 'Aktuális égi állás';
