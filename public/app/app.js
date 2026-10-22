@@ -261,11 +261,18 @@
     }
     return a ? idoStr(a) + ' időpontra' + (K.helyNev(a) ? ' · ' + K.helyNev(a) : '') : '';
   }
+  /**
+   * Személyes adatok elrejtése (chkbInkognito – közös a nyomtatás „Személyes adatok elrejtése” pipájával).
+   * A Windows-osban a fül-súgóból és a státuszsorból tűnik el a születési idő, hely és életkor (és a nyomtatásból);
+   * itt a csempékről, a megnyitott és a legutóbbi képletek listájából is – pl. kivetítéshez, órán.
+   */
+  function inkognito() { return !!(beall.nyomtatas && beall.nyomtatas.inkognito); }
   function idoStr(a) {
     return R.datumStr(a.ev, a.ho, a.nap) + (a.ismeretlen ? ' (idő ismeretlen)' : ' ' + R.pad(a.ora) + ':' + R.pad(a.perc));
   }
   function datumSor(k) {
     var a = k.adat;
+    if (inkognito() && a.tipus !== 'aktualis') return 'személyes adatok elrejtve';
     return idoStr(a) + (K.helyNev(a) ? ' · ' + K.helyNev(a) : '');
   }
   function infoSor(k) {
@@ -301,7 +308,7 @@
     var k = akt();
     if (!k) { $('st1').textContent = kepletek.length ? '' : 'Nincs megnyitott képlet'; $('st2').textContent = ''; $('st3').textContent = ''; return; }
     var a = k.adat;
-    $('st1').textContent = K.cim(a) + ' ' + idoStr(a) + (K.helyNev(a) ? ' ' + K.helyNev(a) : '');
+    $('st1').textContent = K.cim(a) + (inkognito() && a.tipus !== 'aktualis' ? '' : ' ' + idoStr(a) + (K.helyNev(a) ? ' ' + K.helyNev(a) : ''));
     $('st2').textContent = tipusNev(k);
     if (k.fajta) {
       var rr = [kulsoMikor(k)];
@@ -311,7 +318,7 @@
       return;
     }
     var r = [];
-    if (a.tipus !== 'aktualis') { var ek = K.eletkor(a); if (ek >= 0 && ek < 150) r.push(ek + ' é'); }
+    if (a.tipus !== 'aktualis' && !inkognito()) { var ek = K.eletkor(a); if (ek >= 0 && ek < 150) r.push(ek + ' é'); }
     if (k.e) r.push(k.e.hz.kos0 ? 'Kos 0° házak' : R.HAZRENDSZER[beall.hsys] + (beall.sid ? ', sziderikus' : ''));
     if (lepettE(k)) r.push('léptetve: ' + eltolasStr(k.eltolas));
     if (k.e && k.e.figyelmeztetes.length) r.push(k.e.figyelmeztetes.join(' '));
@@ -351,8 +358,8 @@
       '<button type="button" class="gomb" data-tett="megnyit">Megnyitás (Ctrl+O)</button>' +
       '<button type="button" class="gomb" data-tett="aktualis">Aktuális égi állás</button></div>' +
       (l.length ? '<h2>Legutóbbi képletek</h2><ul>' + l.map(function (x, i) {
-        return '<li><button type="button" data-legutobbi="' + i + '">' + R.esc(K.cim(x.adat)) + '<small>' + R.esc(idoStr(x.adat)) +
-          (x.fajlnev ? ' · ' + R.esc(x.fajlnev) : '') + '</small></button></li>';
+        return '<li><button type="button" data-legutobbi="' + i + '">' + R.esc(K.cim(x.adat)) + '<small>' + (inkognito() ? '' : R.esc(idoStr(x.adat))) +
+          (x.fajlnev ? (inkognito() ? '' : ' · ') + R.esc(x.fajlnev) : '') + '</small></button></li>';
       }).join('') + '</ul>' : '') + '</div>';
   }
   function renderReszlet(hova) {
@@ -726,6 +733,10 @@
       tablaMutat('allo');
     },
     alloBeall: alloDlg,
+    inkognito: function () {
+      beall.nyomtatas = beall.nyomtatas || {}; beall.nyomtatas.inkognito = !beall.nyomtatas.inkognito; beallMent(); render();
+      uzen(inkognito() ? 'Személyes adatok elrejtve (születési idő, hely, életkor) – a képernyőn és a nyomtatásban.' : 'Személyes adatok megjelenítve.');
+    },
     megjelenites: megjelenitesDlg, egyebek: egyebekDlg, gyari: gyariBeall,
     beallLetolt: beallLetolt, beallBetolt: beallBetolt,
     nevjegy: function () { $('nvSwe').textContent = se ? 'Swiss Ephemeris ' + se.version() + ' (WebAssembly)' : ''; $('dlgNevjegy').showModal(); },
@@ -760,14 +771,14 @@
     if (t === 'kulsoKulon' && !(akt() && akt().fajta && akt().fajta !== 'pd')) return false;
     return engedelyezettAlap(t);
   }
-  function engedelyezettAlap(t) { return !!TETT[t] && (!KELL_AKT[t] || vanAkt()) && (betoltve || ['nevjegy', 'segitseg', 'facebook', 'iskola', 'megjelenites', 'egyebek', 'gyari', 'alloBeall', 'allo'].indexOf(t) >= 0 || t.indexOf('hsys') === 0 || t.indexOf('zod') === 0); }
+  function engedelyezettAlap(t) { return !!TETT[t] && (!KELL_AKT[t] || vanAkt()) && (betoltve || ['nevjegy', 'segitseg', 'facebook', 'iskola', 'megjelenites', 'egyebek', 'gyari', 'alloBeall', 'allo', 'inkognito'].indexOf(t) >= 0 || t.indexOf('hsys') === 0 || t.indexOf('zod') === 0); }
   function vegrehajt(t) { if (engedelyezett(t)) TETT[t](); }
 
   function legutobbiMenu() {
     var l = S.legutobbi();
     if (!l.length) return [{ c: '(üres)', t: '' }];
     return l.map(function (x, i) {
-      return { c: K.cim(x.adat) + ' – ' + idoStr(x.adat), fn: function () { legutobbiNyit(i); } };
+      return { c: K.cim(x.adat) + (inkognito() ? '' : ' – ' + idoStr(x.adat)), fn: function () { legutobbiNyit(i); } };
     }).concat(['-', { c: 'Lista törlése', fn: function () { S.legutobbiTorol(); render(); } }]);
   }
   function tesztMenu() {
@@ -842,7 +853,7 @@
     ['Fényszögek (Ctrl+F)', 'M4 20h16M4 20V4M4 14h6v6M4 8h12v12', 'fenyszogek'],
     ['Életstratégia, járatlan út (Ctrl+J)', 'M4 4h16v16H4zM4 9h16M4 14h16M9 4v16M14 4v16', 'eletstrat'],
     ['Énállapotok – be/ki (személyiségrajz)', 'M12 4l8 14H4z', 'szemely', function () { return !!(akt() && akt().szemely); }],
-    ['Személyes adatok – be/ki', 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c1-4 4-6 8-6s7 2 8 6', 5],
+    ['Személyes adatok elrejtése – be/ki', 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c1-4 4-6 8-6s7 2 8 6', 'inkognito', inkognito],
     ['Állócsillagok – be/ki', 'M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.6l-5.3 2.8 1.2-6-4.5-4.1 6-.7z', 'allo', function () { return !!beall.allo.megj; }],
     ['Chiron és a kisbolygók – be/ki', 'M7 5a2 2 0 1 0 .01 0M16 7a3 3 0 1 0 .01 0M10 15a2.5 2.5 0 1 0 .01 0', 'aszteroidak', function () { return beall.kerek.asteroids; }], 0,
     ['Aktuális égi állás', 'M12 8a4 4 0 1 0 .01 0M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2', 'aktualis'],
@@ -1427,7 +1438,9 @@
       }
       var g = ev.target.closest('[data-nyg]'); if (!g) return;
       var t = g.getAttribute('data-nyg');
+      var inkElotte = inkognito();
       beall.nyomtatas = o; beallMent();
+      if (inkognito() !== inkElotte) render();   // a „Személyes adatok elrejtése” a képernyőre is vonatkozik
       if (t === 'megse') { d.close(); return; }
       if (t !== 'elonezet') d.close();
       if (t === 'nyomtat') { nyomtatasElokeszit(); setTimeout(function () { window.print(); }, 60); }
