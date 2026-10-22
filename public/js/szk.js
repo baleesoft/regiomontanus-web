@@ -1,6 +1,7 @@
 /*
  * szk.js – a Windows-os Regiomontanus .szk képletfájljainak olvasása a böngészőben.
  * A .szk INI-szöveg: újabb fájlok UTF-16LE (BOM-mal), régebbiek Windows-1250 kódolásúak.
+ * Mentés: UTF-16LE BOM-mal, CRLF sorvégekkel, a Windows-os kulcssorrendben.
  * Licenc: AGPL-3.0.
  */
 (function (global) {
@@ -76,5 +77,70 @@
     };
   }
 
-  global.RegioSzk = { parse: parse, decode: dekodol };
+  /* ---------- írás (a Windows-os GenerateSzulKepletFileAndSave szerint) ---------- */
+  var VERZIO = 'v3.1';
+  function TF(b) { return b ? 'T' : 'F'; }
+  function fokPerc(x) {
+    var a = Math.abs(x), f = Math.floor(a), p = Math.round((a - f) * 60);
+    if (p === 60) { f++; p = 0; }
+    return [f, p];
+  }
+
+  /**
+   * A webes képletadatból (Regio.Keplet) .szk szöveg. z: a Regio.Keplet.zona() eredménye.
+   * A fájlban nem kezelt mezők (Gender, IsDead, kép, csatolmányok) az eredeti fájlból öröklődnek (a.eredeti).
+   */
+  function szoveg(a, z) {
+    var e = a.eredeti || {}, bi = e.BirthInfo || {}, ot = e.Other || {};
+    var orak = z.orak, perc = Math.round(Math.abs(orak) * 60), h = Math.floor(perc / 60), m = perc % 60;
+    var lon = fokPerc(a.lon), lat = fokPerc(a.lat);
+    var s = ['', '[BirthInfo]',
+      'Name=' + a.nev,
+      'Gender=' + (bi.Gender || '2'),
+      'Year=' + a.ev, 'Month=' + a.ho, 'Day=' + a.nap,
+      'Hour=' + (a.ismeretlen ? 12 : a.ora), 'Minute=' + (a.ismeretlen ? 0 : a.perc), 'Second=' + (a.ismeretlen ? 0 : (a.mp || 0)),
+      'TimeIsUnknown=' + TF(a.ismeretlen),
+      'TZoneCode=' + (z.kod || ''),
+      'TZoneWest=' + TF(orak < 0 && h === 0),
+      'TZoneHour=' + (orak < 0 && h !== 0 ? -h : h),
+      'TZoneMinute=' + m,
+      'TZCodeIsManual=' + TF(a.zonaMod === 'kezi' && (!a.tzKod || bi.TZCodeIsManual === 'T')),
+      'LocCity=' + (a.telepules || ''), 'LocCountry=' + (a.orszag || ''), 'LocCountryID=' + (a.orszagKod || ''),
+      'LocAltitude=' + (bi.LocAltitude || '0'),
+      'LocLongDegree=' + lon[0], 'LocLongMinute=' + lon[1], 'LocLongSecond=999', 'LocLongWest=' + TF(a.lon < 0),
+      'LocLatDegree=' + lat[0], 'LocLatMinute=' + lat[1], 'LocLatSecond=999', 'LocLatSouth=' + TF(a.lat < 0),
+      'IsDayLightSavingTime=' + TF(z.nyari),
+      'BirthDateIsBC=F',
+      'IsDead=' + (bi.IsDead === 'T' ? 'T' : 'F')];
+    if (bi.IsDead === 'T') ['DeathYear', 'DeathMonth', 'DeathDay', 'DeathHour', 'DeathMin', 'DeathSec'].forEach(function (k) {
+      s.push(k + '=' + (bi[k] || '0'));
+    });
+    s.push('', '[Tags]', 'Tags=' + (a.cimkek || []).join(';'), '', '[Notes]');
+    var jegyzet = (a.jegyzet || '').replace(/\r/g, '');
+    if (jegyzet) jegyzet.split('\n').forEach(function (l, i) { s.push('Note' + (i < 9 ? '0' : '') + (i + 1) + '=' + l); });
+    s.push('', '[Other]', 'PictureFilename=' + (ot.PictureFilename || ''), 'FileVersionId=' + VERZIO, '', '[Attachements]');
+    var att = e.Attachements || {};
+    Object.keys(att).sort().forEach(function (k) { s.push(k + '=' + att[k]); });
+    return s.join('\r\n') + '\r\n';
+  }
+
+  /** UTF-16LE, BOM-mal – ahogy a Windows-os program (TTntStringList.SaveToFile) menti. */
+  function epit(a, z) {
+    var t = szoveg(a, z), b = new Uint8Array(2 + t.length * 2);
+    b[0] = 0xFF; b[1] = 0xFE;
+    for (var i = 0; i < t.length; i++) { var c = t.charCodeAt(i); b[2 + 2 * i] = c & 255; b[3 + 2 * i] = c >> 8; }
+    return b.buffer;
+  }
+
+  /** A beolvasott fájlból a webes képletadat (Regio.Keplet). A fájl saját zónaadatai érvényesek. */
+  function adatba(p) {
+    return {
+      nev: p.name, ev: p.year, ho: p.month, nap: p.day, ora: p.hour, perc: p.minute, mp: p.second,
+      ismeretlen: p.timeUnknown, telepules: p.city, orszag: p.country, orszagKod: p.countryId, lat: p.lat, lon: p.lon,
+      zonaMod: p.tzCode === 'LMT' ? 'lmt' : 'kezi', tz: '', eltolas: p.offsetHours, tzKod: p.tzCode, nyari: p.dst,
+      jegyzet: p.notes, cimkek: p.tags, tipus: 'radix', eredeti: p.raw
+    };
+  }
+
+  global.RegioSzk = { parse: parse, decode: dekodol, text: szoveg, build: epit, toAdat: adatba, VERZIO: VERZIO };
 })(typeof window !== 'undefined' ? window : globalThis);

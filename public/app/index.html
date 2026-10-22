@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Regiomontanus</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="app" id="app">
+  <div class="cimsor">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M3 12h18M12 3v18"/></svg>
+    <b>Regiomontanus</b><span class="nev" id="cimNev"></span><span class="ver" id="ver">betöltés…</span>
+  </div>
+  <nav class="menusor" id="menusor" aria-label="Főmenü"></nav>
+  <div class="eszkoztar" role="toolbar" aria-label="Eszköztár">
+    <div class="ikonok" id="ikonok"></div>
+    <div class="jobb">
+      <button type="button" class="gomb" id="listaGomb" aria-expanded="false" aria-haspopup="true" title="Megnyitott képletek (Alt+1…9)">
+        <span>Megnyitott képletek (<span id="db">0</span>)</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <span class="cimke">Elrendezés:</span>
+      <div class="csoport" role="group" aria-label="Elrendezés" id="racs">
+        <button type="button" data-r="1" aria-pressed="false">1 képlet</button>
+        <button type="button" data-r="2" aria-pressed="false">2</button>
+        <button type="button" data-r="4" aria-pressed="false">4</button>
+      </div>
+      <div class="lista" id="lista" role="menu" aria-label="Megnyitott képletek" hidden></div>
+    </div>
+  </div>
+  <div class="lepteto" id="lepteto" role="region" aria-label="Képletléptető" title="Az aktív képlet időpontját lépteti (Ctrl+L: be/ki)" hidden>
+    <b>Képletléptető</b>
+    <span id="lepNev"></span>
+    <span class="ido" id="lepIdo">–</span>
+    <span id="lepMezok" style="display:contents"></span>
+    <label>Mérték <input type="number" id="lepMertek" min="1" max="999" value="1" aria-label="Lépés mértéke"></label>
+    <button type="button" class="gomb" id="lepEredeti">Eredeti időpont</button>
+    <span class="elt" id="lepElt"></span>
+    <button type="button" class="zar" id="lepZar" aria-label="Léptető bezárása" title="Bezárás (Ctrl+L)">✕</button>
+  </div>
+  <div class="asztal" id="asztal"></div>
+  <footer class="statusz" aria-live="polite">
+    <span class="s1" id="st1">Nincs megnyitott képlet</span><span class="s2" id="st2"></span><span class="s3" id="st3"></span>
+  </footer>
+  <div class="nyomtat" id="nyomtat" aria-hidden="true"></div>
+</div>
+
+<!-- Születési képlet adatai (új / szerkesztés) -->
+<dialog id="dlgAdat" aria-labelledby="dlgAdatCim">
+  <form method="dialog" id="frmAdat" novalidate>
+    <div class="dfej"><span id="dlgAdatCim">Új születési képlet</span>
+      <button type="button" class="kisgomb" data-megse aria-label="Bezárás"><svg viewBox="0 0 24 24" aria-hidden="true" style="stroke:#6b665d"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="dtorzs">
+      <fieldset><legend>Név</legend>
+        <div class="mezok"><label class="szeles">Név <input id="aNev" autocomplete="off" maxlength="120"></label></div>
+      </fieldset>
+      <fieldset><legend>Születési időpont (helyi idő)</legend>
+        <div class="mezok">
+          <label>Év <input id="aEv" class="sz" type="number" min="1" max="2999" inputmode="numeric"></label>
+          <label>Hó <input id="aHo" class="sz2" type="number" min="1" max="12" inputmode="numeric"></label>
+          <label>Nap <input id="aNap" class="sz2" type="number" min="1" max="31" inputmode="numeric"></label>
+          <label>Óra <input id="aOra" class="sz2" type="number" min="0" max="23" inputmode="numeric"></label>
+          <label>Perc <input id="aPerc" class="sz2" type="number" min="0" max="59" inputmode="numeric"></label>
+          <label>Mp <input id="aMp" class="sz2" type="number" min="0" max="59" inputmode="numeric"></label>
+          <label class="pipa"><input type="checkbox" id="aIsm"> A születési idő ismeretlen (Kos 0° képlet)</label>
+        </div>
+      </fieldset>
+      <fieldset><legend>Születési hely</legend>
+        <div class="mezok">
+          <div class="szeles keres">
+            <label for="aTelep">Település (gépelj be legalább 2 betűt)</label>
+            <input id="aTelep" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="aTalalat" aria-autocomplete="list">
+            <ul class="talalatok" id="aTalalat" role="listbox" hidden></ul>
+          </div>
+          <label>Ország <input id="aOrszag" class="sz4" style="width:130px"></label>
+          <label>Kód <input id="aOrszagKod" class="sz2"></label>
+        </div>
+        <div class="mezok" style="margin-top:8px">
+          <label>Szélesség (fok) <input id="aSzF" class="sz2" type="number" min="0" max="90"></label>
+          <label>perc <input id="aSzP" class="sz2" type="number" min="0" max="59"></label>
+          <label>&nbsp;<select id="aSzI"><option value="1">É</option><option value="-1">D</option></select></label>
+          <span style="width:12px"></span>
+          <label>Hosszúság (fok) <input id="aHoF" class="sz2" type="number" min="0" max="180"></label>
+          <label>perc <input id="aHoP" class="sz2" type="number" min="0" max="59"></label>
+          <label>&nbsp;<select id="aHoI"><option value="1">K</option><option value="-1">Ny</option></select></label>
+        </div>
+      </fieldset>
+      <fieldset><legend>Időzóna</legend>
+        <div class="mezok">
+          <label class="pipa"><input type="radio" name="aZm" value="iana"> Zóna (automatikus, történeti nyári időszámítással)</label>
+          <label class="pipa"><input type="radio" name="aZm" value="lmt"> Helyi középidő (LMT)</label>
+          <label class="pipa"><input type="radio" name="aZm" value="kezi"> Kézi megadás</label>
+        </div>
+        <div class="mezok" style="margin-top:8px">
+          <label class="szeles" style="flex-basis:220px">Zóna <input id="aTz" list="tzLista" autocomplete="off" placeholder="pl. Europe/Budapest"></label>
+          <label>Eltérés UTC-től (óra) <input id="aElt" class="sz4" type="number" step="0.25" min="-14" max="14"></label>
+          <label>Kód <input id="aTzKod" class="sz2" style="width:70px" maxlength="10"></label>
+          <label class="pipa"><input type="checkbox" id="aNyari"> nyári idő</label>
+        </div>
+        <datalist id="tzLista"></datalist>
+        <div class="zinfo" id="aZinfo"></div>
+      </fieldset>
+      <fieldset><legend>Megjegyzések, címkék</legend>
+        <textarea id="aJegyzet" aria-label="Megjegyzések"></textarea>
+        <div class="mezok" style="margin-top:6px"><label class="szeles">Címkék (pontosvesszővel elválasztva) <input id="aCimkek" autocomplete="off"></label></div>
+      </fieldset>
+      <p class="hibauz" id="aHiba" hidden></p>
+    </div>
+    <div class="dlab">
+      <button type="button" class="gomb" id="aMost">Aktuális időpont</button>
+      <button type="button" class="gomb" id="aVissza">Eredeti értékek visszaállítása</button>
+      <span class="tolt"></span>
+      <button type="submit" class="gomb fo" id="aOk" value="ok">Rendben</button>
+      <button type="button" class="gomb" data-megse>Mégsem</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Beállítások – Megjelenítés -->
+<dialog id="dlgMegj" aria-labelledby="dlgMegjCim">
+  <form method="dialog">
+    <div class="dfej"><span id="dlgMegjCim">Megjelenítés</span></div>
+    <div class="dtorzs">
+      <fieldset><legend>A képletkeréken</legend>
+        <div class="pipak">
+          <label class="pipa"><input type="checkbox" data-k="houseLords"> Házurak a planéták alatt</label>
+          <label class="pipa"><input type="checkbox" data-k="feral"> Ferális (F) és izolált (i) jelölés</label>
+          <label class="pipa"><input type="checkbox" data-k="retrograde"> Retrográd (R) jelölés</label>
+          <label class="pipa"><input type="checkbox" data-k="stationary"> Stacioner (S) jelölés</label>
+          <label class="pipa"><input type="checkbox" data-k="selfMarkers"> Énjelölők (háromszögek)</label>
+          <label class="pipa"><input type="checkbox" data-k="cuspLabels"> Házcsúcsok fokszáma</label>
+          <label class="pipa"><input type="checkbox" data-k="conjLines"> Együttállás-vonalak</label>
+          <label class="pipa"><input type="checkbox" data-k="nodes"> Holdcsomók</label>
+          <label class="pipa"><input type="checkbox" data-k="asteroids"> Chiron és a kisbolygók</label>
+        </div>
+      </fieldset>
+      <fieldset><legend>Holdcsomó</legend>
+        <div class="mezok">
+          <label class="pipa"><input type="radio" name="mCsomo" value="11"> valódi</label>
+          <label class="pipa"><input type="radio" name="mCsomo" value="10"> közepes</label>
+        </div>
+      </fieldset>
+    </div>
+    <div class="dlab"><span class="tolt"></span><button type="submit" class="gomb fo" value="ok">Rendben</button><button type="submit" class="gomb" value="">Mégsem</button></div>
+  </form>
+</dialog>
+
+<!-- Beállítások – Egyebek -->
+<dialog id="dlgEgyeb" aria-labelledby="dlgEgyebCim">
+  <form method="dialog">
+    <div class="dfej"><span id="dlgEgyebCim">Egyebek</span></div>
+    <div class="dtorzs">
+      <fieldset><legend>Alapértelmezett település (új képlet, aktuális égi állás)</legend>
+        <div class="mezok"><div class="szeles keres">
+          <label for="eTelep">Település</label>
+          <input id="eTelep" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="eTalalat" aria-autocomplete="list">
+          <ul class="talalatok" id="eTalalat" role="listbox" hidden></ul>
+        </div></div>
+        <div class="zinfo" id="eInfo"></div>
+      </fieldset>
+      <fieldset><legend>Aktuális égi állás</legend>
+        <label class="pipa" style="display:flex"><input type="checkbox" id="eFrissit"> Automatikus frissítés 3 percenként</label>
+      </fieldset>
+    </div>
+    <div class="dlab"><span class="tolt"></span><button type="submit" class="gomb fo" value="ok">Rendben</button><button type="submit" class="gomb" value="">Mégsem</button></div>
+  </form>
+</dialog>
+
+<!-- Névjegy -->
+<dialog id="dlgNevjegy" aria-labelledby="dlgNevjegyCim">
+  <form method="dialog">
+    <div class="dfej"><span id="dlgNevjegyCim">A program névjegye</span></div>
+    <div class="dtorzs nevjegy" style="max-width:460px">
+      <p><b style="font-size:16px;color:#2a4a7f">Regiomontanus</b> – webes változat</p>
+      <p>Készítette: Nemes Balázs<br>E-mail: <a href="mailto:info@regiomontanus.hu">info@regiomontanus.hu</a><br>
+        <a href="https://www.regiomontanus.hu" target="_blank" rel="noopener">www.regiomontanus.hu</a></p>
+      <p>Ingyenes program a Humanisztikus Asztrológia Iskola hallgatóinak.</p>
+      <p id="nvSwe" style="color:#6b665d;font-size:12px"></p>
+      <p style="color:#6b665d;font-size:12px">A böngészőben futó rész az AGPL-3.0 licenc alatt érhető el;
+        az asztrológiai számítások a Swiss Ephemerisszel (© Astrodienst AG) készülnek. A jelek a Noto Sans Symbols betűkészletből (SIL OFL).</p>
+    </div>
+    <div class="dlab"><span class="tolt"></span><button type="submit" class="gomb fo">Rendben</button></div>
+  </form>
+</dialog>
+
+<!-- Megerősítés -->
+<dialog id="dlgKerdes" aria-labelledby="dlgKerdesCim">
+  <form method="dialog">
+    <div class="dfej"><span id="dlgKerdesCim">Regiomontanus</span></div>
+    <div class="dtorzs" id="kerdesSzoveg" style="max-width:440px"></div>
+    <div class="dlab"><span class="tolt"></span>
+      <button type="submit" class="gomb fo" value="igen" id="kerdesIgen">Igen</button>
+      <button type="submit" class="gomb" value="nem" id="kerdesNem">Nem</button>
+      <button type="submit" class="gomb" value="" id="kerdesMegse">Mégsem</button></div>
+  </form>
+</dialog>
+
+<input type="file" id="fajlInput" accept=".szk" multiple hidden>
+
+<script src="../swe/sweph.js"></script>
+<script src="../js/kozos.js"></script>
+<script src="../js/szk.js"></script>
+<script src="../js/keplet.js"></script>
+<script src="../js/kerek.js"></script>
+<script src="../js/tablak.js"></script>
+<script src="../js/tarolo.js"></script>
+<script src="telepules.js"></script>
+<script src="adatlap.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
