@@ -1158,10 +1158,13 @@
     if (t[0] === 'en') return x.selfMarkers[+t[1]];
     return null;
   }
-  function olvHtml(s, tooltip) {
-    s = R.esc(s);
-    s = tooltip ? s.replace(/@/g, '\n') : s.replace(/@/g, '');
-    return s.replace(/\n/g, '<br>');
+  /*
+   * A forrásszövegben a „@” a Windows-os buborék kézi sortörése (ott a hint nem tördel magától, ~100 karakteres sorok).
+   * A webes buborék és ablak maga tördel, ezért a „@” elmarad – különben a kézi és az automatikus törés
+   * együtt magányos szavakat hagy a sorok végén („… gyorsan és” / „önállóan …”).
+   */
+  function olvHtml(s) {
+    return R.esc(s).replace(/@/g, '').replace(/\n/g, '<br>');
   }
   function olvTipZar() { clearTimeout(olvIdozito); if (olvTip) olvTip.hidden = true; }
   function olvTipMutat(ev, html) {
@@ -1176,7 +1179,7 @@
     var a = document.createElement('div');
     a.className = 'olv-ablak'; a.setAttribute('role', 'dialog'); a.setAttribute('aria-label', cim0);
     a.innerHTML = '<div class="olv-fej"><b>' + R.esc(cim0) + '</b><button type="button" class="kisgomb" data-masol title="Másolás a vágólapra" aria-label="Másolás"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="1"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg></button>' +
-      '<button type="button" class="kisgomb" data-zar title="Bezárás (Esc)" aria-label="Bezárás"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div class="olv-torzs">' + olvHtml(szoveg, false) + '</div>';
+      '<button type="button" class="kisgomb" data-zar title="Bezárás (Esc)" aria-label="Bezárás"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div class="olv-torzs">' + olvHtml(szoveg) + '</div>';
     var n = document.querySelectorAll('.olv-ablak').length;
     a.style.left = (60 + n * 24) + 'px'; a.style.top = (120 + n * 24) + 'px';
     document.body.appendChild(a);
@@ -1204,7 +1207,7 @@
       olvIdozito = setTimeout(function () {
         olvSzovegek(c.cel).then(function (x) {
           var t = olvKeres(x, c.kulcs);
-          if (t && elem.matches(':hover')) olvTipMutat(ev, olvHtml(t, true));
+          if (t && elem.matches(':hover')) olvTipMutat(ev, olvHtml(t));
         }, function () { /* nincs szöveg */ });
       }, 100);
     });
