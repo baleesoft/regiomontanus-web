@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Regiomontanus – próba</title>
 <style>
+  @font-face { font-family: 'Regio Symbols'; src: url(../fonts/regio-symbols-1.woff2) format('woff2');
+               unicode-range: U+260A-260D, U+263D-2653, U+26B3-26BC; font-display: block; }
+  @font-face { font-family: 'Regio Symbols'; src: url(../fonts/regio-symbols-2.woff2) format('woff2');
+               unicode-range: U+2609, U+25A1, U+25B3; font-display: block; }
   :root {
     --bg: #ece9e2; --panel: #fbfaf7; --ink: #1f1d1a; --muted: #6b665d; --line: #cfc9bd;
     --accent: #2a4a7f; --ok: #2f7d32; --warn: #b26a00; --bad: #b3261e; --head: #e3ded3; --sum: #fffde8;
@@ -42,7 +46,7 @@
   th { font-weight: 600; color: var(--muted); font-size: 12px; }
   td.num { text-align: right; }
   .glyph { font-size: 17px; width: 24px; text-align: center;
-           font-family: "Segoe UI Symbol", "DejaVu Sans", "Noto Sans Symbols", "Noto Sans Symbols 2", sans-serif; }
+           font-family: "Regio Symbols", "Segoe UI Symbol", "DejaVu Sans", "Noto Sans Symbols", "Noto Sans Symbols 2", sans-serif; }
   .r { color: var(--bad); font-weight: 700; }
   .flag { font-weight: 700; }
   .em { color: var(--accent); }
@@ -59,7 +63,7 @@
   .asp-wrap { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
   table.asp { width: auto; border-collapse: collapse; }
   table.asp td { width: 30px; height: 28px; padding: 0; text-align: center; border: 1px solid #d9d3c6;
-                 font-family: "Segoe UI Symbol", "DejaVu Sans", "Noto Sans Symbols", "Noto Sans Symbols 2", sans-serif; }
+                 font-family: "Regio Symbols", "Segoe UI Symbol", "DejaVu Sans", "Noto Sans Symbols", "Noto Sans Symbols 2", sans-serif; }
   table.asp td.diag { background: var(--head); font-size: 16px; font-weight: 600; }
   table.asp td.ax { font: 600 11px Tahoma, sans-serif; }
   table.asp td.empty { border: none; }
@@ -76,6 +80,10 @@
   .es-res { margin-top: 10px; display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; }
   .es-res div:nth-child(odd) { font-weight: 600; }
 
+  .kerek { max-width: 780px; margin: 0 auto; }
+  .kerek svg .planeta { cursor: default; }
+  label.chk { display: flex; gap: 6px; align-items: center; color: var(--ink); font-size: 13px; margin-top: 8px; }
+  label.chk input { width: auto; }
   #drop { position: fixed; inset: 0; background: rgba(42, 74, 127, .15); border: 3px dashed var(--accent);
           display: none; align-items: center; justify-content: center; font-size: 20px; color: var(--accent); z-index: 9; }
   #drop.on { display: flex; }
@@ -166,11 +174,12 @@
           </select>
         </div>
       </div>
-      <label for="csomo">Holdcsomó a fényszögtáblában</label>
+      <label for="csomo">Holdcsomó</label>
       <select id="csomo">
         <option value="11">Valódi</option>
         <option value="10">Közepes</option>
       </select>
+      <label class="chk"><input type="checkbox" id="kerekExtra"> Holdcsomók és Chiron a keréken</label>
     </fieldset>
 
     <div class="btns">
@@ -187,6 +196,8 @@
     <div id="status" class="status">A Swiss Ephemeris és az adatfájlok betöltése folyamatban…</div>
     <div id="status2" class="status" hidden></div>
 
+    <div class="card"><h2>Születési képlet <small>vidd az egeret egy jelre a részletekért</small></h2>
+      <div class="body"><div class="kerek" id="kerek"><span class="hint">számítás…</span></div></div></div>
     <div class="card"><h2>Alapadatok</h2><div class="body"><div class="kv" id="info"></div></div></div>
     <div class="card"><h2>Planéták <small>F = ferális, i = izolált, R = retrográd, S = stacioner, ● = énjelölő</small></h2>
       <div class="body"><table id="planetak"></table></div></div>
@@ -209,6 +220,7 @@
 
 <script src="../swe/sweph.js"></script>
 <script src="../js/szk.js"></script>
+<script src="../js/kerek.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

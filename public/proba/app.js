@@ -248,9 +248,14 @@
     // Az elemzés táblái
     if (!el) {
       ['fenyszogek', 'enallapotok'].forEach(function (id) { $(id).innerHTML = '<tr><td class="hint">számítás…</td></tr>'; });
+      $('kerek').innerHTML = '<span class="hint">számítás…</span>';
       $('eletstrat').innerHTML = '<span class="hint">számítás…</span>';
       return;
     }
+    var kerekPl = RegioKerek.ALAP.planets.slice();
+    if ($('kerekExtra').checked) kerekPl.push(b.csomo, b.csomo === 11 ? 25 : 24, 15);
+    RegioKerek.rajzol($('kerek'), { asc: hz.asc, mc: hz.mc, cusps: hz.cusps, planets: el.planets,
+      aspects: el.aspects, selfMarkers: el.selfMarkers }, { planets: kerekPl });
     fenyszogTabla(el, b.csomo, ep);
     enallapotTabla(el, ep);
     eletstratTabla(el.lifeStrategy);
@@ -377,7 +382,7 @@
 
   $('frm').addEventListener('submit', function (e) { e.preventDefault(); szamol(); });
   $('zonamod').addEventListener('change', function () { zonaMod(); szamol(); });
-  ['hsys', 'zod', 'csomo'].forEach(function (id) { $(id).addEventListener('change', szamol); });
+  ['hsys', 'zod', 'csomo', 'kerekExtra'].forEach(function (id) { $(id).addEventListener('change', szamol); });
   $('telep').addEventListener('change', function () {
     var v = $('telep').value; if (v === 'custom') return;
     var p = v.split('|'); $('szel').value = p[0]; $('hossz').value = p[1]; $('tz').value = p[2];

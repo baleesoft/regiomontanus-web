@@ -18,6 +18,8 @@ public/                ← ez a tartalom kerül fel FTP-vel a tárhelyre
     swe.wasm           Swiss Ephemeris 2.10.03 (WebAssembly)
     ephe/              .se1 adatfájlok 600–2999 (600 éves blokkok, igény szerint töltődnek) + sefstars.txt
   js/szk.js            a Windows-os program .szk képletfájljainak beolvasása
+  js/kerek.js          a képletkerék SVG-ben, a Windows-os program geometriája szerint
+  fonts/               asztrológiai jelek: Noto Sans Symbols / Symbols 2 részhalmaz (SIL OFL 1.1, OFL.txt)
   proba/               próbaoldal: pozíciók + képlet-elemzés (api/szamol.php) + .szk megnyitás
 tools/
   build-wasm.sh        a swe.wasm reprodukálható fordítása a hivatalos forrásból
@@ -34,5 +36,6 @@ tools/build-wasm.sh            # alapértelmezés: aloistr/swisseph c69c14a (2.1
 
 ## Licenc
 
-AGPL-3.0 (lásd `LICENSE`). A Swiss Ephemeris © Astrodienst AG, AGPL-3.0 / Swiss Ephemeris Professional
+AGPL-3.0 (lásd `LICENSE`). A `public/fonts/` betűkészletei a Noto Project munkái, SIL Open Font License 1.1
+(`public/fonts/OFL.txt`). A Swiss Ephemeris © Astrodienst AG, AGPL-3.0 / Swiss Ephemeris Professional
 License kettős licenccel: <https://www.astro.com/swisseph/>.
