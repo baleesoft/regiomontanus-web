@@ -183,6 +183,74 @@
       (e.figyelmeztetes.length ? '<p class="t-hint">' + e.figyelmeztetes.map(R.esc).join('<br>') + '</p>' : '');
   };
 
+  /* ---------- Összevetés: keresztkapcsolati fényszögtábla (sorok: belső kör, oszlopok: külső kör) ---------- */
+  T.keresztFenyszogek = function (hova, kereszt, eB, eK, b, cimB, cimK) {
+    if (!kereszt) { hova.innerHTML = '<p class="t-hint">A keresztkapcsolati fényszögek számítása…</p>'; return; }
+    if (kereszt.hiba) { hova.innerHTML = '<p class="t-hint">A keresztkapcsolati fényszögek nem érhetők el: ' + R.esc(kereszt.hiba) + '</p>'; return; }
+    // A Windows-os tábla (fAspectInformations_Syn): Nap–Plútó, holdcsomó (ha látható), ASC, MC; a két holdcsomó
+    // együttállása kimarad. Sorok: belső kör, oszlopok: külső kör.
+    var cs = T.csomo(b), csomoLathato = !!(b && b.kerek && b.kerek.nodes);
+    function lista(e) {
+      var l = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].concat(csomoLathato ? [cs] : []).filter(function (id) { return e.poz[id]; });
+      return l.concat([998, 999]);
+    }
+    var sorok = lista(eB), oszl = lista(eK), cell = {};
+    (kereszt.aspects || []).forEach(function (a) {
+      var i = a.a[0] === 'A' ? (a.a[1] === 0 ? 998 : a.a[1] === 1 ? 999 : null) : a.a[1];
+      var j = a.b[0] === 'A' ? (a.b[1] === 0 ? 998 : a.b[1] === 1 ? 999 : null) : a.b[1];
+      if ((i === 10 || i === 11) && (j === 10 || j === 11) && a.aspect === 1) return;
+      if (i === null || j === null || sorok.indexOf(i) < 0 || oszl.indexOf(j) < 0) return;
+      (cell[i + '_' + j] = cell[i + '_' + j] || []).push({ a: a, id1: i, id2: j });
+    });
+    function fej(id) {
+      return R.TENGELY[id] ? '<th class="t-ax" title="' + R.TENGELY[id][0] + '">' + R.TENGELY[id][1] + '</th>'
+        : R.glif(id) ? '<th title="' + R.esc(R.nev(id)) + '">' + R.glif(id) + '</th>'
+        : '<th class="t-ax" title="' + R.esc(R.nev(id)) + '">' + R.esc(R.nev(id).slice(0, 3)) + '</th>';
+    }
+    var h = '<p class="t-hint">Részletes információkért kattintson az adott fényszögre a táblázatban!</p><div class="t-asp"><table class="t-grid t-kereszt"><thead><tr><th class="t-sarok" title="sor: belső kör, oszlop: külső kör">B \\ K</th>' +
+      oszl.map(fej).join('') + '</tr></thead><tbody>';
+    sorok.forEach(function (i) {
+      h += '<tr>' + fej(i) + oszl.map(function (j) {
+        var l = cell[i + '_' + j];
+        return l ? '<td class="t-has" tabindex="0" data-k="' + i + '_' + j + '" title="' + l.map(function (x) { return R.FENYSZOG[x.a.aspect][0]; }).join(', ') +
+          '">' + l.map(function (x) { return R.FENYSZOG[x.a.aspect][3]; }).join(' ') + '</td>' : '<td></td>';
+      }).join('') + '</tr>';
+    });
+    h += '</tbody></table><div class="t-kv t-aspinfo" aria-live="polite"><div>Válassz egy fényszöget a táblában.</div><div></div></div></div>' +
+      '<p class="t-hint">A bal oldali oszlopban a belső-, a felső sorban pedig a külső születési képlet planétái láthatóak! ' +
+      'A keresztkapcsolati fényszögtáblázathoz a fényszögekhez tartozó eredeti orbis értékek felét vettük figyelembe (legalább 1°), ' +
+      'ami az „orbis értéke” sorban is látható. Belső kör: ' + R.esc(cimB) + ' · külső kör: ' + R.esc(cimK) + '.</p>';
+    hova.innerHTML = h;
+    var t = hova.querySelector('.t-grid'), info = hova.querySelector('.t-aspinfo');
+    function valaszt(td) {
+      Array.prototype.forEach.call(t.querySelectorAll('td.t-sel'), function (x) { x.classList.remove('t-sel'); });
+      td.classList.add('t-sel');
+      info.innerHTML = cell[td.getAttribute('data-k')].map(function (x) {
+        var f = R.FENYSZOG[x.a.aspect];
+        return [R.esc(cimB) + ' – kiválasztott elem:', R.esc(R.nev(x.id1)), R.esc(cimK) + ' – kiválasztott elem:', R.esc(R.nev(x.id2)),
+          'Fényszög:', f[0] + ' (' + f[1] + '°)', 'Orbis értéke:', R.fokStr(x.a.maxOrb),
+          'Aktuális orbis:', R.fokStr(x.a.orb, false) + (x.a.exact ? ' (pontos)' : '')].map(cella).join('');
+      }).join('<div class="t-kv-sep"></div>');
+    }
+    t.addEventListener('click', function (ev) { var td = ev.target.closest('td.t-has'); if (td) valaszt(td); });
+    t.addEventListener('keydown', function (ev) {
+      if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.classList.contains('t-has')) { ev.preventDefault(); valaszt(ev.target); }
+    });
+  };
+
+  /** Összevetés: egy tábla a belső és egy a külső kör adataival */
+  T.ket = function (fn, eB, eK, cimB, cimK, b) {
+    return '<h3 class="t-cim">Belső kör – ' + R.esc(cimB) + '</h3>' + fn(eB, b) +
+      '<h3 class="t-cim">Külső kör – ' + R.esc(cimK) + '</h3>' + (eK ? fn(eK, b) : '<p class="t-hint">számítás…</p>');
+  };
+  /** Progressziós Hold: a Hold ugyanezen a helyen a valódi életben (DoCalculateSecDirHold) */
+  T.progrHold = function (l) {
+    if (!l || !l.length) return '';
+    return '<h3 class="t-cim">Progressziós Hold értékek</h3><table class="t"><tbody>' + l.map(function (x) {
+      return '<tr' + (x.aktualis ? ' class="t-akt"' : '') + '><td>' + R.esc(x.szoveg) + '</td><td>' + (x.aktualis ? 'a mostani léptetés' : '') + '</td></tr>';
+    }).join('') + '</tbody></table>';
+  };
+
   /** A kerék adatai a RegioKerek.rajzol() számára */
   T.kerekAdat = function (e) {
     var el = e.elemzes;

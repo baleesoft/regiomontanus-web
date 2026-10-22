@@ -70,6 +70,8 @@
     d.setUTCFullYear(+p.year, +p.month - 1, +p.day); d.setUTCHours(+p.hour, +p.minute, +p.second, 0);
     return (d.getTime() - Math.floor(utcMs / 1000) * 1000) / 60000;
   }
+  /** Egy UTC pillanatban érvényes zónaeltolás percben */
+  R.zonaEltolasUtc = function (utcMs, tz) { return zonaEltolas(utcMs, tz); };
   /** Helyi időből a zóna eltolása (perc) és a nyári időszámítás jelzése. */
   R.helyiZona = function (y, mo, d, h, mi, s, tz) {
     var dt = new Date(0); dt.setUTCFullYear(y, mo - 1, d); dt.setUTCHours(h, mi, s || 0, 0);

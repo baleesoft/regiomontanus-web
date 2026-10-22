@@ -121,6 +121,22 @@
     });
   };
 
+  K.API_OSSZ = '../api/osszevet.php';
+  function kuldes(e) {
+    return {
+      planets: Object.keys(e.poz).map(function (id) { var x = e.poz[id]; return { id: +id, lon: x.lon, lat: x.lat, speed: x.speedLon }; }),
+      cusps: e.hz.cusps.slice(1, 13),
+      ascmc: [e.hz.asc, e.hz.mc, e.hz.armc, e.hz.vertex, e.hz.equAsc, e.hz.coAscKoch, e.hz.coAscMunkasey, e.hz.polarAsc]
+    };
+  }
+  /**
+   * Összevetés (keresztkapcsolati fényszögek) a szervertől: belső × külső kör.
+   * Promise<{ aspects: [{a:[típus,id] (belső), b:[típus,id] (külső), aspect, exact, orb, maxOrb}], kulsoHaz: {id: ház} }>
+   */
+  K.osszevet = function (eBelso, eKulso, api) {
+    return apiHivas(api || K.API_OSSZ, { belso: kuldes(eBelso), kulso: kuldes(eKulso) });
+  };
+
   /** A képlet megjelenített neve (Kos 0° előtaggal, ahogy a Windows-os program teszi) */
   K.cim = function (a) {
     if (K.kos0e(a) && a.nev.indexOf('Kos 0°<') !== 0) return 'Kos 0°< ' + a.nev;

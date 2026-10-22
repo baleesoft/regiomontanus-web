@@ -60,13 +60,18 @@
    * @param {Object} k      – { asc, mc, cusps[1..12], planets: [{id, lon, house, lordOf, closedLordOf, feral, isolated, speed}],
    *                            aspects: [...api], selfMarkers: [...api] }
    * @param {Object} beall  – felülírja az ALAP beállításokat
+   * @param {Object} [kulso] – összevetés „egymáson” (D.ReDrawCalculatedResults): a külső kör
+   *   { planets, asc, mc, cusps[1..12], csucsok: 'mind' | 'tengely' | 'nincs', tengelyJel: bool, betuk: bool, egyenlo: bool }
+   *   A külső planéták a zodiákus-sávon kívül (≈1,10 r), a házcsúcsok r…1,075 r tüskeként; énjelölő és
+   *   házcsúcs-felirat ilyenkor nincs, a zodiákus-sáv külső szélén is van fokbeosztás.
    */
-  function rajzol(hova, k, beall) {
+  function rajzol(hova, k, beall, kulso) {
     var o = {}, kk;
     for (kk in ALAP) o[kk] = ALAP[kk];
     for (kk in (beall || {})) o[kk] = beall[kk];
+    if (kulso) { o.selfMarkers = false; o.cuspLabels = false; o.outerTicks = true; }
 
-    var r = 400, R = r * 1.2;
+    var r = 400, R = r * (kulso ? 1.3 : 1.2);
     var asc = k.asc;
     // Képernyőszög: az ASC balra, a zodiákus az óramutatóval ellentétesen nő
     function pont(lon, rad) {
@@ -118,6 +123,17 @@
       tick += 'M' + t1[0].toFixed(2) + ',' + t1[1].toFixed(2) + 'L' + t2[0].toFixed(2) + ',' + t2[1].toFixed(2);
     }
     el('path', { d: tick, 'stroke-width': 0.8 }, gVonal);
+    // több képletnél a sáv külső szélén is fokbeosztás, befelé (DrawDegreeLines(0, −iSub), D 1033–1045, 1137–1155)
+    if (o.outerTicks) {
+      var tickK = '';
+      for (var dk = 0; dk < 360; dk++) {
+        if (dk % 30 === 0) continue;
+        var hk = dk % 10 === 0 ? r / 48 : dk % 5 === 0 ? r / 72 : r / 96;
+        var u1 = pont(dk, r), u2 = pont(dk, r - hk);
+        tickK += 'M' + u1[0].toFixed(2) + ',' + u1[1].toFixed(2) + 'L' + u2[0].toFixed(2) + ',' + u2[1].toFixed(2);
+      }
+      el('path', { d: tickK, 'stroke-width': 0.8 }, gVonal);
+    }
 
     /* ---------- planéták elhelyezése (DrawPlanets + ReArrangePlanets) ---------- */
     var cs = k.cusps;
@@ -308,10 +324,92 @@
       });
     }
 
+    /* ---------- külső kör (összevetés, egymáson) ---------- */
+    if (kulso) {
+      var R_K_PL = r * 1.10, R_K_TUSKE = r * 1.075;
+      var gK = el('g', { 'class': 'kulso' }, svg);
+      // házcsúcs-tüskék: Tr/Pd csak ASC és MC, PH semmi, a többi mind a 12 (D 1289–1336)
+      var kc = kulso.cusps || [];
+      var csucsLista = kulso.csucsok === 'mind' ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] : kulso.csucsok === 'tengely' ? [1, 10] : [];
+      csucsLista.forEach(function (hz) {
+        var lonC = hz === 10 && kulso.egyenlo && typeof kulso.mc === 'number' ? kulso.mc : kc[hz];
+        if (typeof lonC !== 'number') return;
+        vonal(lonC, r, R_K_TUSKE, { stroke: '#000', 'stroke-width': (hz === 1 || hz === 4 || hz === 7 || hz === 10) ? 2.2 : 1 }, gK);
+      });
+      // planéták + ASC/MC jel; a tengelyjel nem mozdul (D 2603–2609)
+      var kElemek = (kulso.planets || []).filter(function (p) {
+        return o.planets.indexOf(p.id) >= 0 && PLANETA[p.id] !== undefined && (!kulso.csakHold || p.id === 1);
+      }).map(function (p) {
+        var ur = o.houseLords && p.lordOf ? urSzoveg(p) : '';
+        return { p: p, orig: p.lon, uj: p.lon, w: Math.max(W, ur.length * pxKicsi * 0.56), h: W + (ur ? pxKicsi * 1.15 : 0), fix: false };
+      });
+      if (kulso.tengelyJel) {
+        [['AC', kulso.asc, 'Ascendens'], ['MC', kulso.mc, 'Medium Coeli']].forEach(function (t) {
+          if (typeof t[1] === 'number') kElemek.push({ tengely: t[0], nev: t[2], orig: t[1], uj: t[1], w: W, h: W, fix: true });
+        });
+      }
+      var helyezK = function (e, lon) { var q = pont(lon, R_K_PL); e.x = q[0]; e.y = q[1]; e.bal = q[0] - e.w / 2; e.fent = q[1] - e.w / 2; };
+      kElemek.forEach(function (e) { helyezK(e, e.uj); });
+      var bizt = 0, kesz;
+      do {
+        kesz = true;
+        for (var a1 = 0; a1 < kElemek.length; a1++) {
+          for (var a2 = a1 + 1; a2 < kElemek.length; a2++) {
+            var f1 = kElemek[a1], f2 = kElemek[a2];
+            if (!atfed(f1, f2) || (f1.fix && f2.fix)) continue;
+            kesz = false;
+            var mz = Math.abs(f1.orig - f2.orig) >= 330 ? (f1.orig >= 330 ? -2 : 2) : (f1.orig < f2.orig ? -2 : 2);
+            if (!f1.fix) { f1.uj += f2.fix ? mz * 2 : mz; if (f1.uj < 0) f1.uj = 360; else if (f1.uj > 360) f1.uj = 0; helyezK(f1, f1.uj); }
+            if (!f2.fix) { f2.uj -= f1.fix ? mz * 2 : mz; if (f2.uj < 0) f2.uj = 360; else if (f2.uj > 360) f2.uj = 0; helyezK(f2, f2.uj); }
+            bizt++;
+          }
+        }
+        bizt++;
+      } while (!kesz && bizt <= 250);
+      kElemek.forEach(function (e) {
+        var g = el('g', { 'class': e.tengely ? 'kulso-tengely' : 'planeta kulso', 'data-id': e.p ? e.p.id : e.tengely }, gK);
+        var jk = jegy(e.orig), fjk = fokNorm(e.orig) - jk * 30;
+        el('rect', { x: e.bal, y: e.fent, width: e.w, height: e.w, fill: '#fff' }, g);
+        if (e.tengely) {
+          cim(g, 'Külső kör – ' + e.nev + ': ' + JNEV[jk] + ' ' + fokStr(fjk));
+          szoveg(e.tengely, { x: e.x, y: e.y, 'font-size': pxKicsi * 1.25, 'font-weight': 'bold', 'text-anchor': 'middle',
+            'dominant-baseline': 'central', fill: '#000' }, g);
+          return;
+        }
+        var p = e.p;
+        cim(g, 'Külső kör – ' + PNEV[p.id] + ': ' + JNEV[jk] + ' ' + fokStr(fjk) + (p.house ? ', ' + p.house + '. ház (saját képletében)' : '') +
+          (p.speed < 0 ? ', retrográd' : '') + (p.feral ? ', ferális' : '') + (p.isolated ? ', izolált' : '') + (kulso.cimKieg && kulso.cimKieg[p.id] ? '\n' + kulso.cimKieg[p.id] : ''));
+        szoveg(PLANETA[p.id] + VS, { x: e.x, y: e.y, 'font-size': pxPlaneta, 'font-family': SYM, 'text-anchor': 'middle',
+          'dominant-baseline': 'central', fill: '#000' }, g);
+        // vezetővonal: a doboz szélétől a valódi helyig a zodiákus külső körén (D 435–470)
+        var z = pont(e.orig, r), dx = z[0] - e.x, dy = z[1] - e.y, tm = Infinity;
+        if (dx !== 0) tm = Math.min(tm, Math.abs((e.w / 2) / dx));
+        if (dy !== 0) tm = Math.min(tm, Math.abs((e.w / 2) / dy));
+        if (tm < 1) el('line', { x1: (e.x + dx * tm).toFixed(2), y1: (e.y + dy * tm).toFixed(2), x2: z[0].toFixed(2), y2: z[1].toFixed(2),
+          stroke: '#000', 'stroke-width': 0.8 }, g);
+        // R / S / F / i a gyűrűn kívül (D 482–562; primer direkciónál nincs)
+        if (kulso.betuk) {
+          var jl = [];
+          if (o.retrograde && p.speed < 0) jl.push('R');
+          if (o.stationary && p.stationary) jl = ['S'];
+          if (o.feral && p.feral) jl.push('F');
+          if (o.feral && p.isolated) jl.push('i');
+          if (jl.length) {
+            var bp = pont(e.uj, r * 1.26 - pxKicsi * 1.1);
+            szoveg(jl.join(', '), { x: bp[0], y: bp[1], 'font-size': pxKicsi * 0.9, 'font-weight': 'bold', 'text-anchor': 'middle',
+              'dominant-baseline': 'central', fill: '#000' }, g);
+          }
+        }
+      });
+    }
+
     hova.innerHTML = '';
     hova.appendChild(svg);
     return svg;
   }
 
-  global.RegioKerek = { rajzol: rajzol, ALAP: ALAP };
+  /** Összevetés egymáson: a belső képlet a megszokott módon, a külső kör a zodiákus-sávon kívül */
+  function rajzolDupla(hova, belso, kulso, beall) { return rajzol(hova, belso, beall, kulso); }
+
+  global.RegioKerek = { rajzol: rajzol, rajzolDupla: rajzolDupla, ALAP: ALAP };
 })(typeof window !== 'undefined' ? window : globalThis);

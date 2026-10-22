@@ -165,7 +165,19 @@ body.huzas, body.huzas * { cursor: col-resize !important; user-select: none !imp
 .fulek button small { color: var(--muted); font-weight: 400; font-size: 11px; margin-left: 4px; }
 .tabla-tart { flex: 1 1 0; min-height: 0; padding: 10px; overflow: auto; }
 
+/* összevetés: két kerék egymás mellett */
+.ketkerek { width: 100%; height: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-items: center; }
+.ketkerek figure { margin: 0; min-height: 0; height: 100%; display: flex; flex-direction: column; align-items: center; }
+.ketkerek .kk { flex: 1 1 0; min-height: 0; width: 100%; display: flex; justify-content: center; }
+.ketkerek .kk svg { width: 100%; height: 100% !important; }
+.ketkerek figcaption { font-size: 12px; color: var(--ink2); padding-top: 4px; text-align: center; }
+@media (max-width: 760px) { .ketkerek { grid-template-columns: minmax(0, 1fr); } .ketkerek .kk svg { height: auto !important; } }
+
 /* táblák (tablak.js) */
+h3.t-cim { font-size: 12px; margin: 10px 0 4px; color: var(--accent); }
+h3.t-cim:first-child { margin-top: 0; }
+tr.t-akt td { font-weight: 700; background: var(--sum); }
+table.t-kereszt th.t-sarok { font: 600 10px Tahoma, sans-serif; color: var(--muted); }
 table.t { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: 12px; }
 table.t th, table.t td { padding: 3px 6px; text-align: left; border-bottom: 1px solid var(--line2); white-space: nowrap; }
 table.t thead th { color: var(--muted); font-weight: 600; }
@@ -233,6 +245,8 @@ dialog textarea { width: 100%; min-height: 70px; resize: vertical; }
 .talalatok li small { color: var(--muted); margin-left: auto; white-space: nowrap; }
 .talalatok li[aria-selected="true"], .talalatok li:hover { background: var(--sel); }
 .talalatok li.nincs { color: var(--muted); cursor: default; }
+.progr-dlg { width: 560px; }
+.rev-lista { max-height: 180px; overflow: auto; }
 .pipak { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 4px 12px; }
 .nevjegy p { margin: 0 0 8px; }
 .uzenet { position: fixed; left: 50%; bottom: 40px; transform: translateX(-50%); z-index: 50; background: #2b2925; color: #fff;

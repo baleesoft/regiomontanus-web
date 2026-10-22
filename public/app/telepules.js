@@ -37,6 +37,26 @@
   }
 
   /**
+   * Egy képlet helyéhez (a .szk-ból nincs IANA-zóna) megkeresi az adatbázisban a települést és a zónáját.
+   * Promise<{ telepules, telepulesKijelzes, orszag, orszagKod, lat, lon, tz }> – ha nem találja, tz: ''.
+   */
+  R.helyZonaval = function (a) {
+    var hely = { telepules: a.telepules || '', telepulesKijelzes: a.telepulesKijelzes || '', orszag: a.orszag || '',
+      orszagKod: a.orszagKod || '', lat: a.lat, lon: a.lon, tz: a.tz || '' };
+    if (hely.tz || !hely.telepules || hely.telepules.length < 2) return Promise.resolve(hely);
+    var q = 'q=' + encodeURIComponent(hely.telepules) + '&max=50' + (/^[A-Za-z]{1,5}$/.test(hely.orszagKod) ? '&orszag=' + hely.orszagKod : '');
+    return lekerdez(q).then(function (l) {
+      var t = null;
+      l.forEach(function (x) {
+        if (!t && (x.adatNev || x.nev) === hely.telepules && Math.abs(x.lat - hely.lat) < 0.05 && Math.abs(x.lon - hely.lon) < 0.05) t = x;
+      });
+      if (!t) l.forEach(function (x) { if (!t && Math.abs(x.lat - hely.lat) < 0.02 && Math.abs(x.lon - hely.lon) < 0.02) t = x; });
+      if (t) { hely.tz = t.tz; if (t.nev !== hely.telepules) hely.telepulesKijelzes = t.nev; }
+      return hely;
+    }, function () { return hely; });
+  };
+
+  /**
    * input: a beviteli mező, lista: <ul role=listbox>, valaszt(t): a kiválasztott településsel hívódik.
    * t = { nev (megjelenített), adatNev (a .szk-ba), orszagKod, orszag, lat, lon, tz }
    */

@@ -26,7 +26,8 @@
     kerek: { houseLords: true, feral: true, retrograde: false, stationary: false, selfMarkers: true,
       cuspLabels: true, nodes: false, asteroids: false, conjLines: false },
     alapHely: { telepules: 'Budapest', telepulesKijelzes: '', orszag: 'Hungary', orszagKod: 'H', lat: 47.5, lon: 19.0666667, tz: 'Europe/Budapest' },
-    elrendezes: 4, aktualisFrissit: true, lepes: 1, reszletArany: 0.58
+    elrendezes: 4, aktualisFrissit: true, lepes: 1, reszletArany: 0.58,
+    osszevetesMod: 'egymason', pdKonverz: false, phCsakHold: true, phTengely: false
   };
   function melyMasol(a) { return JSON.parse(JSON.stringify(a)); }
   function osszefesul(alap, v) {

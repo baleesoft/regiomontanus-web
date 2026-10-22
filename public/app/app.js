@@ -24,7 +24,55 @@
   /* ====================================================================== */
   function ujKepletObj(adat, fajl) {
     return { id: kovId++, eredeti: K.masol(adat), adat: K.masol(adat), eltolas: [0, 0, 0, 0, 0], e: null, hiba: null,
-      sorszam: 0, fajlnev: fajl ? fajl.nev : '', handle: fajl ? fajl.handle || null : null, valtozott: !fajl, mini: '', idozito: null };
+      sorszam: 0, fajlnev: fajl ? fajl.nev : '', handle: fajl ? fajl.handle || null : null, valtozott: !fajl, mini: '', idozito: null,
+      fajta: null, kulso: null, mod: beall.osszevetesMod || 'egymason', kereszt: null, phHold: null };
+  }
+  /*
+   * Összevetés-csempe (a Windows-os „<-> belső - külső” fül): k.adat/k.e a belső (radix) képlet,
+   * k.kulso a külső kör: { eredeti, adat, e, hiba, sorszam, eltolas[5], ph: {napok, orak}, pd: fok, sol: {ev, hely}, rev: {pl} }.
+   * fajta: 'tranzit' | 'ph' | 'pd' | 'sol' | 'rev' | 'szin'
+   */
+  function osszevetesHozzaad(belso, fajta, kulsoAdat, extra) {
+    var k = ujKepletObj(belso, null);
+    k.valtozott = false; k.fajta = fajta;
+    k.kulso = { eredeti: kulsoAdat ? K.masol(kulsoAdat) : null, adat: kulsoAdat ? K.masol(kulsoAdat) : null, e: null, hiba: null,
+      sorszam: 0, eltolas: [0, 0, 0, 0, 0], idozito: null };
+    var x; for (x in (extra || {})) k.kulso[x] = extra[x];
+    k.kulso.alap = JSON.parse(JSON.stringify({ ph: k.kulso.ph, pd: k.kulso.pd, sol: k.kulso.sol }));
+    kepletek.push(k); aktiv = kepletek.length - 1;
+    szamol(k); render();
+    return k;
+  }
+  function szamolOpt() { return { hsys: beall.hsys, sid: beall.sid }; }
+  function sweFlag() { return SwissEph.SE.FLG_SWIEPH | SwissEph.SE.FLG_SPEED | (beall.sid ? SwissEph.SE.FLG_SIDEREAL : 0); }
+  /** A külső kör számítása (a belső kész eredményéből a primer direkció) + kereszt-fényszögek */
+  function kulsoSzamol(k) {
+    var ks = k.kulso, sz = ++ks.sorszam;
+    function kesz(e) {
+      if (sz !== ks.sorszam) return;
+      ks.e = e; ks.hiba = null;
+      k.phHold = k.fajta === 'ph' ? R.Idotech.progrHold(se, k.adat, ks.adat, sweFlag()) : null;
+      k.kereszt = null;
+      K.osszevet(k.e, e).then(function (x) { if (sz === ks.sorszam) { k.kereszt = x; render(); } },
+        function (h) { if (sz === ks.sorszam) { k.kereszt = { hiba: h.message }; render(); } });
+      k.mini = miniSvg(k);
+      render();
+    }
+    if (!k.e) return;
+    if (k.fajta === 'pd') { kesz(R.Idotech.primer(k.e, ks.pd)); return; }
+    if (k.fajta === 'ph') ks.adat = R.Idotech.progr(se, k.adat, ks.ph.napok, ks.ph.orak);
+    if (k.fajta === 'sol' && ks.sol) {
+      var napHossz = k.e.poz[0].lon;
+      se.ensureEphe([ks.sol.ev, ks.sol.ev + 1]).then(function () {
+        var jd = R.Idotech.szolar(se, k.adat, napHossz, ks.sol.ev, sweFlag());
+        if (jd === null) { ks.hiba = 'Nincs szolár-időpont.'; render(); return; }
+        ks.adat = R.Idotech.adatJd(se, jd, ks.sol.hely, k.adat);
+        ks.adat.nev = kulsoNev(k);
+        K.szamol(se, ks.adat, szamolOpt()).then(kesz, function (h) { if (sz === ks.sorszam) { ks.hiba = h.message; render(); } });
+      });
+      return;
+    }
+    K.szamol(se, ks.adat, szamolOpt()).then(kesz, function (h) { if (sz === ks.sorszam) { ks.hiba = h.message; render(); } });
   }
   function hozzaad(adat, fajl, nemAktival) {
     var k = ujKepletObj(adat, fajl);
@@ -38,9 +86,10 @@
   function szamol(k) {
     if (!se) return;
     var sz = ++k.sorszam;
-    K.szamol(se, k.adat, { hsys: beall.hsys, sid: beall.sid }).then(function (e) {
+    K.szamol(se, k.adat, szamolOpt()).then(function (e) {
       if (sz !== k.sorszam) return;
       k.e = e; k.hiba = null; k.mini = miniSvg(k);
+      if (k.fajta) kulsoSzamol(k);
       render();
     }, function (h) {
       if (sz !== k.sorszam) return;
@@ -48,16 +97,17 @@
       render();
     });
   }
-  function utemezSzamol(k) {
-    clearTimeout(k.idozito);
-    k.idozito = setTimeout(function () { szamol(k); }, 90);
+  function utemezSzamol(k, csakKulso) {
+    var o = csakKulso ? k.kulso : k;
+    clearTimeout(o.idozito);
+    o.idozito = setTimeout(function () { if (csakKulso) kulsoSzamol(k); else szamol(k); }, 90);
   }
   function mindSzamol() { kepletek.forEach(szamol); }
 
   function bezar(i) {
     var k = kepletek[i]; if (!k) return Promise.resolve(false);
     var elott = k.valtozott && k.adat.tipus !== 'aktualis'
-      ? kerdez('A(z) „' + R.esc(K.cim(k.adat)) + '” képlet változásai nincsenek elmentve. Mented bezárás előtt?', true)
+      ? kerdez('A(z) „' + R.esc(cim(k)) + '” képlet változásai nincsenek elmentve. Mented bezárás előtt?', true)
       : Promise.resolve('nem');
     return elott.then(function (v) {
       if (!v) return false;
@@ -100,13 +150,47 @@
       aspectTypes: b.conjLines ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] : RegioKerek.ALAP.aspectTypes };
   }
   function kerekRajzol(hova, k) {
+    if (k.fajta) return osszKerekRajzol(hova, k);
     if (k.e) {
       var svg = RegioKerek.rajzol(hova, T.kerekAdat(k.e), kerekBeall(k));
-      svg.setAttribute('aria-label', 'Képletkerék: ' + K.cim(k.adat));
+      svg.setAttribute('aria-label', 'Képletkerék: ' + cim(k));
       return svg;
     }
     hova.innerHTML = k.hiba ? '<div class="hiba">Hiba: ' + R.esc(k.hiba) + '</div>' : '<div class="betolt">számítás…</div>';
     return null;
+  }
+  /** Összevetés: egymáson (bi-kerék) vagy egymás mellett (két kerék) */
+  function osszKerekRajzol(hova, k) {
+    var ks = k.kulso;
+    if (!k.e || !ks.e) {
+      var h = k.hiba || ks.hiba;
+      hova.innerHTML = h ? '<div class="hiba">Hiba: ' + R.esc(h) + '</div>' : '<div class="betolt">számítás…</div>';
+      return null;
+    }
+    var o = kerekBeall(k), csakHold = k.fajta === 'ph' && beall.phCsakHold !== false;
+    if (k.mod === 'egymasmellett') {
+      // két önálló kerék: énjelölő és házcsúcs-felirat nélkül, külső fokbeosztással (D 2810–2956)
+      hova.innerHTML = '<div class="ketkerek"><figure><div class="kk"></div><figcaption>Belső kör – ' + R.esc(K.cim(k.adat)) +
+        '</figcaption></figure><figure><div class="kk"></div><figcaption>Külső kör – ' + R.esc(kulsoNev(k)) + '</figcaption></figure></div>';
+      var kk = hova.querySelectorAll('.kk');
+      o.selfMarkers = false; o.cuspLabels = false; o.outerTicks = true;
+      RegioKerek.rajzol(kk[0], T.kerekAdat(k.e), o);
+      var o2 = {}, x; for (x in o) o2[x] = o[x];
+      if (csakHold) o2.planets = [1];
+      if (k.fajta === 'pd') o2.feral = false;
+      RegioKerek.rajzol(kk[1], T.kerekAdat(ks.e), o2);
+      return hova.querySelector('svg');
+    }
+    var kd = T.kerekAdat(ks.e);
+    kd.csucsok = k.fajta === 'tranzit' || k.fajta === 'pd' ? 'tengely' : k.fajta === 'ph' ? (beall.phTengely ? 'tengely' : 'nincs') : 'mind';
+    kd.tengelyJel = k.fajta !== 'ph' || !!beall.phTengely;
+    kd.betuk = k.fajta !== 'pd';
+    kd.egyenlo = beall.hsys === 'A';
+    kd.csakHold = csakHold;
+    if (k.fajta === 'ph' && k.phHold) kd.cimKieg = { 1: 'Progressziós Hold értékek: ' + k.phHold.map(function (x) { return x.szoveg; }).join('; ') };
+    var svg = RegioKerek.rajzolDupla(hova, T.kerekAdat(k.e), kd, o);
+    svg.setAttribute('aria-label', 'Összevetés: ' + cim(k));
+    return svg;
   }
   function miniSvg(k) {
     if (!k.e) return '';
@@ -121,7 +205,43 @@
   /* ====================================================================== */
   /* Kiírás                                                                  */
   /* ====================================================================== */
-  function lepettE(k) { return k.eltolas.some(function (x) { return x !== 0; }); }
+  function lepettE(k) {
+    if (k.fajta) {
+      var ks = k.kulso, a = ks.alap || {};
+      return ks.eltolas.some(function (x) { return x !== 0; }) || JSON.stringify({ ph: ks.ph, pd: ks.pd, sol: ks.sol }) !== JSON.stringify(a);
+    }
+    return k.eltolas.some(function (x) { return x !== 0; });
+  }
+  /** A külső kör neve, a Windows-os előtagokkal (Tr>, PH>, Pd>, Sol>, Rev>) */
+  function kulsoNev(k) {
+    var I = R.Idotech, n = K.cim(k.adat);
+    if (k.fajta === 'rev') return 'Rev> ' + R.nev(k.kulso.rev.pl) + ' (' + R.datumStr(k.kulso.eredeti.ev, k.kulso.eredeti.ho, k.kulso.eredeti.nap) + '.) ' + n;
+    if (k.fajta === 'szin') return k.kulso.adat ? K.cim(k.kulso.adat) : '';
+    return I.ELOTAG[k.fajta] + ' ' + n;
+  }
+  function cim(k) { return k.fajta ? '<-> ' + K.cim(k.adat) + ' - ' + kulsoNev(k) : K.cim(k.adat); }
+  /** A státuszsor és a csempe típusfelirata (GetActivePageStringTypeToStatBar) */
+  function tipusNev(k) {
+    if (!k.fajta) return K.tipusNev(k.adat);
+    if (k.fajta === 'ph') {
+      var nap = k.kulso.ph ? k.kulso.ph.napok + k.kulso.ph.orak / 24 : 0, d = new Date(Date.UTC(k.adat.ev, k.adat.ho - 1, k.adat.nap));
+      d.setUTCMonth(d.getUTCMonth() + Math.round(nap * 12));
+      return 'Progressziós Hold - ' + d.getUTCFullYear() + '. évre';
+    }
+    return { tranzit: 'Tranzit - Összevetés', pd: 'Primer direkció - Összevetés', sol: 'Szolár-képlet - Összevetés' }[k.fajta] || 'Összevetés';
+  }
+  /** A külső kör időpontjának leírása (a Windows-os státuszsor 2. mezője) */
+  function kulsoMikor(k) {
+    var ks = k.kulso, a = ks.adat;
+    if (k.fajta === 'pd') return 'Primer direkció a(z) ' + (k.adat.ev + (ks.konverz ? -ks.pd : ks.pd)) + '. évre (' + Math.abs(ks.pd) + '°)';
+    if (k.fajta === 'sol') return 'Szolár-képlet a(z) ' + ks.sol.ev + '. évre' + (a ? ' – ' + idoStr(a) + (K.helyNev(a) ? ' ' + K.helyNev(a) : '') : '');
+    if (k.fajta === 'ph') {
+      var nap = ks.ph.napok + ks.ph.orak / 24, ev = Math.trunc(Math.abs(nap)), ho = Math.round((Math.abs(nap) - ev) * 12);
+      if (ho === 12) { ev++; ho = 0; }
+      return (nap < 0 ? '−' : '') + (ho ? ev + ' év ' + ho + ' hónapos' : ev + ' éves') + ' korra' + (a ? ' (a képlet ideje: ' + idoStr(a) + ')' : '');
+    }
+    return a ? idoStr(a) + ' időpontra' + (K.helyNev(a) ? ' · ' + K.helyNev(a) : '') : '';
+  }
   function idoStr(a) {
     return R.datumStr(a.ev, a.ho, a.nap) + (a.ismeretlen ? ' (idő ismeretlen)' : ' ' + R.pad(a.ora) + ':' + R.pad(a.perc));
   }
@@ -139,7 +259,7 @@
     return R.esc(s);
   }
   function tipusCimke(k) {
-    return '<span class="tipus">' + R.esc(K.tipusNev(k.adat)) + '</span>' + (lepettE(k) ? ' <span class="tipus lep" title="Léptetett időpont">léptetve</span>' : '');
+    return '<span class="tipus">' + R.esc(tipusNev(k)) + '</span>' + (lepettE(k) ? ' <span class="tipus lep" title="Léptetett időpont">léptetve</span>' : '');
   }
 
   function render() {
@@ -148,8 +268,8 @@
   }
   function renderCim() {
     var k = akt();
-    $('cimNev').textContent = k ? '– ' + K.cim(k.adat) + (k.valtozott && k.adat.tipus !== 'aktualis' ? ' *' : '') : '';
-    document.title = k ? K.cim(k.adat) + ' – Regiomontanus' : 'Regiomontanus';
+    $('cimNev').textContent = k ? '– ' + cim(k) + (k.valtozott && k.adat.tipus !== 'aktualis' ? ' *' : '') : '';
+    document.title = k ? cim(k) + ' – Regiomontanus' : 'Regiomontanus';
     $('db').textContent = kepletek.length;
     Array.prototype.forEach.call($('racs').querySelectorAll('button'), function (b) {
       b.setAttribute('aria-pressed', String(+b.getAttribute('data-r') === beall.elrendezes && nezet === 'mozaik'));
@@ -160,7 +280,14 @@
     if (!k) { $('st1').textContent = kepletek.length ? '' : 'Nincs megnyitott képlet'; $('st2').textContent = ''; $('st3').textContent = ''; return; }
     var a = k.adat;
     $('st1').textContent = K.cim(a) + ' ' + idoStr(a) + (K.helyNev(a) ? ' ' + K.helyNev(a) : '');
-    $('st2').textContent = K.tipusNev(a);
+    $('st2').textContent = tipusNev(k);
+    if (k.fajta) {
+      var rr = [kulsoMikor(k)];
+      if (k.kulso.hiba) rr.push(k.kulso.hiba);
+      if (lepettE(k)) rr.push('léptetve');
+      $('st3').textContent = rr.join(' · ');
+      return;
+    }
     var r = [];
     if (a.tipus !== 'aktualis') { var ek = K.eletkor(a); if (ek >= 0 && ek < 150) r.push(ek + ' é'); }
     if (k.e) r.push(k.e.hz.kos0 ? 'Kos 0° házak' : R.HAZRENDSZER[beall.hsys] + (beall.sid ? ', sziderikus' : ''));
@@ -183,8 +310,8 @@
     var l = r === 1 ? [aktiv] : kepletek.map(function (k, i) { return i; });
     hova.innerHTML = '<main class="mozaik r' + r + '" aria-label="Munkaasztal">' + l.map(function (i) {
       var k = kepletek[i];
-      return '<section class="csempe' + (i === aktiv ? ' aktiv' : '') + '" data-i="' + i + '" aria-label="' + R.esc(K.cim(k.adat)) + '">' +
-        '<div class="fej"><b>' + R.esc(K.cim(k.adat)) + (k.valtozott && k.adat.tipus !== 'aktualis' ? ' *' : '') + '</b> ' + tipusCimke(k) +
+      return '<section class="csempe' + (i === aktiv ? ' aktiv' : '') + '" data-i="' + i + '" aria-label="' + R.esc(cim(k)) + '">' +
+        '<div class="fej"><b>' + R.esc(cim(k)) + (k.valtozott && k.adat.tipus !== 'aktualis' ? ' *' : '') + '</b> ' + tipusCimke(k) +
         '<span class="tolt"></span>' +
         '<button type="button" class="kisgomb" data-tett="nagyit" aria-label="Kinagyítás" title="Kinagyítás (dupla kattintás)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>' +
         '<button type="button" class="kisgomb" data-tett="bezar" aria-label="Bezárás" title="Bezárás (Alt+W)"><svg viewBox="0 0 24 24" aria-hidden="true" style="stroke:#6b665d"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
@@ -210,10 +337,13 @@
     var k = akt();
     hova.innerHTML = '<nav class="belyegek" aria-label="Megnyitott képletek">' + kepletek.map(function (x, i) {
       return '<button type="button" data-valt="' + i + '" aria-current="' + (i === aktiv) + '"><span class="mini">' + x.mini + '</span>' +
-        '<span class="ln"><b>' + R.esc(K.cim(x.adat)) + '</b><small>' + R.esc(K.tipusNev(x.adat)) + '</small></span></button>';
+        '<span class="ln"><b>' + R.esc(cim(x)) + '</b><small>' + R.esc(tipusNev(x)) + '</small></span></button>';
     }).join('') + '</nav>' +
-      '<main class="reszlet" aria-label="Részletes nézet" style="--kerek-arany:' + (aranyKorlat(beall.reszletArany) * 100).toFixed(1) + '%"><section class="fo-kerek"><div class="fej"><b>' + R.esc(K.cim(k.adat)) + '</b> ' +
-      tipusCimke(k) + '<span class="tolt"></span><button type="button" class="gomb fo" data-tett="vissza">Vissza a mozaikhoz (Esc)</button></div>' +
+      '<main class="reszlet" aria-label="Részletes nézet" style="--kerek-arany:' + (aranyKorlat(beall.reszletArany) * 100).toFixed(1) + '%"><section class="fo-kerek"><div class="fej"><b>' + R.esc(cim(k)) + '</b> ' +
+      tipusCimke(k) + '<span class="tolt"></span>' + (k.fajta ? '<div class="csoport" role="group" aria-label="Megjelenítés">' +
+        '<button type="button" data-tett="egymason" aria-pressed="' + (k.mod !== 'egymasmellett') + '">Egymáson</button>' +
+        '<button type="button" data-tett="egymasmellett" aria-pressed="' + (k.mod === 'egymasmellett') + '">Egymás mellett</button></div>' : '') +
+      '<button type="button" class="gomb fo" data-tett="vissza">Vissza a mozaikhoz (Esc)</button></div>' +
       '<div class="kerek"></div></section>' +
       '<div class="elvalaszto" role="separator" tabindex="0" aria-orientation="vertical" aria-controls="tablaTart" ' +
       'aria-label="A kerék és a táblák szélességének állítása" aria-valuemin="30" aria-valuemax="80" aria-valuenow="' +
@@ -267,6 +397,16 @@
 
   function renderTabla(hova, k) {
     if (!k.e) { hova.innerHTML = k.hiba ? '<p class="hiba">' + R.esc(k.hiba) + '</p>' : '<p class="betolt">számítás…</p>'; return; }
+    if (k.fajta) {
+      var eK = k.kulso.e, cB = K.cim(k.adat), cK = kulsoNev(k);
+      if (ful === 'fenyszogek') { T.keresztFenyszogek(hova, k.kereszt, k.e, eK, beall, cB, cK); return; }
+      hova.innerHTML = ful === 'hazak' ? T.ket(T.hazak, k.e, eK, cB, cK, beall)
+        : ful === 'egyeb' ? T.ket(T.egyeb, k.e, eK, cB, cK, beall) + T.progrHold(k.phHold)
+        : ful === 'eletstrat' ? T.ket(T.eletstrat, k.e, eK, cB, cK, beall)
+        : ful === 'enallapotok' ? T.ket(T.enallapotok, k.e, eK, cB, cK, beall)
+        : T.ket(T.planetak, k.e, eK, cB, cK, beall) + T.progrHold(k.phHold);
+      return;
+    }
     if (ful === 'fenyszogek') { T.fenyszogek(hova, k.e, beall); return; }
     hova.innerHTML = ful === 'hazak' ? T.hazak(k.e) : ful === 'eletstrat' ? T.eletstrat(k.e) : ful === 'enallapotok' ? T.enallapotok(k.e)
       : ful === 'egyeb' ? T.egyeb(k.e) : T.planetak(k.e, beall);
@@ -278,7 +418,7 @@
     if (l.hidden) return;
     l.innerHTML = (kepletek.length ? kepletek.map(function (k, i) {
       return '<button type="button" role="menuitem" data-valt="' + i + '" aria-current="' + (i === aktiv) + '"><span class="mini">' + k.mini + '</span>' +
-        '<span class="ln"><b>' + R.esc(K.cim(k.adat)) + '</b><small>' + R.esc(K.tipusNev(k.adat)) + ' · ' + R.esc(datumSor(k)) + '</small></span></button>';
+        '<span class="ln"><b>' + R.esc(cim(k)) + '</b><small>' + R.esc(tipusNev(k)) + ' · ' + R.esc(datumSor(k)) + '</small></span></button>';
     }).join('') : '<div class="ures">Nincs megnyitott képlet.</div>') +
       '<div class="lab">Váltás billentyűzetről: Alt+1 … Alt+9</div>';
   }
@@ -301,14 +441,33 @@
           '</span><button type="button" data-lep="' + i + '" data-ir="1" aria-label="' + n + ' plusz">+</button></span>';
       }).join('');
     }
-    $('lepNev').textContent = k ? K.cim(k.adat) : 'nincs aktív képlet';
-    $('lepIdo').textContent = k ? R.datumStr(k.adat.ev, k.adat.ho, k.adat.nap, k.adat.ora, k.adat.perc) : '–';
-    $('lepElt').textContent = k && lepettE(k) ? '(' + eltolasStr(k.eltolas) + ')' : '';
-    Array.prototype.forEach.call(l.querySelectorAll('button[data-lep], #lepEredeti'), function (b) { b.disabled = !k; });
+    var progr = !!(k && k.fajta), eng = lepEngedett(k);
+    l.querySelector('b').textContent = progr ? 'Progresszióléptető' : 'Képletléptető';
+    $('lepNev').textContent = k ? (progr ? kulsoNev(k) : cim(k)) : 'nincs aktív képlet';
+    var la = k ? (progr ? k.kulso.adat : k.adat) : null;
+    $('lepIdo').textContent = progr && k.fajta === 'pd' ? (k.adat.ev + (k.kulso.konverz ? -k.kulso.pd : k.kulso.pd)) + '. év'
+      : la ? R.datumStr(la.ev, la.ho, la.nap, la.ora, la.perc) : '–';
+    $('lepElt').textContent = k && lepettE(k) ? (progr ? '(léptetve)' : '(' + eltolasStr(k.eltolas) + ')') : '';
+    Array.prototype.forEach.call(l.querySelectorAll('button[data-lep]'), function (b) {
+      var i = +b.getAttribute('data-lep');
+      b.disabled = !k || eng.indexOf(i) < 0;
+      b.parentNode.hidden = !!k && eng.indexOf(i) < 0;
+    });
+    $('lepEredeti').disabled = !k;
+    l.title = progr ? 'A külső kör (' + R.Idotech.NEV[k.fajta] + ') időpontját lépteti; a belső radix marad.' + (k.fajta === 'ph' ? ' Év = 1 nap, Hó = 2 óra.' : '')
+      : 'Az aktív képlet időpontját lépteti (Ctrl+L: be/ki)';
+  }
+  /** A léptetőben használható mezők (a Windows-os fProgrLepteto szabályai) */
+  function lepEngedett(k) {
+    if (!k || !k.fajta) return [0, 1, 2, 3, 4];
+    if (k.fajta === 'ph') return [0, 1];
+    if (k.fajta === 'pd' || k.fajta === 'sol') return [0];
+    return [0, 1, 2, 3, 4];
   }
   function lep(i, ir) {
     var k = akt(); if (!k) return;
     var m = Math.max(1, Math.min(999, Math.floor(+$('lepMertek').value) || 1));
+    if (k.fajta) { progrLep(k, i, ir * m); return; }
     k.eltolas[i] += ir * m;
     k.adat = K.leptet(k.eredeti, k.eltolas);
     if (k.adat.ismeretlen && (i >= 3)) { k.adat.ismeretlen = false; k.adat.tipus = 'kos0'; }
@@ -317,8 +476,36 @@
     utemezSzamol(k);
     renderLepteto(); renderStatusz(); renderCim();
   }
+  /** Progresszióléptető: a külső kör léptetése */
+  function progrLep(k, i, d) {
+    var ks = k.kulso;
+    if (lepEngedett(k).indexOf(i) < 0) return;
+    if (k.fajta === 'pd') ks.pd += ks.konverz ? -d : d;
+    else if (k.fajta === 'sol') {
+      var ev = ks.sol.ev + d;
+      if (ev < 1 || ev > 2998) { uzen('Az év 1 és 2998 között lehet.'); return; }
+      ks.sol = { ev: ev, hely: ks.sol.hely };
+    } else if (k.fajta === 'ph') {
+      if (i === 0) ks.ph = { napok: ks.ph.napok + d, orak: ks.ph.orak };
+      else ks.ph = { napok: ks.ph.napok, orak: ks.ph.orak + 2 * d };
+    } else {
+      ks.eltolas[i] += d;
+      var u = K.leptet(ks.eredeti, ks.eltolas);
+      if (u.ev < 1 || u.ev > 2999) { ks.eltolas[i] -= d; uzen('Az év 1 és 2999 között lehet.'); return; }
+      ks.adat = u;
+    }
+    utemezSzamol(k, true);
+    renderLepteto(); renderStatusz();
+  }
   function lepEredeti() {
     var k = akt(); if (!k || !lepettE(k)) return;
+    if (k.fajta) {
+      var ks = k.kulso, a = JSON.parse(JSON.stringify(ks.alap || {}));
+      ks.eltolas = [0, 0, 0, 0, 0]; ks.adat = ks.eredeti ? K.masol(ks.eredeti) : null;
+      ks.ph = a.ph; ks.pd = a.pd; ks.sol = a.sol;
+      kulsoSzamol(k); render();
+      return;
+    }
     k.eltolas = [0, 0, 0, 0, 0]; k.adat = K.masol(k.eredeti);
     szamol(k); render();
   }
@@ -344,6 +531,10 @@
     nevjegy: function () { $('nvSwe').textContent = se ? 'Swiss Ephemeris ' + se.version() + ' (WebAssembly)' : ''; $('dlgNevjegy').showModal(); },
     segitseg: link('https://www.regiomontanus.hu/'), facebook: link('https://www.facebook.com/regiomontanus.astrology'),
     iskola: link('https://humanisztikus.hu/'),
+    tranzit: tranzit, ph: progrHold, pd: primerDirekcio, sol: szolar, rev: revolucio, kulsoKulon: kulsoKulon,
+    egymason: function () { megjelenitesMod('egymason'); }, egymasmellett: function () { megjelenitesMod('egymasmellett'); },
+    pdDirekt: function () { beall.pdKonverz = false; beallMent(); }, pdKonverz: function () { beall.pdKonverz = true; beallMent(); },
+    progrLepteto: function () { TETT.lepteto(); },
     vissza: function () { nezet = 'mozaik'; render(); }, nagyit: function () { if (vanAkt()) { nezet = 'reszlet'; render(); } }
   };
   ['P', 'R', 'C', 'K', 'O', 'A'].forEach(function (h) {
@@ -353,8 +544,12 @@
   TETT.zodS = function () { if (!beall.sid) { beall.sid = true; beallMent(); mindSzamol(); render(); } };
 
   var KELL_AKT = { adatok: 1, ment: 1, mentMaskent: 1, bezar: 1, kep: 1, nyomtat: 1, planetak: 1, hazak: 1, fenyszogek: 1,
-    eletstrat: 1, enallapotok: 1, egyeb: 1, kos0: 1, nagyit: 1 };
-  function engedelyezett(t) { return !!TETT[t] && (!KELL_AKT[t] || vanAkt()) && (betoltve || ['nevjegy', 'segitseg', 'facebook', 'iskola', 'megjelenites', 'egyebek', 'gyari'].indexOf(t) >= 0 || t.indexOf('hsys') === 0 || t.indexOf('zod') === 0); }
+    eletstrat: 1, enallapotok: 1, egyeb: 1, kos0: 1, nagyit: 1, tranzit: 1, ph: 1, pd: 1, sol: 1, rev: 1, kulsoKulon: 1 };
+  function engedelyezett(t) {
+    if (t === 'kulsoKulon' && !(akt() && akt().fajta && akt().fajta !== 'pd')) return false;
+    return engedelyezettAlap(t);
+  }
+  function engedelyezettAlap(t) { return !!TETT[t] && (!KELL_AKT[t] || vanAkt()) && (betoltve || ['nevjegy', 'segitseg', 'facebook', 'iskola', 'megjelenites', 'egyebek', 'gyari'].indexOf(t) >= 0 || t.indexOf('hsys') === 0 || t.indexOf('zod') === 0); }
   function vegrehajt(t) { if (engedelyezett(t)) TETT[t](); }
 
   function legutobbiMenu() {
@@ -381,13 +576,18 @@
       { c: 'Életstratégia, járatlan út', b: 'Ctrl+J', t: 'eletstrat' }, { c: 'Énállapotok', b: 'Ctrl+E', t: 'enallapotok' }, '-',
       { c: 'Állócsillagok', f: 2 }, '-', { c: 'Egyéb információk', t: 'egyeb' }] },
     { c: 'Speciális', l: [
-      { c: 'Képletléptető', b: 'Ctrl+L', t: 'lepteto', pipa: function () { return lepNyitva; } }, { c: 'Progresszióléptető', f: 2 }, '-',
+      { c: 'Képletléptető', b: 'Ctrl+L', t: 'lepteto', pipa: function () { return lepNyitva; } }, { c: 'Progresszióléptető', t: 'progrLepteto', pipa: function () { return lepNyitva && !!(akt() && akt().fajta); } }, '-',
       { c: 'Planéta az Ascendensen', f: 3 }, { c: 'Kos 0° képlet', t: 'kos0' }, '-',
       { c: 'Horoszkópolvasó aktiválása', f: 3 }, '-', { c: 'Aktuális égi állások', t: 'aktualis' }, '-', { c: 'Keresés', f: 4 }] },
     { c: 'Progressziók', l: [
-      { c: 'Primer direkciók', f: 2 }, { c: 'Progressziós Hold', f: 2 }, { c: 'Tranzitok', f: 2 }, '-',
-      { c: 'Szolár-képlet', f: 2 }, '-', { c: 'Revolúciók...', f: 2 }] },
-    { c: 'Összevetés', l: [{ c: 'Összevetés (Szinasztria)', f: 3 }, { c: 'Képletek megjelenítése...', f: 3 }] },
+      { c: 'Primer direkciók', t: 'pd' }, { c: 'Progressziós Hold', t: 'ph' }, { c: 'Tranzitok', t: 'tranzit' }, '-',
+      { c: 'Szolár-képlet', t: 'sol' }, '-', { c: 'Revolúciók...', t: 'rev' }] },
+    { c: 'Összevetés', l: [{ c: 'Összevetés (Szinasztria)', f: 3 },
+      { c: 'Képletek megjelenítése...', al: function () {
+        var m = akt() && akt().fajta ? akt().mod : (beall.osszevetesMod || 'egymason');
+        return [{ c: '... egymáson', t: 'egymason', radio: true, pipa: function () { return m === 'egymason'; } },
+          { c: '... egymás mellett', t: 'egymasmellett', radio: true, pipa: function () { return m === 'egymasmellett'; } }];
+      } }, '-', { c: 'A külső kör önálló képletként', t: 'kulsoKulon' }] },
     { c: 'Beállítások', l: [
       { c: 'Megjelenítés', t: 'megjelenites' }, { c: 'Egyebek', t: 'egyebek' }, { c: 'Fényszög orbisok', f: 4 }, { c: 'Színek és szimbólumok', f: 4 },
       { c: 'Házrendszer', al: function () {
@@ -397,7 +597,10 @@
         return [{ c: 'Sziderikus', t: 'zodS', radio: true, pipa: function () { return beall.sid; } },
           { c: 'Tropikus', t: 'zodT', radio: true, pipa: function () { return !beall.sid; } }];
       } },
-      { c: 'Primer direkció iránya', f: 2 }, '-', { c: 'Születési képletek importálása', f: 4 }, '-',
+      { c: 'Primer direkció iránya', al: function () {
+        return [{ c: 'Direkt', t: 'pdDirekt', radio: true, pipa: function () { return !beall.pdKonverz; } },
+          { c: 'Konverz', t: 'pdKonverz', radio: true, pipa: function () { return !!beall.pdKonverz; } }];
+      } }, '-', { c: 'Születési képletek importálása', f: 4 }, '-',
       { c: 'Település adatok szerkesztése', f: 5 }, '-',
       { c: 'Betöltés fájlból', t: 'beallBetolt' }, { c: 'Mentés fájlba', t: 'beallLetolt' }, '-',
       { c: 'Alapértelmezések visszatöltése', t: 'gyari' }] },
@@ -429,13 +632,13 @@
     ['Planéta az Ascendensen (perspektíva)', 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 .01 0', 3],
     ['Kos 0° képlet', 'M12 21V10a5 5 0 0 0-9-3M12 10a5 5 0 0 1 9-3', 'kos0'], 0,
     ['Összevetés (szinasztria)', 'M9 6a6 6 0 1 0 .01 0M15 6a6 6 0 1 0 .01 0', 3], 0,
-    ['Primer direkciók', 'M4 12h14M13 6l6 6-6 6', 2],
-    ['Progressziós Hold', 'M15 3a9 9 0 1 0 6 15A7 7 0 0 1 15 3z', 2],
-    ['Tranzitok', 'M12 3a9 9 0 1 0 .01 0M3 12h18', 2], 0,
-    ['Szolár-képlet', 'M12 7a5 5 0 1 0 .01 0M12 11.5v1', 2], 0,
-    ['Revolúciók…', 'M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5', 2], 0,
+    ['Primer direkciók', 'M4 12h14M13 6l6 6-6 6', 'pd'],
+    ['Progressziós Hold', 'M15 3a9 9 0 1 0 6 15A7 7 0 0 1 15 3z', 'ph'],
+    ['Tranzitok', 'M12 3a9 9 0 1 0 .01 0M3 12h18', 'tranzit'], 0,
+    ['Szolár-képlet', 'M12 7a5 5 0 1 0 .01 0M12 11.5v1', 'sol'], 0,
+    ['Revolúciók…', 'M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5', 'rev'], 0,
     ['Képletléptető (Ctrl+L)', 'M5 12h14M5 12l4-4M5 12l4 4M19 12l-4-4M19 12l-4 4', 'lepteto', function () { return lepNyitva; }],
-    ['Progresszióléptető', 'M4 18l6-6-6-6M12 18l6-6-6-6', 2], 0,
+    ['Progresszióléptető', 'M4 18l6-6-6-6M12 18l6-6-6-6', 'progrLepteto', function () { return lepNyitva && !!(akt() && akt().fajta); }], 0,
     ['Segítség a program használatához', 'M12 3a9 9 0 1 0 .01 0M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 1-1 1.7M12 17h.01', 'segitseg'], 0,
     ['Humanisztikus Asztrológia Iskola', 'M2 9l10-5 10 5-10 5zM6 11v5c3 2 9 2 12 0v-5', 'iskola'], 0,
     ['Jegyek és játszmák', 'M4 7h10v14H4zM10 3h10v14', 5],
@@ -603,6 +806,89 @@
       k.eredeti = u; k.adat = K.masol(u); szamol(k);
     });
   }
+  /* ---------- Progressziók ---------- */
+  /** Az aktív képlet, ha egyszerű (nem összevetés) – a progressziók ehhez készülnek */
+  function radixAkt() {
+    var k = akt();
+    if (!k) return null;
+    if (!k.e) { uzen('A képlet még nem készült el.'); return null; }
+    return k;
+  }
+  function belsoAdat(k) { var a = K.masol(k.adat); delete a.eredeti; return a; }
+  function tranzit() {
+    var k = radixAkt(); if (!k) return;
+    R.helyZonaval(k.fajta ? k.kulso.adat || k.adat : k.adat).then(function (hely) {
+      var a = belsoAdat(k), n = new Date();
+      a.nev = R.Idotech.ELOTAG.tranzit + ' ' + K.cim(k.adat); a.tipus = 'radix'; a.ismeretlen = false; a.jegyzet = ''; a.cimkek = [];
+      a.telepules = hely.telepules; a.telepulesKijelzes = hely.telepulesKijelzes; a.tz = hely.tz;
+      if (hely.tz) {
+        a.zonaMod = 'iana';
+        var p = {};
+        new Intl.DateTimeFormat('en-US', { timeZone: hely.tz, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric',
+          hour: 'numeric', minute: 'numeric', second: 'numeric' }).formatToParts(n).forEach(function (x) { p[x.type] = +x.value; });
+        a.ev = p.year; a.ho = p.month; a.nap = p.day; a.ora = p.hour; a.perc = p.minute; a.mp = 0;
+      } else {
+        var d = new Date(n.getTime() + K.zona(a).orak * 3600000);
+        a.ev = d.getUTCFullYear(); a.ho = d.getUTCMonth() + 1; a.nap = d.getUTCDate(); a.ora = d.getUTCHours(); a.perc = d.getUTCMinutes(); a.mp = 0;
+      }
+      return R.Adatlap.megnyit(a, 'Progresszió beállítások - Tranzit');
+    }).then(function (u) {
+      if (!u) return;
+      u.tipus = 'radix';
+      osszevetesHozzaad(belsoAdat(k), 'tranzit', u);
+    });
+  }
+  function progrHold() {
+    var k = radixAkt(); if (!k) return;
+    R.Progr.ph(k.adat).then(function (x) {
+      if (!x) return;
+      osszevetesHozzaad(belsoAdat(k), 'ph', null, { ph: { napok: x.napok, orak: x.orak } });
+    });
+  }
+  function primerDirekcio() {
+    var k = radixAkt(); if (!k) return;
+    R.Progr.pd(k.adat, !!beall.pdKonverz).then(function (x) {
+      if (!x) return;
+      osszevetesHozzaad(belsoAdat(k), 'pd', null, { pd: x.n, konverz: !!beall.pdKonverz });
+    });
+  }
+  function szolar() {
+    var k = radixAkt(); if (!k) return;
+    R.helyZonaval(k.adat).then(function (hely) {
+      return R.Progr.szolar(se, k.adat, k.e.poz[0].lon, sweFlag(), hely);
+    }).then(function (x) {
+      if (!x) return;
+      osszevetesHozzaad(belsoAdat(k), 'sol', null, { sol: { ev: x.ev, hely: x.hely } });
+    });
+  }
+  function revolucio() {
+    var k = radixAkt(); if (!k) return;
+    R.helyZonaval(k.adat).then(function (hely) {
+      return R.Progr.rev(se, k.adat, k.e, sweFlag(), hely);
+    }).then(function (x) {
+      if (!x) return;
+      x.talalatok.forEach(function (t) {
+        var a = t.adat;
+        a.nev = 'Rev> ' + R.nev(t.pl) + ' (' + R.datumStr(a.ev, a.ho, a.nap) + '.) ' + K.cim(k.adat);
+        a.tipus = 'radix';
+        if (x.osszevetes) osszevetesHozzaad(belsoAdat(k), 'rev', a, { rev: { pl: t.pl } });
+        else hozzaad(a, null).valtozott = true;
+      });
+    });
+  }
+  /** A külső kör megnyitása önálló képletként (a Windows-os program ezt is megnyitja) */
+  function kulsoKulon() {
+    var k = akt(); if (!k || !k.fajta) return;
+    if (k.fajta === 'pd') { uzen('A primer direkció elforgatott képlet, önállóan nem nyitható meg.'); return; }
+    if (!k.kulso.adat) return;
+    var a = K.masol(k.kulso.adat); a.nev = kulsoNev(k); a.tipus = 'radix';
+    hozzaad(a, null);
+  }
+  function megjelenitesMod(m) {
+    beall.osszevetesMod = m; beallMent();
+    var k = akt(); if (k && k.fajta) { k.mod = m; render(); }
+  }
+
   function tablaMutat(f) {
     if (!vanAkt()) return;
     ful = f; nezet = 'reszlet'; render();
@@ -659,6 +945,13 @@
   }
   /** Promise<boolean>: sikerült-e menteni */
   function ment(k, maskent) {
+    if (k.fajta) {
+      // összevetésnél a külső kör képlete menthető (a belső a saját fájljában van)
+      if (k.fajta === 'pd' || !k.kulso.adat) { uzen('A primer direkció elforgatott képlet, nem menthető .szk-ba.'); return Promise.resolve(false); }
+      var ka = K.masol(k.kulso.adat); ka.nev = kulsoNev(k);
+      var kk = { adat: ka, eredeti: ka, eltolas: [0, 0, 0, 0, 0], fajlnev: k.kulso.fajlnev || '', handle: k.kulso.handle || null };
+      return ment(kk, maskent).then(function (ok) { if (ok) { k.kulso.fajlnev = kk.fajlnev; k.kulso.handle = kk.handle; } return ok; });
+    }
     var a = K.masol(k.adat); a.nev = K.cim(a);
     var buf = RegioSzk.build(a, K.zona(a)), nev = fajlnevJavasol(k), p;
     if (!maskent && k.handle && k.handle.createWritable) p = irHandle(k.handle, buf);
@@ -725,7 +1018,7 @@
   function nyomtatasElokeszit() {
     var k = akt(), n = $('nyomtat');
     if (!k || !k.e) { n.innerHTML = '<p>Nincs kiszámolt képlet a nyomtatáshoz.</p>'; return; }
-    n.innerHTML = '<h1>' + R.esc(K.cim(k.adat)) + '</h1><div>' + R.esc(datumSor(k)) + ' · ' + R.esc(k.e.zona.info) + '</div><div class="kerek"></div>' +
+    n.innerHTML = '<h1>' + R.esc(cim(k)) + '</h1><div>' + R.esc(datumSor(k)) + ' · ' + R.esc(k.e.zona.info) + '</div><div class="kerek"></div>' +
       '<section><h2>Planéták</h2>' + T.planetak(k.e, beall) + '</section><section><h2>Házak</h2>' + T.hazak(k.e) + '</section>' +
       '<section><h2>Énállapotok</h2>' + T.enallapotok(k.e) + '</section><section><h2>Életstratégia, járatlan út</h2>' + T.eletstrat(k.e) + '</section>';
     kerekRajzol(n.querySelector('.kerek'), k);
@@ -742,11 +1035,13 @@
     var d = $('dlgMegj');
     Array.prototype.forEach.call(d.querySelectorAll('input[data-k]'), function (c) { c.checked = !!beall.kerek[c.getAttribute('data-k')]; });
     Array.prototype.forEach.call(d.querySelectorAll('input[name="mCsomo"]'), function (r) { r.checked = +r.value === beall.csomo; });
+    Array.prototype.forEach.call(d.querySelectorAll('input[data-b]'), function (c) { c.checked = !!beall[c.getAttribute('data-b')]; });
     d.returnValue = ''; d.showModal();
     d.onclose = function () {
       if (d.returnValue !== 'ok') return;
       Array.prototype.forEach.call(d.querySelectorAll('input[data-k]'), function (c) { beall.kerek[c.getAttribute('data-k')] = c.checked; });
       var r = d.querySelector('input[name="mCsomo"]:checked'); if (r) beall.csomo = +r.value;
+      Array.prototype.forEach.call(d.querySelectorAll('input[data-b]'), function (c) { beall[c.getAttribute('data-b')] = c.checked; });
       beallMent(); render();
     };
   }
@@ -821,7 +1116,15 @@
   function munkamenetMent() {
     if (!betoltve) return;
     S.munkamenetMent({
-      kepletek: kepletek.map(function (k) { return { adat: k.eredeti, eltolas: k.eltolas, fajlnev: k.fajlnev, valtozott: k.valtozott }; }),
+      kepletek: kepletek.map(function (k) {
+        var m = { adat: k.eredeti, eltolas: k.eltolas, fajlnev: k.fajlnev, valtozott: k.valtozott };
+        if (k.fajta) {
+          var ks = k.kulso;
+          m.ossz = { fajta: k.fajta, mod: k.mod, eredeti: ks.eredeti, eltolas: ks.eltolas, ph: ks.ph, pd: ks.pd, sol: ks.sol, rev: ks.rev,
+            konverz: ks.konverz, alap: ks.alap };
+        }
+        return m;
+      }),
       aktiv: aktiv, nezet: nezet, ful: ful, lepNyitva: lepNyitva
     });
   }
@@ -833,6 +1136,15 @@
       var k = ujKepletObj(x.adat, x.fajlnev ? { nev: x.fajlnev } : null);
       k.valtozott = !!x.valtozott;
       if (Array.isArray(x.eltolas) && x.eltolas.length === 5) { k.eltolas = x.eltolas.map(function (v) { return +v || 0; }); k.adat = K.leptet(k.eredeti, k.eltolas); }
+      var o = x.ossz;
+      if (o && R.Idotech.NEV[o.fajta]) {
+        k.fajta = o.fajta; k.mod = o.mod === 'egymasmellett' ? 'egymasmellett' : 'egymason';
+        k.kulso = { eredeti: o.eredeti || null, adat: null, e: null, hiba: null, sorszam: 0, idozito: null,
+          eltolas: Array.isArray(o.eltolas) && o.eltolas.length === 5 ? o.eltolas.map(function (v) { return +v || 0; }) : [0, 0, 0, 0, 0],
+          ph: o.ph, pd: +o.pd || 0, sol: o.sol, rev: o.rev, konverz: !!o.konverz, alap: o.alap || {} };
+        if (k.kulso.eredeti) k.kulso.adat = K.leptet(k.kulso.eredeti, k.kulso.eltolas);
+        k.valtozott = false;
+      }
       kepletek.push(k);
     });
     aktiv = Math.min(Math.max(0, +m.aktiv || 0), kepletek.length - 1);
