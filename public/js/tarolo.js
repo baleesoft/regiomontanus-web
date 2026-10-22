@@ -23,8 +23,21 @@
   /* ---------- beállítások ---------- */
   S.ALAP = {
     hsys: 'P', sid: false, csomo: 11,
+    // Megjelenítés (fBeallitasok_Megjelenites) – a Windows-os „Alapértelmezések visszaállítása” szerint
     kerek: { houseLords: true, feral: true, retrograde: false, stationary: false, selfMarkers: true,
-      cuspLabels: true, nodes: false, asteroids: false, conjLines: false },
+      cuspLabels: true, nodes: false, nodesDown: false, asteroids: false,
+      // Általános I.: jegyek (+ analóg planéta), tengelyek (Vertex, Keletpont, Koascendens, Sarki ASC), házhatárok, házszámok, planéták
+      jegyek: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], analog: false, tengelyek: [],
+      hazHatar: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], hazSzam: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      planetak: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+      // Általános II.: fokjelölők, énállapot-jelölés (0 kör, 1 háromszög), planéta fokszáma, méret, egyéb
+      fokKulso: false, fokBelso: true, fokFsz: false, fokKulon: true, enMod: 1, enEredeti: true, planetDeg: false, meret: 1,
+      eletkorRejt: false, arab: true, csakOssz: true,
+      // Fényszögek: fajták, jelek, vonalak; fényszögelt elemek (házak/tengelyek, planéták, kisbolygók, holdcsomók)
+      fszTipus: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], fszJel: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      fszPlanetaig: false, fszEredeti: false, fszHaz: [], fszPl: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], fszKisb: [], fszCsomo: [] },
+    // több képlet egymás mellett: 'fuggoleges' (átlósan eltolva, 60%) | 'vizszintes' (egymás mellett, 50%)
+    osszElhely: 'fuggoleges',
     alapHely: { telepules: 'Budapest', telepulesKijelzes: '', orszag: 'Hungary', orszagKod: 'H', lat: 47.5, lon: 19.0666667, tz: 'Europe/Budapest' },
     elrendezes: 4, aktualisFrissit: true, lepes: 1, reszletArany: 0.58,
     osszevetesMod: 'egymason', pdKonverz: false, phCsakHold: true, phTengely: false,
@@ -62,7 +75,12 @@
     });
     return u;
   }
-  S.beallitasok = function () { return osszefesul(S.ALAP, olvas('beallitasok', null)); };
+  S.beallitasok = function () {
+    var v = olvas('beallitasok', null), b = osszefesul(S.ALAP, v);
+    // a régi „Együttállás-vonalak” kapcsoló a fényszögfajták közé került
+    if (v && v.kerek && v.kerek.conjLines === true && !v.kerek.fszTipus && b.kerek.fszTipus.indexOf(1) < 0) b.kerek.fszTipus.unshift(1);
+    return b;
+  };
   S.beallitasMent = function (b) { return ir('beallitasok', b); };
   S.gyari = function () { torol('beallitasok'); return melyMasol(S.ALAP); };
 

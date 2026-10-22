@@ -285,7 +285,7 @@
     if (kereszt.hiba) { hova.innerHTML = '<p class="t-hint">A keresztkapcsolati fényszögek nem érhetők el: ' + R.esc(kereszt.hiba) + '</p>'; return; }
     // A Windows-os tábla (fAspectInformations_Syn): Nap–Plútó, holdcsomó (ha látható), ASC, MC; a két holdcsomó
     // együttállása kimarad. Sorok: belső kör, oszlopok: külső kör.
-    var cs = T.csomo(b), csomoLathato = !!(b && b.kerek && b.kerek.nodes);
+    var cs = T.csomo(b), csomoLathato = !!(b && b.kerek && (b.kerek.nodes || b.kerek.nodesDown));
     function lista(e) {
       var l = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].concat(csomoLathato ? [cs] : []).filter(function (id) { return e.poz[id]; });
       return l.concat([998, 999]);
@@ -352,6 +352,8 @@
     var el = e.elemzes;
     return { asc: e.hz.asc, mc: e.hz.mc, cusps: e.hz.cusps,
       tengelyJelek: e.hz.persp !== undefined ? [['AC', e.hz.origAsc, 'Eredeti Ascendens'], ['MC', e.hz.origMc, 'Eredeti Medium Coeli']] : null,
+      // a Megjelenítés › Tengelyek további pontjai (swe_houses_ex ascmc[3], [4], [6], [7])
+      tengelyPontok: { vtx: e.hz.vertex, ep: e.hz.equAsc, cas: e.hz.coAscMunkasey, pas: e.hz.polarAsc }, kos0: !!e.hz.kos0,
       planets: el ? el.planets : Object.keys(e.poz).map(function (id) {
         var x = e.poz[id]; return { id: +id, lon: x.lon, lat: x.lat, speed: x.speedLon, house: 0, lordOf: [], closedLordOf: [] };
       }),

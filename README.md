@@ -39,7 +39,10 @@ public/                ← ez a tartalom kerül fel FTP-vel a tárhelyre
   js/rtf.js            a Windows-os jegyzetek (RichEdit RTF, RegiomontanusWIN szimbólumok) és a .mgj fájl olvasása/írása
   js/nyomtatas.js      A4-es nyomtatási / exportálási lapkép SVG-ben (fejléc, kerék, táblák, lábléc)
   js/kerek.js          a képletkerék SVG-ben, a Windows-os program geometriája szerint (összevetésnél bi-kerék,
-                       személyiségrajz-szűrő, data-olv jelölések a horoszkópolvasónak)
+                       személyiségrajz-szűrő, data-olv jelölések a horoszkópolvasónak); a Beállítások › Megjelenítés
+                       lehetőségei: jegyek és analóg planéták, tengelyek (Vertex, Keletpont, Koascendens, Sarki ASC),
+                       házhatárok/házszámok, planéták, fokjelölők, énjelölő kör/háromszög, planétaméret, planéta fokszáma,
+                       fényszögfajták és -jelek, fényszögelt elemek, fényszögvonalak a planétákig / az eredeti helyhez
   js/idotech.js        időbeli technikák: tranzit, progressziós Hold, primer direkció, szolár, revolúció-kereső
   js/tablak.js         a Táblázatok menü táblái
   js/allocsillagok.js  a Windows-os program 737 állócsillaga (név, nómenklatúra, csillagkép latinul és magyarul)

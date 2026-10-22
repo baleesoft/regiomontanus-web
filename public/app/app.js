@@ -71,7 +71,13 @@
   };
   /** alap: a képlet saját (belső) számítása – csak ehhez kellenek az állócsillagok (a Windows-osban is a radixon látszanak) */
   function szamolOpt(alap) {
-    return { hsys: beall.hsys, sid: beall.sid, allo: alap ? beall.allo : null, kisb: { be: !!beall.kerek.asteroids, ids: beall.kisb } };
+    var b = beall.kerek, cs = beall.csomo, pl = b.fszPl.concat(b.fszKisb);
+    if (b.fszCsomo.indexOf('fel') >= 0) pl.push(cs);
+    if (b.fszCsomo.indexOf('le') >= 0) pl.push(cs === 11 ? 25 : 24);
+    // a fényszögelt elemek a szerveroldali csillag-szűréshez (>21 csillagnál csak a fényszöggel rendelkezők látszanak)
+    var fsz = { tipus: b.fszTipus, pl: pl, haz: b.fszHaz,
+      tengely: [b.fszHaz.indexOf(1) >= 0 ? 0 : -1, b.fszHaz.indexOf(10) >= 0 ? 1 : -1].filter(function (x) { return x >= 0; }) };
+    return { hsys: beall.hsys, sid: beall.sid, allo: alap ? beall.allo : null, kisb: { be: !!beall.kerek.asteroids, ids: beall.kisb }, fsz: fsz };
   }
   function sweFlag() { return SwissEph.SE.FLG_SWIEPH | SwissEph.SE.FLG_SPEED | (beall.sid ? SwissEph.SE.FLG_SIDEREAL : 0); }
   /** A külső kör számítása (a belső kész eredményéből a primer direkció) + kereszt-fényszögek */
@@ -85,6 +91,13 @@
       K.osszevet(k.e, e).then(function (x) { if (sz === ks.sorszam) { k.kereszt = x; render(); } },
         function (h) { if (sz === ks.sorszam) { k.kereszt = { hiba: h.message }; render(); } });
       k.mini = miniSvg(k);
+      // „Csak az összevetés képlet megjelenítése” kikapcsolva: a Windows-oshoz hasonlóan a külső kör önálló képletként is
+      // megnyílik (egyszer, a háttérben; a primer direkció elforgatott képlet, az nem)
+      if (!beall.kerek.csakOssz && !ks.kulonNyitva && k.fajta !== 'pd' && k.fajta !== 'szin' && ks.adat) {
+        ks.kulonNyitva = true;
+        var ka = K.masol(ks.adat); ka.nev = kulsoNev(k); ka.tipus = 'radix';
+        hozzaad(ka, null, true).valtozott = false;
+      }
       render();
     }
     if (!k.e) return;
@@ -172,15 +185,26 @@
   /* ====================================================================== */
   var nyomtatFelul = null;   // nyomtatás/export alatt: { colors } – fekete-fehér kerék, jegyzetjelek nélkül
   function kerekBeall(k) {
-    var b = beall.kerek, pl = RegioKerek.ALAP.planets.slice();
-    if (b.nodes) pl.push(beall.csomo, beall.csomo === 11 ? 25 : 24);
+    var b = beall.kerek, pl = b.planetak.slice(), cs = beall.csomo, csLe = cs === 11 ? 25 : 24;
+    // holdcsomók: a felszálló és a leszálló külön (a Windows-osban bármelyik pipa mindkettőt mutatja)
+    if (b.nodes) pl.push(cs);
+    if (b.nodesDown) pl.push(csLe);
     if (b.asteroids) beall.kisb.forEach(function (id) { pl.push(id); });
     if (beall.allo && beall.allo.megj && k.e && k.e.csillagok) k.e.csillagok.forEach(function (c) { pl.push(c.id); });
-    var sz = beall.szin, ff = nyomtatFelul && nyomtatFelul.colors;
+    // fényszögelt elemek (GetShownAspectPlanets): planéták + kisbolygók + holdcsomók (a beállított típusból)
+    var fszPl = b.fszPl.concat(b.fszKisb);
+    if (b.fszCsomo.indexOf('fel') >= 0) fszPl.push(cs);
+    if (b.fszCsomo.indexOf('le') >= 0) fszPl.push(csLe);
+    var sz = beall.szin, ff = nyomtatFelul && nyomtatFelul.colors, kos0 = !!(k.e && k.e.hz.kos0);
     return { planets: pl, csillagMind: !!(beall.allo && beall.allo.mind), jelek: jelek(), vonal: sz.vonal,
       aspectColors: ff ? null : sz.fsz, aspectStyles: sz.stilus, houseLords: b.houseLords, feral: b.feral, retrograde: b.retrograde, stationary: b.stationary,
-      selfMarkers: b.selfMarkers && !(k.e && k.e.hz.kos0), cuspLabels: b.cuspLabels, szemely: !!k.szemely && !k.fajta,
-      aspectTypes: b.conjLines ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] : RegioKerek.ALAP.aspectTypes,
+      selfMarkers: b.selfMarkers && !kos0, selfMarkerAtOrigPlace: b.enEredeti, enKor: b.enMod === 0,
+      cuspLabels: b.cuspLabels, szemely: !!k.szemely && !k.fajta,
+      aspectTypes: b.fszTipus, aspectSymbols: b.fszJel, aspectPlanets: fszPl, aspectHouses: b.fszHaz,
+      fszPlanetaig: b.fszPlanetaig, fszEredeti: b.fszEredeti,
+      jegyek: b.jegyek, analog: b.analog, hazHatar: b.hazHatar, hazSzam: b.hazSzam, arab: b.arab, tengelyek: b.tengelyek,
+      mcIc: beall.hsys === 'A' && !kos0, planetDeg: b.planetDeg, meret: b.meret,
+      fokKulso: b.fokKulso, fokBelso: b.fokBelso, fokFsz: b.fokFsz, fokKulon: b.fokKulon,
       colors: ff || { fire: sz.fire, earth: sz.earth, air: sz.air, water: sz.water, aspectBg: sz.aspectBg, aspect: '#000000' } };
   }
   function kerekRajzol(hova, k) {
@@ -206,7 +230,7 @@
     var o = kerekBeall(k), csakHold = k.fajta === 'ph' && beall.phCsakHold !== false;
     if (k.mod === 'egymasmellett') {
       // két önálló kerék: énjelölő és házcsúcs-felirat nélkül, külső fokbeosztással (D 2810–2956)
-      hova.innerHTML = '<div class="ketkerek"><figure><div class="kk"></div><figcaption>Belső kör – ' + R.esc(K.cim(k.adat)) +
+      hova.innerHTML = '<div class="ketkerek' + (beall.osszElhely === 'vizszintes' ? '' : ' atlos') + '"><figure><div class="kk"></div><figcaption>Belső kör – ' + R.esc(K.cim(k.adat)) +
         '</figcaption></figure><figure><div class="kk" data-kulso="1"></div><figcaption>Külső kör – ' + R.esc(kulsoNev(k)) + '</figcaption></figure></div>';
       var kk = hova.querySelectorAll('.kk');
       o.selfMarkers = false; o.cuspLabels = false; o.outerTicks = true;
@@ -330,7 +354,7 @@
     // a Windows-os fül-súgó szerint: név, születési idő, hely, majd az életkor (GetKora + „é”)
     var ek = a.tipus !== 'aktualis' ? K.eletkor(a) : -1;
     $('st1').textContent = K.cim(a) + (inkognito() && a.tipus !== 'aktualis' ? '' : ' ' + idoStr(a) + (K.helyNev(a) ? ' ' + K.helyNev(a) : '') +
-      (ek >= 0 && ek < 150 ? ' · ' + ek + ' é' : ''));
+      (ek >= 0 && ek < 150 && !beall.kerek.eletkorRejt ? ' · ' + ek + ' é' : ''));
     $('st2').textContent = tipusNev(k);
     if (k.fajta) {
       var rr = [kulsoMikor(k)];
@@ -1158,7 +1182,10 @@
       var A = kepletek[x.a], B = kepletek[x.b];
       osszevetesHozzaad(belsoAdat(A), 'szin', belsoAdat(B), { mod: 'egymason' });
       osszevetesHozzaad(belsoAdat(B), 'szin', belsoAdat(A), { mod: 'egymason' });
-      aktiv = kepletek.length - 2; render();
+      // „Csak az összevetés képlet” kikapcsolva: egymás mellett is (Kepletek_Osszevetese(…, ovetEgymasMellett, …))
+      if (!beall.kerek.csakOssz) { osszevetesHozzaad(belsoAdat(A), 'szin', belsoAdat(B), { mod: 'egymasmellett' }); aktiv = kepletek.length - 3; }
+      else aktiv = kepletek.length - 2;
+      render();
     });
   }
   /** A külső kör megnyitása önálló képletként (a Windows-os program ezt is megnyitja) */
@@ -1518,27 +1545,105 @@
 
   /* ---------- beállítások ---------- */
   function beallMent() { S.beallitasMent(beall); }
+  /* ---------- Beállítások › Megjelenítés (fBeallitasok_Megjelenites) ---------- */
+  var JEGYNEV = ['Kos', 'Bika', 'Ikrek', 'Rák', 'Oroszlán', 'Szűz', 'Mérleg', 'Skorpió', 'Nyilas', 'Bak', 'Vízöntő', 'Halak'];
+  var HAZNEV = ['1 (ASC)', '2', '3', '4 (IC)', '5', '6', '7 (DC)', '8', '9', '10 (MC)', '11', '12'];
+  function plNevek() { return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(function (id) { return [id, R.nev(id)]; }); }
+  var MEGJ_LISTA = {
+    jegyek: function () { return JEGYNEV.map(function (n, i) { return [i, n]; }); },
+    tengelyek: function () { return [['vtx', 'Vertex'], ['ep', 'Keletpont'], ['cas', 'Koascendens'], ['pas', 'Sarki ascendens']]; },
+    planetak: plNevek, fszPl: plNevek,
+    fszHaz: function () { return HAZNEV.map(function (n, i) { return [i + 1, n]; }); },
+    fszCsomo: function () { return [['fel', 'Felsz. holdcsomó'], ['le', 'Lesz. holdcsomó']]; },
+    // chkbFenyszogeltKisBolygok: a Windows-os listában ez a nyolc szerepel
+    fszKisb: function () { return [[15, 'Chiron'], [16, 'Pholus'], [17, 'Ceres'], [18, 'Pallas Athene'], [19, 'Juno'], [20, 'Vesta'], [146199, 'Eris'], [12, 'Lilith']]; }
+  };
+  /** a kerékre ható beállítások kulcsa – változáskor a szerveroldali csillag-szűréshez újra kell számolni */
+  function fszKulcs() { var b = beall.kerek; return JSON.stringify([b.fszTipus, b.fszPl, b.fszKisb, b.fszCsomo, b.fszHaz, beall.csomo]); }
   function megjelenitesDlg() {
     var d = $('dlgMegj'), kb = $('mKisb');
-    if (!kb.firstChild) kb.innerHTML = R.KISBOLYGOK.map(function (k) {
-      return '<label class="pipa"><input type="checkbox" data-kisb="' + k[0] + '"> ' + R.esc(k[1]) + '</label>';
-    }).join('');
-    Array.prototype.forEach.call(kb.querySelectorAll('input'), function (c) { c.checked = beall.kisb.indexOf(+c.getAttribute('data-kisb')) >= 0; });
-    var kisbElotte = JSON.stringify([beall.kerek.asteroids, beall.kisb]);
-    Array.prototype.forEach.call(d.querySelectorAll('input[data-k]'), function (c) { c.checked = !!beall.kerek[c.getAttribute('data-k')]; });
-    Array.prototype.forEach.call(d.querySelectorAll('input[name="mCsomo"]'), function (r) { r.checked = +r.value === beall.csomo; });
-    Array.prototype.forEach.call(d.querySelectorAll('input[data-b]'), function (c) { c.checked = !!beall[c.getAttribute('data-b')]; });
+    if (!kb.firstChild) {
+      kb.innerHTML = R.KISBOLYGOK.map(function (k) {
+        return '<label class="pipa"><input type="checkbox" data-kisb="' + k[0] + '"> ' + R.esc(k[1]) + '</label>';
+      }).join('');
+      Array.prototype.forEach.call(d.querySelectorAll('[data-tomb]'), function (t) {
+        var n = t.getAttribute('data-tomb');
+        t.innerHTML = MEGJ_LISTA[n]().map(function (x) {
+          return '<label class="pipa"><input type="checkbox" data-tm="' + n + '" value="' + x[0] + '"> ' + R.esc(x[1]) + '</label>';
+        }).join('');
+      });
+      var hazSor = function (n, i) {
+        return '<div class="megj-hsor"><span>' + n + '</span><input type="checkbox" data-tm="hazHatar" value="' + (i + 1) + '" aria-label="' + (i + 1) + '. ház határa">' +
+          '<input type="checkbox" data-tm="hazSzam" value="' + (i + 1) + '" aria-label="' + (i + 1) + '. ház száma"></div>';
+      };
+      $('mHazak').innerHTML = '<div><div class="megj-hfej"><span>Ház</span><label class="pipa"><input type="checkbox" id="mHatarMind"> Határai</label><span>Számok</span></div>' +
+        HAZNEV.slice(0, 6).map(hazSor).join('') + '</div><div><div class="megj-hfej"><span>Ház</span><span>Határai</span><span>Számok</span></div>' +
+        HAZNEV.slice(6).map(function (n, i) { return hazSor(n, i + 6); }).join('') + '</div>';
+      $('mFsz').tBodies[0].innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(function (k) {
+        return '<tr><td>' + R.esc(R.FENYSZOG[k][0]) + ' (' + R.FENYSZOG[k][1] + '°)</td><td><input type="checkbox" data-tm="fszTipus" value="' + k + '" aria-label="' +
+          R.esc(R.FENYSZOG[k][0]) + ' vizsgálata"></td><td><input type="checkbox" data-tm="fszJel" value="' + k + '" aria-label="' + R.esc(R.FENYSZOG[k][0]) + ' szimbóluma"></td></tr>';
+      }).join('');
+      // „Határai”: mind a 12 házhatár egyszerre (chkbShowHideHousesClickCheck)
+      $('mHatarMind').onchange = function () {
+        var be = this.checked;
+        Array.prototype.forEach.call(d.querySelectorAll('[data-tm="hazHatar"]'), function (c) { c.checked = be; });
+      };
+      d.addEventListener('change', function (ev) {
+        if (ev.target.getAttribute('data-tm') === 'hazHatar') hatarMind();
+      });
+      Array.prototype.forEach.call(d.querySelectorAll('[data-megjful]'), function (b) {
+        b.onclick = function () { megjFul(b.getAttribute('data-megjful')); };
+      });
+    }
+    function hatarMind() {
+      $('mHatarMind').checked = Array.prototype.every.call(d.querySelectorAll('[data-tm="hazHatar"]'), function (c) { return c.checked; });
+    }
+    function megjFul(nev) {
+      Array.prototype.forEach.call(d.querySelectorAll('[data-megjful]'), function (b) { b.setAttribute('aria-selected', String(b.getAttribute('data-megjful') === nev)); });
+      Array.prototype.forEach.call(d.querySelectorAll('[data-megjlap]'), function (l) { l.hidden = l.getAttribute('data-megjlap') !== nev; });
+    }
+    function kitolt(kr, x) {
+      Array.prototype.forEach.call(kb.querySelectorAll('input'), function (c) { c.checked = x.kisb.indexOf(+c.getAttribute('data-kisb')) >= 0; });
+      Array.prototype.forEach.call(d.querySelectorAll('input[data-k]'), function (c) { c.checked = !!kr[c.getAttribute('data-k')]; });
+      Array.prototype.forEach.call(d.querySelectorAll('input[data-tm]'), function (c) {
+        var t = kr[c.getAttribute('data-tm')] || [], v = c.value;
+        c.checked = t.some(function (e) { return String(e) === v; });
+      });
+      Array.prototype.forEach.call(d.querySelectorAll('input[name="mCsomo"]'), function (r) { r.checked = +r.value === x.csomo; });
+      Array.prototype.forEach.call(d.querySelectorAll('input[name="mEnMod"]'), function (r) { r.checked = +r.value === kr.enMod; });
+      Array.prototype.forEach.call(d.querySelectorAll('input[name="mOsszMod"]'), function (r) { r.checked = r.value === (x.osszevetesMod || 'egymason'); });
+      Array.prototype.forEach.call(d.querySelectorAll('input[name="mElhely"]'), function (r) { r.checked = r.value === x.osszElhely; });
+      Array.prototype.forEach.call(d.querySelectorAll('input[data-b]'), function (c) { c.checked = !!x[c.getAttribute('data-b')]; });
+      $('mMeret').value = (+kr.meret || 1).toFixed(1);
+      hatarMind();
+    }
+    kitolt(beall.kerek, beall);
+    megjFul('a1');
+    $('mAlap').onclick = function () { var g = JSON.parse(JSON.stringify(S.ALAP)); kitolt(g.kerek, g); };
+    var kisbElotte = JSON.stringify([beall.kerek.asteroids, beall.kisb]), fszElotte = fszKulcs();
     d.returnValue = ''; d.showModal();
     d.onclose = function () {
       if (d.returnValue !== 'ok') return;
-      Array.prototype.forEach.call(d.querySelectorAll('input[data-k]'), function (c) { beall.kerek[c.getAttribute('data-k')] = c.checked; });
+      var kr = beall.kerek;
+      Array.prototype.forEach.call(d.querySelectorAll('input[data-k]'), function (c) { kr[c.getAttribute('data-k')] = c.checked; });
+      Object.keys(MEGJ_LISTA).concat(['hazHatar', 'hazSzam', 'fszTipus', 'fszJel']).forEach(function (n) {
+        var szam = n !== 'tengelyek' && n !== 'fszCsomo';
+        kr[n] = Array.prototype.filter.call(d.querySelectorAll('input[data-tm="' + n + '"]'), function (c) { return c.checked; })
+          .map(function (c) { return szam ? +c.value : c.value; });
+      });
       var r = d.querySelector('input[name="mCsomo"]:checked'); if (r) beall.csomo = +r.value;
+      r = d.querySelector('input[name="mEnMod"]:checked'); if (r) kr.enMod = +r.value;
+      r = d.querySelector('input[name="mElhely"]:checked'); if (r) beall.osszElhely = r.value;
+      var m = +String($('mMeret').value).replace(',', '.');
+      kr.meret = isFinite(m) && m > 0 ? Math.round(Math.min(2, Math.max(0.5, m)) * 10) / 10 : 1;
       Array.prototype.forEach.call(d.querySelectorAll('input[data-b]'), function (c) { beall[c.getAttribute('data-b')] = c.checked; });
       // a kiválasztott kisbolygók a Windows-os lista sorrendjében
       beall.kisb = Array.prototype.filter.call(kb.querySelectorAll('input'), function (c) { return c.checked; })
         .map(function (c) { return +c.getAttribute('data-kisb'); });
+      r = d.querySelector('input[name="mOsszMod"]:checked');
       beallMent();
-      if (JSON.stringify([beall.kerek.asteroids, beall.kisb]) !== kisbElotte) mindSzamol();
+      if (r && r.value !== (beall.osszevetesMod || 'egymason')) megjelenitesMod(r.value);
+      if (JSON.stringify([beall.kerek.asteroids, beall.kisb]) !== kisbElotte || (beall.allo.megj && fszKulcs() !== fszElotte)) mindSzamol();
       render();
     };
   }
@@ -1848,7 +1953,7 @@
         k.fajta = o.fajta; k.mod = o.mod === 'egymasmellett' ? 'egymasmellett' : 'egymason';
         k.kulso = { eredeti: o.eredeti || null, adat: null, e: null, hiba: null, sorszam: 0, idozito: null,
           eltolas: Array.isArray(o.eltolas) && o.eltolas.length === 5 ? o.eltolas.map(function (v) { return +v || 0; }) : [0, 0, 0, 0, 0],
-          ph: o.ph, pd: +o.pd || 0, sol: o.sol, rev: o.rev, konverz: !!o.konverz, alap: o.alap || {} };
+          ph: o.ph, pd: +o.pd || 0, sol: o.sol, rev: o.rev, konverz: !!o.konverz, alap: o.alap || {}, kulonNyitva: true };
         if (k.kulso.eredeti) k.kulso.adat = K.leptet(k.kulso.eredeti, k.kulso.eltolas);
         k.valtozott = false;
       }

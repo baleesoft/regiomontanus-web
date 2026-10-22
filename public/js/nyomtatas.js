@@ -284,7 +284,7 @@
     top += GAP;
     var kis = div(FS, 4) * 3, lep = th(kis) + GAP;
     var ids = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-    if (b && b.kerek && b.kerek.nodes) ids.push(b.csomo === 10 ? 10 : 11);
+    if (b && b.kerek && (b.kerek.nodes || b.kerek.nodesDown)) ids.push(b.csomo === 10 ? 10 : 11);
     ids.forEach(function (id) {
       if (!e.poz[id]) return;
       var p = e.elemPl[id] || {}, jf = R.jegyben(e.poz[id].lon), jel = '';

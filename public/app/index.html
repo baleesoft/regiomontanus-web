@@ -119,41 +119,134 @@
   </form>
 </dialog>
 
-<!-- Beállítások – Megjelenítés -->
-<dialog id="dlgMegj" aria-labelledby="dlgMegjCim">
+<!-- Beállítások – Megjelenítés (fBeallitasok_Megjelenites: Általános I., Általános II., Fényszögek) -->
+<dialog id="dlgMegj" class="megj-dlg" aria-labelledby="dlgMegjCim">
   <form method="dialog">
     <div class="dfej"><span id="dlgMegjCim">Megjelenítés</span></div>
     <div class="dtorzs">
-      <fieldset><legend>A képletkeréken</legend>
-        <div class="pipak">
-          <label class="pipa"><input type="checkbox" data-k="houseLords"> Házurak a planéták alatt</label>
-          <label class="pipa"><input type="checkbox" data-k="feral"> Ferális (F) és izolált (i) jelölés</label>
-          <label class="pipa"><input type="checkbox" data-k="retrograde"> Retrográd (R) jelölés</label>
-          <label class="pipa"><input type="checkbox" data-k="stationary"> Stacioner (S) jelölés</label>
-          <label class="pipa"><input type="checkbox" data-k="selfMarkers"> Énjelölők (háromszögek)</label>
-          <label class="pipa"><input type="checkbox" data-k="cuspLabels"> Házcsúcsok fokszáma</label>
-          <label class="pipa"><input type="checkbox" data-k="conjLines"> Együttállás-vonalak</label>
-          <label class="pipa"><input type="checkbox" data-k="nodes"> Holdcsomók</label>
+      <div class="orb-fulek" role="tablist">
+        <button type="button" role="tab" data-megjful="a1" aria-selected="true">Általános I.</button>
+        <button type="button" role="tab" data-megjful="a2" aria-selected="false">Általános II.</button>
+        <button type="button" role="tab" data-megjful="fsz" aria-selected="false">Fényszögek</button>
+      </div>
+      <div data-megjlap="a1" class="megj-lap">
+        <fieldset><legend>Zodiákusjelek</legend>
+          <div class="megj-lista" data-tomb="jegyek"></div>
+          <label class="pipa megj-kulon"><input type="checkbox" data-k="analog"> Analóg planéta kijelzése</label>
+        </fieldset>
+        <fieldset><legend>Tengelyek</legend>
+          <div class="megj-lista">
+            <label class="pipa"><input type="checkbox" checked disabled> Ascendens</label>
+            <label class="pipa"><input type="checkbox" checked disabled> Medium Coeli</label>
+            <label class="pipa"><input type="checkbox" checked disabled> Descendens</label>
+            <label class="pipa"><input type="checkbox" checked disabled> Imum Coeli</label>
+          </div>
+          <div class="megj-lista" data-tomb="tengelyek"></div>
+        </fieldset>
+        <fieldset><legend>Házak</legend>
+          <div class="megj-hazak" id="mHazak"></div>
+        </fieldset>
+        <fieldset><legend>Planéták</legend>
+          <div class="megj-lista" data-tomb="planetak"></div>
+        </fieldset>
+        <fieldset><legend>Kisbolygók/Aszteroidák</legend>
+          <label class="pipa" style="display:flex"><input type="checkbox" data-k="asteroids"> Aszteroidák megjelenítése</label>
+          <div class="pipak kisb-pipak" id="mKisb"></div>
+        </fieldset>
+        <fieldset><legend>Holdcsomó</legend>
+          <div class="mezok">
+            <label class="pipa"><input type="checkbox" data-k="nodes"> Felszálló holdcsomó</label>
+            <label class="pipa"><input type="checkbox" data-k="nodesDown"> Leszálló holdcsomó</label>
+            <span class="megj-elval" aria-hidden="true"></span>
+            <label class="pipa"><input type="radio" name="mCsomo" value="10"> közepes</label>
+            <label class="pipa"><input type="radio" name="mCsomo" value="11"> valódi</label>
+          </div>
+        </fieldset>
+      </div>
+      <div data-megjlap="a2" class="megj-lap" hidden>
+        <div class="megj-ket">
+          <fieldset><legend>Fokjelölő kijelzése</legend>
+            <div class="megj-oszlop">
+              <label class="pipa"><input type="checkbox" data-k="fokKulso"> Zodiákuskör külső</label>
+              <label class="pipa"><input type="checkbox" data-k="fokBelso"> Zodiákuskör belső</label>
+              <label class="pipa"><input type="checkbox" data-k="fokFsz"> Fényszög-kör belső</label>
+              <label class="pipa"><input type="checkbox" data-k="cuspLabels"> Ház fokszámának kijelzése</label>
+              <label class="pipa"><input type="checkbox" data-k="fokKulon"> Fokszám kijelzése külön íven</label>
+            </div>
+          </fieldset>
+          <fieldset><legend>Planéta plusz információk</legend>
+            <div class="megj-oszlop">
+              <label class="pipa"><input type="checkbox" data-k="planetDeg"> Planéta fokszámának kijelzése</label>
+              <label class="pipa"><input type="checkbox" data-k="houseLords"> Házurak kijelzése</label>
+              <label class="pipa"><input type="checkbox" data-k="retrograde"> Retrográd-jelző</label>
+              <label class="pipa"><input type="checkbox" data-k="feral"> Ferális-jelző</label>
+              <label class="pipa"><input type="checkbox" data-k="stationary"> Stacioner-jelző</label>
+            </div>
+          </fieldset>
+          <fieldset><legend>Énállapotok</legend>
+            <div class="megj-oszlop">
+              <label class="pipa"><input type="checkbox" data-k="selfMarkers"> Énállapotok megjelenítése</label>
+              <label class="pipa"><input type="checkbox" data-k="enEredeti"> Énállapot a planéta eredeti helyzeténél</label>
+              <span class="megj-al">Jelölési mód:</span>
+              <div class="mezok">
+                <label class="pipa"><input type="radio" name="mEnMod" value="0"> Kör</label>
+                <label class="pipa"><input type="radio" name="mEnMod" value="1"> Háromszög</label>
+              </div>
+            </div>
+          </fieldset>
+          <fieldset><legend>Planéták mérete</legend>
+            <div class="mezok"><label>Mértéke (0,5 – 2,0)<input type="number" id="mMeret" class="sz" min="0.5" max="2" step="0.1"></label></div>
+          </fieldset>
+          <fieldset><legend>Egyéb megjelenítések</legend>
+            <div class="megj-oszlop">
+              <label class="pipa"><input type="checkbox" data-k="eletkorRejt"> Életkor kijelzés elrejtése</label>
+              <label class="pipa"><input type="checkbox" data-k="arab"> Sarokházak arab számokkal</label>
+              <label class="pipa"><input type="checkbox" data-k="csakOssz"> Csak az összevetés képlet megjelenítése (progresszió, szinasztria esetén)</label>
+            </div>
+          </fieldset>
+          <fieldset><legend>Progressziók</legend>
+            <div class="megj-oszlop">
+              <label class="pipa"><input type="checkbox" data-b="phCsakHold"> Csak a progressziós Hold megjelenítése</label>
+              <label class="pipa"><input type="checkbox" data-b="phTengely"> Progr. Hold tengelyek megjelenítése (ASC, MC)</label>
+            </div>
+          </fieldset>
+          <fieldset><legend>Több képlet megjelenítése</legend>
+            <div class="megj-oszlop">
+              <label class="pipa"><input type="radio" name="mOsszMod" value="egymason"> egymáson</label>
+              <label class="pipa"><input type="radio" name="mOsszMod" value="egymasmellett"> egymás mellett</label>
+            </div>
+          </fieldset>
+          <fieldset><legend>Több képlet elhelyezése</legend>
+            <div class="megj-oszlop">
+              <label class="pipa"><input type="radio" name="mElhely" value="fuggoleges"> függőlegesen eltolva</label>
+              <label class="pipa"><input type="radio" name="mElhely" value="vizszintes"> vízszintesen eltolva</label>
+            </div>
+          </fieldset>
         </div>
-      </fieldset>
-      <fieldset><legend>Kisbolygók/Aszteroidák</legend>
-        <label class="pipa" style="display:flex"><input type="checkbox" data-k="asteroids"> Aszteroidák megjelenítése</label>
-        <div class="pipak kisb-pipak" id="mKisb"></div>
-      </fieldset>
-      <fieldset><legend>Progressziók</legend>
-        <div class="pipak">
-          <label class="pipa"><input type="checkbox" data-b="phCsakHold"> Csak a progressziós Hold megjelenítése</label>
-          <label class="pipa"><input type="checkbox" data-b="phTengely"> Progr. Hold tengelyek megjelenítése (ASC, MC)</label>
+      </div>
+      <div data-megjlap="fsz" class="megj-lap" hidden>
+        <div class="megj-ket">
+          <fieldset><legend>Fényszögek</legend>
+            <table class="megj-fsz" id="mFsz"><thead><tr><th>Fényszög</th><th title="… vizsgálata a fényszögelt elemekkel">vizsgálata</th><th title="… szimbólum kijelzése">szimbóluma</th></tr></thead><tbody></tbody></table>
+            <div class="megj-oszlop megj-kulon">
+              <label class="pipa"><input type="checkbox" data-k="fszPlanetaig"> Fényszög vonalak nagyítása a planétákig</label>
+              <label class="pipa"><input type="checkbox" data-k="fszEredeti"> Vonalak a planéta eredeti helyzetéhez</label>
+            </div>
+          </fieldset>
+          <fieldset><legend>Fényszögelt elemek</legend>
+            <span class="megj-al">Házak / Tengelyek</span>
+            <div class="megj-lista" data-tomb="fszHaz"></div>
+            <span class="megj-al">Virtuális pontok</span>
+            <div class="megj-lista" data-tomb="fszCsomo"></div>
+            <span class="megj-al">Planéták</span>
+            <div class="megj-lista" data-tomb="fszPl"></div>
+            <span class="megj-al">Kisbolygók/Aszteroidák</span>
+            <div class="megj-lista" data-tomb="fszKisb"></div>
+          </fieldset>
         </div>
-      </fieldset>
-      <fieldset><legend>Holdcsomó</legend>
-        <div class="mezok">
-          <label class="pipa"><input type="radio" name="mCsomo" value="11"> valódi</label>
-          <label class="pipa"><input type="radio" name="mCsomo" value="10"> közepes</label>
-        </div>
-      </fieldset>
+      </div>
     </div>
-    <div class="dlab"><span class="tolt"></span><button type="submit" class="gomb fo" value="ok">Rendben</button><button type="submit" class="gomb" value="">Mégsem</button></div>
+    <div class="dlab"><button type="button" class="gomb" id="mAlap">Alapértékek</button><span class="tolt"></span><button type="submit" class="gomb fo" value="ok">Rendben</button><button type="submit" class="gomb" value="">Mégsem</button></div>
   </form>
 </dialog>
 

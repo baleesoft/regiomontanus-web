@@ -146,6 +146,11 @@
         kuld.fixedStars = csillagok;
         kuld.settings = { showFixedStars: true, fixedStarIds: csillagok.map(function (c) { return c.id; }), fixedStarOrb: +al.orb || 0,
           fixedStarAspects: al.fsz || [], aspectPlanetSet: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] };
+        // a Megjelenítés › Fényszögek beállításai (GetShownAspectTypes / Planets / Axis / Houses)
+        if (opt.fsz) {
+          kuld.settings.aspectTypes = opt.fsz.tipus; kuld.settings.aspectPlanetSet = opt.fsz.pl;
+          kuld.settings.aspectAxisSet = opt.fsz.tengely; kuld.settings.aspectHouseSet = opt.fsz.haz;
+        }
       }
       // „Aszteroidák megjelenítése” (chkbKellAsteroidak): kikapcsolva a kisbolygók nem vesznek részt a fényszög-számításban
       if (opt.kisb) { kuld.settings = kuld.settings || {}; kuld.settings.showAsteroids = !!opt.kisb.be; }
