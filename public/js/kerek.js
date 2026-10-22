@@ -19,7 +19,7 @@
     24: 'Lesz. holdcsomó (közepes)', 25: 'Lesz. holdcsomó (valódi)' };
   var JEGY = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'];
   var JNEV = ['Kos', 'Bika', 'Ikrek', 'Rák', 'Oroszlán', 'Szűz', 'Mérleg', 'Skorpió', 'Nyilas', 'Bak', 'Vízöntő', 'Halak'];
-  var FSZ = { 1: '☌', 2: '☍', 3: '□', 4: '∠', 5: '⚼', 6: '△', 7: '⚹', 8: '⚺', 9: '⚻', 10: 'Q', 11: '⊥', 12: 'bQ' };
+  var FSZ = { 1: '☌', 2: '☍', 3: '□', 4: '∠', 5: '⚼', 6: '△', 7: '⚹', 8: '⚺', 9: '⚻', 10: '⊥', 11: '⫠', 12: '⫫' };
   var FSZNEV = { 1: 'Együttállás', 2: 'Szembenállás', 3: 'Negyedfény', 4: 'Nyolcadfény', 5: 'Három-nyolcadfény',
     6: 'Harmadfény', 7: 'Hatodfény', 8: 'Tizenkettedfény', 9: 'Öt-tizenkettedfény', 10: 'Ötödfény', 11: 'Tizedfény', 12: 'Két-ötödfény' };
 
@@ -406,9 +406,7 @@
       cim(vonalE, leiras);
       if (o.aspectSymbols.indexOf(a.aspect) >= 0) {
         var mx = (p[0] + q[0]) / 2, my = (p[1] + q[1]) / 2;
-        cim(szoveg(FSZ[a.aspect] + (FSZ[a.aspect].length === 1 ? VS : ''), { x: mx, y: my,
-          'font-size': FSZ[a.aspect].length > 1 || a.aspect === 10 ? pxFsz * 0.75 : pxFsz,
-          'font-family': a.aspect >= 10 ? TXT : SYM, 'font-weight': a.aspect >= 10 ? 'bold' : null,
+        cim(szoveg(FSZ[a.aspect] + VS, { x: mx, y: my, 'font-size': pxFsz, 'font-family': SYM,
           'text-anchor': 'middle', 'dominant-baseline': 'central', fill: fszSzin(a.aspect), stroke: 'none' }, gFsz), leiras);
       }
     });

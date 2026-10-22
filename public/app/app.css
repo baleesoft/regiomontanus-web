@@ -8,6 +8,9 @@
              unicode-range: U+26E2; font-display: block; }
 @font-face { font-family: 'Regio Symbols'; src: url(../fonts/regio-symbols-4.woff2) format('woff2');
              unicode-range: U+2BD3, U+2BD6; font-display: block; }
+/* fényszögjelek: ötödfény ⊥, tizedfény ⫠, két-ötödfény ⫫, nyolcadfény ∠ (Noto Sans Math, OFL) */
+@font-face { font-family: 'Regio Symbols'; src: url(../fonts/regio-symbols-5.woff2) format('woff2');
+             unicode-range: U+2220, U+22A5, U+2AE0, U+2AEB; font-display: block; }
 
 :root {
   --bg: #ece9e2; --panel: #fbfaf7; --ink: #1f1d1a; --ink2: #4f4a42; --muted: #6b665d; --line: #cfc9bd; --line2: #eee8dc;
@@ -542,3 +545,30 @@ dialog .halv { color: #6b665d; font-size: 12px; }
 .megj-fsz td { padding: 1px 4px; white-space: nowrap; }
 .megj-fsz td:nth-child(n+2) { text-align: center; }
 @media (max-width: 700px) { .megj-ket { grid-template-columns: minmax(0, 1fr); } .megj-hazak { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- Fényszögtábla: jel + orbis a cellában, pozíció a fejlécben ---------- */
+table.t-grid th.t-fej, table.t-grid td { min-width: 40px; height: auto; padding: 2px 3px; vertical-align: middle; }
+table.t-grid th.t-fej { line-height: 1.05; }
+.t-fejjel { display: block; font-size: 15px; }
+th.t-ax .t-fejjel { font: 600 10.5px Tahoma, sans-serif; padding: 2px 0 1px; }
+.t-poz { display: block; font: 400 9.5px Tahoma, Arial, sans-serif; color: var(--ink2); white-space: nowrap; }
+.t-pozj { font-family: var(--sym); font-size: 10px; margin-left: 1px; }
+.t-fsz { display: block; line-height: 1.05; }
+.t-fsz + .t-fsz { margin-top: 2px; border-top: 1px dotted #d9d3c6; padding-top: 1px; }
+.t-fszj { display: block; font-family: var(--sym); font-size: 14px; }
+.t-orb { display: block; font: 400 9.5px Tahoma, Arial, sans-serif; color: var(--ink2); white-space: nowrap; }
+tr.t-elso > * { border-top: 2px solid #b9b2a3 !important; }
+table.t-grid tr.t-pontsor th.t-fej { background: #efe9dc; }
+/* a kiválasztott fényszög adatai a tábla fölött, görgetéskor is látszanak */
+.t-asp { flex-direction: column; align-items: stretch; }
+.t-asp > .t-aspinfo { order: -1; flex: none; position: sticky; top: 0; z-index: 2; box-shadow: 0 2px 6px rgba(0,0,0,.08); min-height: 2.6em; }
+.t-asp > table.t-grid { align-self: flex-start; }
+.t-fszj { font-size: 16px; }
+.t-fejjel { font-size: 17px; }
+/* a széles fényszögtábla a saját dobozában görget (telefonon), a lap és a táblák doboza nem */
+.t-gridtart { max-width: 100%; overflow-x: auto; align-self: stretch; }
+@media (max-width: 560px) {
+  table.t-grid th.t-fej, table.t-grid td { min-width: 32px; padding: 1px 2px; }
+  .t-poz, .t-orb { font-size: 8.5px; }
+  .t-fszj { font-size: 14px; } .t-fejjel { font-size: 15px; }
+}

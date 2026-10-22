@@ -1431,7 +1431,8 @@
   function fontDataUri() {
     if (fontCache) return fontCache;
     var fajlok = [['../fonts/regio-symbols-1.woff2', 'U+260A-260D, U+263D-2653, U+26B3-26BC'], ['../fonts/regio-symbols-2.woff2', 'U+2609, U+25A1, U+25B3'],
-      ['../fonts/regio-symbols-3.woff2', 'U+26E2'], ['../fonts/regio-symbols-4.woff2', 'U+2BD3, U+2BD6']];
+      ['../fonts/regio-symbols-3.woff2', 'U+26E2'], ['../fonts/regio-symbols-4.woff2', 'U+2BD3, U+2BD6'],
+      ['../fonts/regio-symbols-5.woff2', 'U+2220, U+22A5, U+2AE0, U+2AEB']];
     fontCache = Promise.all(fajlok.map(function (f) {
       return fetch(f[0]).then(function (r) { return r.blob(); }).then(function (b) {
         return new Promise(function (res) { var o = new FileReader(); o.onload = function () { res('@font-face{font-family:"Regio Symbols";src:url(' + o.result + ') format("woff2");unicode-range:' + f[1] + ';}'); }; o.readAsDataURL(b); });

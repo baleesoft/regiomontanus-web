@@ -45,7 +45,8 @@
     1: ['Együttállás', 0, 15, '☌'], 2: ['Szembenállás', 180, 7.5, '☍'], 3: ['Negyedfény', 90, 4, '□'],
     4: ['Nyolcadfény', 45, 2, '∠'], 5: ['Három-nyolcadfény', 135, 2, '⚼'], 6: ['Harmadfény', 120, 5, '△'],
     7: ['Hatodfény', 60, 2.5, '⚹'], 8: ['Tizenkettedfény', 30, 1, '⚺'], 9: ['Öt-tizenkettedfény', 150, 1, '⚻'],
-    10: ['Ötödfény', 72, 3, 'Q'], 11: ['Tizedfény', 36, 2.5, '⊥'], 12: ['Két-ötödfény', 144, 3, 'bQ']
+    // ötödfény ⊥, tizedfény ⫠ (rövid), két-ötödfény ⫫ – a hallgatók által megszokott jelek (a Windows-osban Q, ⊥, bQ)
+    10: ['Ötödfény', 72, 3, '⊥'], 11: ['Tizedfény', 36, 2.5, '⫠'], 12: ['Két-ötödfény', 144, 3, '⫫']
   };
   R.HAZRENDSZER = { P: 'Placidus', R: 'Regiomontanus', C: 'Campanus', K: 'Koch', O: 'Porphyrius', A: 'Egyenlő' };
   R.VS = VS;

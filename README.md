@@ -48,7 +48,8 @@ public/                ← ez a tartalom kerül fel FTP-vel a tárhelyre
   js/allocsillagok.js  a Windows-os program 737 állócsillaga (név, nómenklatúra, csillagkép latinul és magyarul)
   js/tarolo.js         beállítások, legutóbbi képletek, munkamenet (localStorage)
   fonts/               asztrológiai jelek: Noto Sans Symbols / Symbols 2 részhalmaz (SIL OFL 1.1, OFL.txt) –
-                       a 3. és 4. a választható Uránusz- és Plútó-jelek (⛢, ⯓, ⯖);
+                       a 3. és 4. a választható Uránusz- és Plútó-jelek (⛢, ⯓, ⯖), az 5. a fényszögjelek ⊥ ⫠ ⫫ ∠
+                       (Noto Sans Math);
                        Amatic SC, Bebas Neue, Source Sans 3 (SIL OFL 1.1) a Kiegészítések kártyáihoz;
                        a kártyák dizájnképei nem részei a repónak (a tárhelyen: kieg/)
   proba/               próbaoldal: pozíciók + képlet-elemzés (api/szamol.php) + .szk megnyitás
