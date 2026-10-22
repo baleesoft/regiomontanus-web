@@ -152,25 +152,41 @@
   /* ---------- Bolygó-visszatérés (revolúció) keresése ---------- */
   /**
    * Az első időpont jdKezd után (elore = false: előtte), amikor az ipl planéta hossza eléri a cel fokot.
-   * Lépés: Hold 0,25 nap, a többi 1 nap; előjelváltásnál felezés másodperc pontosságig.
+   * Lépés: Hold 0,25 nap, a többi 1 nap; előjelváltásnál felezés fél másodperc pontosságig.
+   * Retrográd hurkok: ha egy lépésen belül a planéta megáll és visszafordul (a sebesség előjele
+   * megváltozik), a lépést 15 perces részekre bontva keresi, így az állomás közelében egymáshoz
+   * nagyon közeli kettős átmenet sem marad ki (a Windows-os, 10 napos lépésű keresés ezeket átugorhatta).
    * Visszaad: UT Julián-dátum, vagy null (nincs találat ~400 éven belül).
    */
   I.atmenet = function (se, ipl, cel, jdKezd, elore, flag) {
-    var lepes = (ipl === 1 ? 0.25 : 1) * (elore === false ? -1 : 1);
-    var f = function (jd) { return kul(se.calcUt(jd, ipl, flag).lon, cel); };
-    var t0 = jdKezd, d0 = f(t0), max = Math.ceil(400 * 365.25 / Math.abs(lepes));
-    for (var i = 0; i < max; i++) {
-      var t1 = t0 + lepes, d1 = f(t1);
-      if (d1 === 0) return t1;
-      if ((d0 < 0) !== (d1 < 0) && Math.abs(d1) < 30 && Math.abs(d0) < 30) {
-        var a = t0, b = t1, da = d0;
-        for (var j = 0; j < 50 && Math.abs(b - a) > 0.5 / 86400; j++) {
-          var m = (a + b) / 2, dm = f(m);
-          if ((dm < 0) === (da < 0)) { a = m; da = dm; } else b = m;
-        }
-        return (a + b) / 2;
+    var ir = elore === false ? -1 : 1, lepes = (ipl === 1 ? 0.25 : 1) * ir;
+    var g = function (jd) { var x = se.calcUt(jd, ipl, flag); return { d: kul(x.lon, cel), v: x.speedLon }; };
+    function valt(a, b) { return (a.d < 0) !== (b.d < 0) && Math.abs(a.d) < 30 && Math.abs(b.d) < 30; }
+    function felez(ta, tb, da) {
+      for (var j = 0; j < 60 && Math.abs(tb - ta) > 0.5 / 86400; j++) {
+        var m = (ta + tb) / 2, dm = g(m).d;
+        if ((dm < 0) === (da < 0)) { ta = m; da = dm; } else tb = m;
       }
-      t0 = t1; d0 = d1;
+      return (ta + tb) / 2;
+    }
+    var t0 = jdKezd, x0 = g(t0), max = Math.ceil(400 * 365.25 / Math.abs(lepes));
+    if (x0.d === 0) return t0;
+    for (var i = 0; i < max; i++) {
+      var t1 = t0 + lepes, x1 = g(t1);
+      if ((x0.v < 0) !== (x1.v < 0) && Math.abs(x0.d) < 30) {
+        // állomás a lépésen belül: finomabb bontás (15 perc)
+        var n = Math.ceil(Math.abs(lepes) * 96), h = lepes / n, sa = t0, ya = x0;
+        for (var k = 1; k <= n; k++) {
+          var sb = t0 + h * k, yb = k === n ? x1 : g(sb);
+          if (yb.d === 0) return sb;
+          if (valt(ya, yb)) return felez(sa, sb, ya.d);
+          sa = sb; ya = yb;
+        }
+      } else {
+        if (x1.d === 0) return t1;
+        if (valt(x0, x1)) return felez(t0, t1, x0.d);
+      }
+      t0 = t1; x0 = x1;
     }
     return null;
   };

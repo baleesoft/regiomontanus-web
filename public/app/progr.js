@@ -212,7 +212,7 @@
             for (var i = 0; i < db; i++) {
               var t = I.atmenet(se, pl, (c + 360) % 360, jd, elore, flag);
               if (t === null) break;
-              l.push(t); jd = t + (elore ? 1 : -1);
+              l.push(t); jd = t + (elore ? 1 : -1) / 1440; // a következő keresés 1 perccel utána (közeli retrográd átmenetek)
             }
             talalatok = l.map(function (t) {
               var a = I.adatJd(se, t, d.hely, szul), x = se.calcUt(t, pl, flag);
