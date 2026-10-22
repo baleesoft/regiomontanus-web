@@ -24,7 +24,10 @@
 
   var P = R.Primer = {};
   P.NAIBOD = 0.98564733;            // 0°59′08,33″ – a Nap közepes napi mozgása
-  P.KULCSOK = { ptolemaiosz: 'Ptolemaiosz (1° = 1 év)', naibod: 'Naibod (0°59′08″ = 1 év)', napiv: 'Valódi napív (a Nap rektaszcenziója)' };
+  P.CARDAN = 59 / 60 + 12 / 3600;   // 0°59′12″
+  P.KULCSOK = { ptolemaiosz: 'Ptolemaiosz (1° = 1 év)', cardan: 'Cardanus (0°59′12″ = 1 év)', naibod: 'Naibod (0°59′08″ = 1 év)',
+    szulEgy: 'Születési napív az egyenlítőn', szulEkl: 'Születési napív az ekliptikán',
+    napiv: 'Valós napív az egyenlítőn', napivEkl: 'Valós napív az ekliptikán', egyeni: 'Egyéni (fok / év)' };
   P.MODOK = { zod: 'Placidus-félív, zodiákális (in zodiaco)', mund: 'Placidus-félív, mundán (in mundo)' };
 
   /** ekliptikai (λ, β) → egyenlítői (RA, δ), fokban */
@@ -65,14 +68,13 @@
    * be: { armc, eps, phi (földrajzi szélesség), elemek: { id: { lon, lat, nev, jel } }, asc, mc }
    * opt: { mod: 'zod'|'mund', szel: bool (a promisszor ekliptikai szélességével), kulcs, irany: 'direkt'|'konverz'|'mindketto',
    *        szig: [id | 'AC' | 'MC'], prom: [id], fsz: [fényszög-azonosítók, R.FENYSZOG], korMin, korMax,
-   *        napiv: function (ív) → kor években (csak a „napiv” kulcshoz) }
+   *        kulcsFv: P.kulcs(…) eredménye (ív ↔ kor) }
    * Visszaad: { sorok: [{ kor, iv, prom, fsz, oldal, szig, konverz }], kimaradt: [nevek] } kor szerint rendezve.
    */
   P.szamol = function (be, opt) {
     var sorok = [], kimaradt = {};
-    var kulcs = opt.kulcs === 'naibod' ? function (a) { return a / P.NAIBOD; }
-      : opt.kulcs === 'napiv' && opt.napiv ? opt.napiv : function (a) { return a; };
-    var maxIv = (opt.korMax || 100) * (opt.kulcs === 'naibod' ? P.NAIBOD : 1) * 1.1 + 2;
+    var K = opt.kulcsFv || P.kulcs('ptolemaiosz', {}), kulcs = K.kor;
+    var maxIv = (K.iv(opt.korMax || 100) || 120) * 1.05 + 2;
     var iranyok = opt.irany === 'konverz' ? [true] : opt.irany === 'mindketto' ? [false, true] : [false];
     // szignifikátorok mundán helye
     var szigek = [];
@@ -121,15 +123,74 @@
     return { sorok: sorok, kimaradt: Object.keys(kimaradt) };
   };
 
-  /** a valódi napív kulcs: ív (RA-fok) → kor (év); napRa(t) a Nap rektaszcenziója a születés után t nappal */
-  P.napivKulcs = function (napRa, maxNap) {
-    var tabla = [0];
-    for (var t = 1; t <= maxNap; t++) tabla.push(tabla[t - 1] + norm180(napRa(t) - napRa(t - 1)));
-    return function (iv) {
-      for (var i = 1; i < tabla.length; i++) {
-        if (tabla[i] >= iv) return i - 1 + (iv - tabla[i - 1]) / (tabla[i] - tabla[i - 1]);
+  /**
+   * A kulcs: { kor: ív → kor (év), iv: kor → ív }.
+   * k: ptolemaiosz | cardan | naibod | szulEgy | szulEkl | napiv | napivEkl | egyeni
+   * ctx: { napRa(t), napLon(t) – a Nap rektaszcenziója / hossza a születés után t nappal (1 nap = 1 év); egyeni: fok/év }
+   */
+  P.kulcs = function (k, ctx) {
+    var seb = null;
+    if (k === 'ptolemaiosz') seb = 1;
+    else if (k === 'cardan') seb = P.CARDAN;
+    else if (k === 'naibod') seb = P.NAIBOD;
+    else if (k === 'egyeni') seb = +ctx.egyeni > 0 ? +ctx.egyeni : 1;
+    // születési napív: a Nap mozgása a születés napján (egyenlítőn: rektaszcenzióban, ekliptikán: hosszúságban)
+    else if (k === 'szulEgy') seb = norm180(ctx.napRa(0.5) - ctx.napRa(-0.5));
+    else if (k === 'szulEkl') seb = norm180(ctx.napLon(0.5) - ctx.napLon(-0.5));
+    if (seb) return { kor: function (a) { return a / seb; }, iv: function (kor) { return kor * seb; } };
+    // valós napív: a Nap tényleges (progresszív) útja a születés utáni napokban
+    var f = k === 'napivEkl' ? ctx.napLon : ctx.napRa, tabla = [0];
+    for (var t = 1; t <= 125; t++) tabla.push(tabla[t - 1] + norm180(f(t) - f(t - 1)));
+    return {
+      kor: function (iv) {
+        for (var i = 1; i < tabla.length; i++) if (tabla[i] >= iv) return i - 1 + (iv - tabla[i - 1]) / (tabla[i] - tabla[i - 1]);
+        return null;
+      },
+      iv: function (kor) {
+        var i = Math.max(0, Math.min(tabla.length - 2, Math.floor(kor)));
+        return tabla[i] + (kor - i) * (tabla[i + 1] - tabla[i]);
       }
-      return null;
     };
   };
+
+  /** az a hosszúság (adott ekliptikai szélességgel), amelynek a radixban m a mundán helyzete; null, ha nincs ilyen */
+  P.hosszMundan = function (m, lat, eps, armc, phi, kozel) {
+    function g(l) { var p = P.pont(l, lat, eps, armc, phi); return p ? norm180(P.mundan(p.h, p) - m) : null; }
+    var legjobb = null;
+    for (var i = 0; i < 360; i++) {
+      var a = norm(kozel - 180 + i), b = norm(a + 1), ga = g(a), gb = g(b);
+      if (ga === null || gb === null) continue;
+      // a mundán hely a hosszúsággal csökken (kelet felé): előjelváltás + → −, és nem a ±180°-os ugrás
+      if (ga >= 0 && gb <= 0 && ga - gb < 90) {
+        var lo = a, hi = a + 1;
+        for (var j = 0; j < 50; j++) { var mid = (lo + hi) / 2, gm = g(norm(mid)); if (gm === null) break; if (gm >= 0) lo = mid; else hi = mid; }
+        var gy = norm((lo + hi) / 2);
+        if (legjobb === null || Math.abs(norm180(gy - kozel)) < Math.abs(norm180(legjobb - kozel))) legjobb = gy;
+      }
+    }
+    return legjobb;
+  };
+
+  /**
+   * Direkciós képlet (figura directionis) az ív szerint: az ég az ívvel elfordul – a tengelyek és a házak az ARMC ± ív-ből
+   * (hazak(armc) → hz, a beállított házrendszerrel), a planéták ekliptikai helye marad. Az ekliptikai szélességgel bíró
+   * planétát (eredeti szélesség) a direktált égen a Placidus-féle mundán helyén vetítjük az ekliptikára, ezért az kissé elmozdulhat.
+   * A direktált MC/ASC (és házcsúcsok) akkor érik el a radix planétát, amikor a planéta MC-re / ASC-re direkciója pontos.
+   * be: { armc, eps, phi, poz: { id: { lon, lat, speedLon } } }; visszaad: { hz, poz, kimaradt, armc }
+   */
+  P.direktalt = function (be, iv, konverz, hazak) {
+    var armcD = norm(be.armc + (konverz ? -iv : iv)), poz = {}, kimaradt = [];
+    Object.keys(be.poz).forEach(function (id) {
+      var x = be.poz[id], u = {}, k;
+      for (k in x) u[k] = x[k];
+      poz[id] = u;
+      if (!x.lat) return;
+      var p = P.pont(x.lon, x.lat, be.eps, armcD, be.phi);
+      if (!p) { kimaradt.push(+id); return; }
+      var l = P.hosszMundan(P.mundan(p.h, p), 0, be.eps, armcD, be.phi, x.lon);
+      if (l === null) kimaradt.push(+id); else u.lon = l;
+    });
+    return { hz: hazak(armcD), poz: poz, kimaradt: kimaradt, armc: armcD };
+  };
+
 })(typeof window !== 'undefined' ? window : globalThis);

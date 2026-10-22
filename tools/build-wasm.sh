@@ -14,7 +14,7 @@ git -C "$WORK/swisseph" checkout --quiet "$COMMIT"
 SRC="$WORK/swisseph"
 
 EXPORTS=(swe_set_ephe_path swe_version swe_julday swe_revjul swe_utc_to_jd swe_deltat
-         swe_calc_ut swe_calc swe_houses_ex swe_houses_ex2 swe_house_pos swe_fixstar2_ut
+         swe_calc_ut swe_calc swe_houses_ex swe_houses_ex2 swe_houses_armc swe_house_pos swe_fixstar2_ut
          swe_sidtime swe_get_ayanamsa_ut swe_set_sid_mode swe_difdeg2n swe_degnorm
          swe_solcross_ut swe_mooncross_ut swe_get_planet_name swe_rise_trans swe_pheno_ut swe_time_equ
          swe_close malloc free)

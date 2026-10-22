@@ -587,3 +587,5 @@ table.t-grid tr.t-pontsor th.t-fej { background: #efe9dc; }
 .pd-tabla td { white-space: nowrap; }
 .pd-tabla tr.pd-most td { background: #fff4c8; }
 @media (max-width: 820px) { .pd-torzs { grid-template-columns: minmax(0, 1fr); } .pd-tablatart { max-height: none; } }
+.pd-datum { display: flex; align-items: center; gap: 6px; font-size: 12.5px; }
+.pd-datum input { padding: 3px 5px; border: 1px solid var(--line); background: #fff; color: var(--ink); }

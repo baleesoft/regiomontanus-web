@@ -190,6 +190,13 @@
       ascmc: [e.hz.asc, e.hz.mc, e.hz.armc, e.hz.vertex, e.hz.equAsc, e.hz.coAscKoch, e.hz.coAscMunkasey, e.hz.polarAsc]
     };
   }
+  /** Kész pozíciókból (pl. direktált képlet) a szerveroldali elemzés: Promise<e> (e.elemzes, e.elemPl kitöltve) */
+  K.elemez = function (e) {
+    e.elemPl = {};
+    return apiHivas(K.API, kuldes(e)).then(function (el) {
+      e.elemzes = el; el.planets.forEach(function (p) { e.elemPl[p.id] = p; }); return e;
+    }, function (h) { (e.figyelmeztetes = e.figyelmeztetes || []).push('A képlet-elemzés nem érhető el: ' + h.message); return e; });
+  };
   /**
    * Összevetés (keresztkapcsolati fényszögek) a szervertől: belső × külső kör.
    * Promise<{ aspects: [{a:[típus,id] (belső), b:[típus,id] (külső), aspect, exact, orb, maxOrb}], kulsoHaz: {id: ház} }>

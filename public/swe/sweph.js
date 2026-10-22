@@ -253,6 +253,14 @@
              coAscKoch: a[5], coAscMunkasey: a[6], polarAsc: a[7] };
   };
 
+  /** swe_houses_armc: házak adott ARMC-ből (pl. direktált képlethez); eps: a valódi ferdeség */
+  SwissEph.prototype.housesArmc = function (armc, lat, eps, hsys) {
+    var rc = this.x.swe_houses_armc(armc, lat, eps, hsys.charCodeAt(0), this.pCusps, this.pAscmc);
+    var c = this._doubles(this.pCusps, 13), a = this._doubles(this.pAscmc, 10);
+    return { rc: rc, cusps: c, asc: a[0], mc: a[1], armc: a[2], vertex: a[3], equAsc: a[4],
+             coAscKoch: a[5], coAscMunkasey: a[6], polarAsc: a[7] };
+  };
+
   SwissEph.prototype.fixstar2Ut = function (star, jdUt, iflag) {
     this._writeStr(this.pStr, star);
     this._u8()[this.pSerr] = 0;

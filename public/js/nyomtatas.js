@@ -158,7 +158,7 @@
       out(g, x, y, k[1], f, op); y += lep;
       ki(x, y, k[2], f, op, o.fNev); y += lep;
       if (!e) return;
-      if (j && (d.fajta === 'pd' || d.fajta === 'ph')) { if (d.kulsoMikor) out(g, x, y, d.kulsoMikor, f, op); return; }
+      if (j && (d.fajta === 'pd' || d.fajta === 'pdv' || d.fajta === 'ph')) { if (d.kulsoMikor) out(g, x, y, d.kulsoMikor, f, op); return; }
       if (o.inkognito) return;
       [[szulIdo(e, o, b), true], [szulHely(e), o.fHely], [zona(e), o.fZona], [koord(e), o.fKoord], [hazrendszer(e), o.fHaz], [zodiakus(e), true]]
         .forEach(function (t) { ki(x, y, t[0], f, op, t[1]); y += lep; });
