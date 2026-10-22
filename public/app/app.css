@@ -422,3 +422,26 @@ dialog .halv { color: #6b665d; font-size: 12px; }
 .sze-adatpanel label, .sze-adatpanel span { position: absolute; white-space: nowrap; cursor: default; }
 .sze-adatpanel input[type=radio] { width: 16px; height: 16px; vertical-align: -2px; }
 .kartya-nevjegy { position: absolute; z-index: 2; box-shadow: 0 6px 18px rgba(0,0,0,.45); }
+
+/* ---------- Állócsillagok (beállítás és tábla) ---------- */
+.allo-dlg { width: min(720px, calc(100vw - 24px)); }
+.allo-kereso { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.allo-kereso input[type=search] { flex: 1 1 220px; padding: 4px 6px; border: 1px solid var(--line); background: #fff; color: var(--ink); }
+.allo-sugo { margin: 6px 0; font-size: 12px; color: var(--ink2); }
+.allo-lista { height: min(300px, 45vh); overflow: auto; border: 1px solid var(--line); background: #fff; }
+.allo-lista:focus-visible { outline: 2px solid var(--accent, #2b4c7e); outline-offset: 1px; }
+.allo-lista table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.allo-lista th { position: sticky; top: 0; background: #f1eee8; text-align: left; font-weight: 600; padding: 3px 6px; border-bottom: 1px solid var(--line); }
+.allo-lista td { padding: 2px 6px; border-bottom: 1px solid #eee; cursor: default; user-select: none; white-space: nowrap; }
+.allo-lista td:nth-child(n+2) { text-align: center; }
+.allo-lista tr.akt td { background: #dfe6f2; }
+.allo-lista tr[aria-selected="true"] td { background: #008000; color: #fff; }
+.allo-lista tr[aria-selected="true"].akt td { background: #006400; }
+.allo-also { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-top: 8px; }
+.allo-pipak { display: flex; flex-direction: column; gap: 2px; }
+.allo-jobb { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.allo-db { font-size: 12.5px; cursor: help; }
+.allo-orb { margin: 8px 0; }
+.t-allo td { vertical-align: top; }
+.t-allo .t-allo-fsz { font-size: 12px; white-space: nowrap; }
+.kerek .csillag text { font-family: Arial, Tahoma, sans-serif; }

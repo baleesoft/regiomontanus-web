@@ -125,6 +125,19 @@
         cusps: hz.cusps.slice(1, 13),
         ascmc: [hz.asc, hz.mc, hz.armc, hz.vertex, hz.equAsc, hz.coAscKoch, hz.coAscMunkasey, hz.polarAsc]
       };
+      // Állócsillagok (CalcFixedStarPositions): a kijelöltek ekliptikai hossza, ha a megjelenítésük be van kapcsolva.
+      // opt.allo = { megj, ids, orb, fsz } – a fényszögeket a szerver számolja (csillag × planéta/tengely/házcsúcs).
+      var al = opt.allo, csillagok = [];
+      if (al && al.megj && al.ids && al.ids.length && R.Allo) {
+        al.ids.forEach(function (id) {
+          var x = se.fixstar2Ut(R.Allo.kulcs(id), jd, flag);
+          if (x.flag >= 0) csillagok.push({ id: id, lon: x.lon, speed: x.speedLon });
+        });
+        kuld.fixedStars = csillagok;
+        kuld.settings = { showFixedStars: true, fixedStarIds: csillagok.map(function (c) { return c.id; }), fixedStarOrb: +al.orb || 0,
+          fixedStarAspects: al.fsz || [], aspectPlanetSet: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] };
+      }
+      eredmeny.csillagok = csillagok;
       eredmeny.kuld = kuld;
       if (opt.csakPoz) return eredmeny;     // keresés: a pozíciók elegendők (az elemzés kötegelve, api/kereses.php)
       return apiHivas(opt.api || K.API, kuld).then(function (el) {

@@ -27,7 +27,11 @@
       cuspLabels: true, nodes: false, asteroids: false, conjLines: false },
     alapHely: { telepules: 'Budapest', telepulesKijelzes: '', orszag: 'Hungary', orszagKod: 'H', lat: 47.5, lon: 19.0666667, tz: 'Europe/Budapest' },
     elrendezes: 4, aktualisFrissit: true, lepes: 1, reszletArany: 0.58,
-    osszevetesMod: 'egymason', pdKonverz: false, phCsakHold: true, phTengely: false
+    osszevetesMod: 'egymason', pdKonverz: false, phCsakHold: true, phTengely: false,
+    // Állócsillagok (chkbFixedStars, chkbFenyszogekFixedStars) – a Windows-os program telepítéskori settings.ini-je szerint
+    allo: { megj: false, mind: true, orb: 2.5, fsz: [1, 2],
+      ids: [10000311, 10000148, 10000577, 10000602, 10000094, 10000671, 10000256, 10000616, 10000014, 10000077, 10000669,
+        10000465, 10000327, 10000255, 10000106, 10000549, 10000564, 10000491, 10000450, 10000259, 10000710, 10000573, 10000442] }
   };
   function melyMasol(a) { return JSON.parse(JSON.stringify(a)); }
   function osszefesul(alap, v) {

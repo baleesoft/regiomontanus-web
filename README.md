@@ -21,6 +21,7 @@ public/                ← ez a tartalom kerül fel FTP-vel a tárhelyre
     sweph.js           betöltő + csak olvasható WASI-réteg (függőség nélkül)
     swe.wasm           Swiss Ephemeris 2.10.03 (WebAssembly)
     ephe/              .se1 adatfájlok 600–2999 (600 éves blokkok, igény szerint töltődnek) + sefstars.txt
+                       (a csillagkatalógus a Windows-os programéval azonos, 2018-as változat: ugyanazok a pozíciók)
   index.html           átirányítás az app/-ra
   app/                 a program: menüsor, eszköztár, mozaikos munkaasztal, részletes nézet, léptető
     app.js             vezérlés (menük, billentyűk, fájlkezelés, kép, nyomtatás, munkamenet)
@@ -41,6 +42,7 @@ public/                ← ez a tartalom kerül fel FTP-vel a tárhelyre
                        személyiségrajz-szűrő, data-olv jelölések a horoszkópolvasónak)
   js/idotech.js        időbeli technikák: tranzit, progressziós Hold, primer direkció, szolár, revolúció-kereső
   js/tablak.js         a Táblázatok menü táblái
+  js/allocsillagok.js  a Windows-os program 737 állócsillaga (név, nómenklatúra, csillagkép latinul és magyarul)
   js/tarolo.js         beállítások, legutóbbi képletek, munkamenet (localStorage)
   fonts/               asztrológiai jelek: Noto Sans Symbols / Symbols 2 részhalmaz (SIL OFL 1.1, OFL.txt);
                        Amatic SC, Bebas Neue, Source Sans 3 (SIL OFL 1.1) a Kiegészítések kártyáihoz;

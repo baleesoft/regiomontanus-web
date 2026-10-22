@@ -154,6 +154,39 @@
   </form>
 </dialog>
 
+<!-- Beállítások – Állócsillagok (fBeallitasok_Megjelenites: tsSheetFixedStars + chkbFenyszogekFixedStars) -->
+<dialog id="dlgAllo" class="allo-dlg" aria-labelledby="dlgAlloCim">
+  <form method="dialog">
+    <div class="dfej"><span id="dlgAlloCim">Állócsillagok</span></div>
+    <div class="dtorzs">
+      <div class="allo-kereso">
+        <label for="aKeres">Megnevezés:</label>
+        <input id="aKeres" type="search" autocomplete="off" aria-describedby="aSugo">
+        <label class="pipa"><input type="checkbox" id="aCsakNev" checked> Csak megnevezésben keres</label>
+      </div>
+      <p class="allo-sugo" id="aSugo">Kattintson duplán az állócsillag sorára a kiválasztáshoz! (Billentyűzettel: ↑/↓ és szóköz.)</p>
+      <div class="allo-lista" id="aLista" tabindex="0" role="grid" aria-label="Állócsillagok listája" aria-multiselectable="true">
+        <table><thead><tr><th>Megnevezés</th><th>Nómenklatúra</th><th>Csillagkép</th><th>Csillagkép magyarul</th></tr></thead><tbody></tbody></table>
+      </div>
+      <div class="allo-also">
+        <div class="allo-pipak">
+          <label class="pipa"><input type="checkbox" id="aMegj"> Állócsillagok megjelenítése</label>
+          <label class="pipa" title="Ha a kijelölt állócsillagok száma több mint 21, akkor a horoszkóp ábráján csak azok jelennek meg (legfeljebb 21), amelyeknek van a beállított fényszög-kapcsolata a fényszögelt planétákkal. Ha ezt bepipáljuk, mindenképp megjelenik az összes kijelölt állócsillag az ábrán!"><input type="checkbox" id="aMind"> Megjelenítéskor mutasd mindig az összeset!</label>
+        </div>
+        <div class="allo-jobb">
+          <span id="aDb" class="allo-db">Kiválasztva: 0 db</span>
+          <button type="button" class="gomb" id="aTorol">Minden kijelölés törlése</button>
+        </div>
+      </div>
+      <div class="mezok allo-orb"><label for="aOrb">Állócsillagok orbisa (°)</label><input id="aOrb" class="sz" type="number" min="0" max="15" step="0.5"></div>
+      <fieldset><legend>Fényszögek vizsgálata az állócsillagokkal</legend>
+        <div class="pipak" id="aFsz"></div>
+      </fieldset>
+    </div>
+    <div class="dlab"><span class="tolt"></span><button type="submit" class="gomb fo" value="ok">Rendben</button><button type="submit" class="gomb" value="">Mégsem</button></div>
+  </form>
+</dialog>
+
 <!-- Beállítások – Egyebek -->
 <dialog id="dlgEgyeb" aria-labelledby="dlgEgyebCim">
   <form method="dialog">
@@ -256,6 +289,7 @@
 <script src="../js/kozos.js"></script>
 <script src="../js/szk.js"></script>
 <script src="../js/rtf.js"></script>
+<script src="../js/allocsillagok.js"></script>
 <script src="../js/keplet.js"></script>
 <script src="../js/kerek.js"></script>
 <script src="../js/tablak.js"></script>

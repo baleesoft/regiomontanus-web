@@ -40,6 +40,42 @@
       '<th>Ház</th><th>Házúr</th><th>Jelölés</th><th>Seb. (°/nap)</th></tr></thead><tbody>' + sor.join('') + '</tbody></table>';
   };
 
+  /* ---------- Állócsillagok (Táblázatok › Állócsillagok, fAspectsForFixedStars) ---------- */
+  /**
+   * A kijelölt csillagok név szerint rendezve: megnevezés, jele (4 betű), fényszögek, nómenklatúra, csillagkép (latin, magyar),
+   * jegy, pozíció, ház. A fényszögek a csillagoknál beállított fajták (b.allo.fsz) a Nap..Plútóval
+   * (GetAspectDetailsForPlanetId; a fényszögelt tengelyek és házcsúcsok gyárilag nincsenek bekapcsolva).
+   */
+  T.allocsillagok = function (e, b) {
+    var A = R.Allo, al = (b && b.allo) || {}, fsz = al.fsz || [];
+    if (!A || !e.csillagok || !e.csillagok.length) return '<p class="t-hint">Nincs kijelölt állócsillag (Beállítások › Állócsillagok).</p>';
+    if (!e.elemzes) return nincsElemzes(e);
+    var fsz1 = {};
+    e.elemzes.aspects.forEach(function (a) {
+      if (a.a[0] !== 'P' || a.b[0] !== 'P' || fsz.indexOf(a.aspect) < 0) return;
+      var cs, mas;
+      if (A.csillag(a.a[1]) && !A.csillag(a.b[1])) { cs = a.a[1]; mas = a.b[1]; }
+      else if (A.csillag(a.b[1]) && !A.csillag(a.a[1])) { cs = a.b[1]; mas = a.a[1]; }
+      else return;
+      if (mas > 9) return;
+      (fsz1[cs] = fsz1[cs] || []).push(R.FENYSZOG[a.aspect][0] + ' ' + R.nev(mas) + ' [' + R.fokStr(a.orb, false) + ']');
+    });
+    var sorok = e.csillagok.map(function (c) { return c.id; }).filter(function (id) { return e.elemPl[id]; })
+      .sort(function (x, y) { return A.nev(x).localeCompare(A.nev(y), 'hu'); });
+    var esc = R.esc || function (s) { return s; };
+    var sor = sorok.map(function (id) {
+      var p = e.elemPl[id], d = A.adat(id), j = R.jegyben(p.lon), l = fsz1[id] || [];
+      return '<tr data-allo="' + id + '"><td>' + esc(d[0]) + '</td><td>' + esc(A.jele(id)) + '</td>' +
+        '<td class="t-allo-fsz">' + l.map(esc).join('<br>') + '</td>' +
+        '<td>' + esc(d[1]) + '</td><td>' + esc(d[2]) + '</td><td>' + esc(d[3]) + '</td>' +
+        '<td>' + R.JEGYEK[j.j] + '</td><td class="t-gl">' + R.jegyGlif(j.j) + '</td>' +
+        '<td class="t-num">' + R.fokStr(j.fok) + '</td><td class="t-num">' + (p.house || '') + '</td></tr>';
+    });
+    return '<table class="t t-allo"><thead><tr><th>Megnevezés</th><th>Jele</th><th>Fényszögek</th><th>Nómenklatúra</th>' +
+      '<th>Csillagkép</th><th>Csillagkép magyarul</th><th>Jegyben</th><th>Jele</th><th>Pozíció</th><th>Ház</th></tr></thead><tbody>' +
+      sor.join('') + '</tbody></table>';
+  };
+
   /* ---------- Házak (Ctrl+H) ---------- */
   T.hazak = function (e) {
     var hz = e.hz, sor = [];
