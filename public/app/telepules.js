@@ -15,9 +15,10 @@
     ['Pécs', 'H', 'Hungary', 46.08333, 18.25, 'Europe/Budapest'], ['Győr', 'H', 'Hungary', 47.68333, 17.63333, 'Europe/Budapest'],
     ['Nyíregyháza', 'H', 'Hungary', 47.95, 21.71667, 'Europe/Budapest'], ['Kecskemét', 'H', 'Hungary', 46.9, 19.7, 'Europe/Budapest'],
     ['Székesfehérvár', 'H', 'Hungary', 47.2, 18.41667, 'Europe/Budapest'], ['Szombathely', 'H', 'Hungary', 47.23333, 16.63333, 'Europe/Budapest'],
-    ['Wien', 'A', 'Austria', 48.21667, 16.36667, 'Europe/Vienna'], ['London', 'GBE', 'England', 51.5, -0.16667, 'Europe/London'],
-    ['New York', 'USNY', 'USA, New York', 40.7, -74, 'America/New_York']
-  ].map(function (t) { return { nev: t[0], orszagKod: t[1], orszag: t[2], lat: t[3], lon: t[4], tz: t[5] }; });
+    ['Bécs (Wien)', 'A', 'Austria', 48.21667, 16.36667, 'Europe/Vienna', 'Wien'], ['London', 'GBE', 'England', 51.5, -0.16667, 'Europe/London'],
+    ['New York', 'USNY', 'USA, New York', 40.7, -74, 'America/New_York'],
+    ['Kolozsvár (Cluj)', 'R', 'Romania', 46.78333, 23.6, 'Europe/Bucharest', 'Cluj'], ['Pozsony (Bratislava)', 'CS', 'Czech/Slovak Republic', 48.15, 17.11667, 'Europe/Bratislava', 'Pozsony']
+  ].map(function (t) { return { nev: t[0], adatNev: t[6] || t[0], orszagKod: t[1], orszag: t[2], lat: t[3], lon: t[4], tz: t[5] }; });
 
   function norm(s) {
     return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -37,7 +38,7 @@
 
   /**
    * input: a beviteli mező, lista: <ul role=listbox>, valaszt(t): a kiválasztott településsel hívódik.
-   * t = { nev, orszagKod, orszag, lat, lon, tz }
+   * t = { nev (megjelenített), adatNev (a .szk-ba), orszagKod, orszag, lat, lon, tz }
    */
   R.TelepulesKereso = function (input, lista, valaszt) {
     var talalatok = [], kijelolt = -1, idozito = null, sorszam = 0, szerverHiba = false;

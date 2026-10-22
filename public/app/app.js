@@ -127,7 +127,7 @@
   }
   function datumSor(k) {
     var a = k.adat;
-    return idoStr(a) + (a.telepules ? ' · ' + a.telepules : '');
+    return idoStr(a) + (K.helyNev(a) ? ' · ' + K.helyNev(a) : '');
   }
   function infoSor(k) {
     if (k.hiba) return '<span class="figy">' + R.esc(k.hiba) + '</span>';
@@ -159,7 +159,7 @@
     var k = akt();
     if (!k) { $('st1').textContent = kepletek.length ? '' : 'Nincs megnyitott képlet'; $('st2').textContent = ''; $('st3').textContent = ''; return; }
     var a = k.adat;
-    $('st1').textContent = K.cim(a) + ' ' + idoStr(a) + (a.telepules ? ' ' + a.telepules : '');
+    $('st1').textContent = K.cim(a) + ' ' + idoStr(a) + (K.helyNev(a) ? ' ' + K.helyNev(a) : '');
     $('st2').textContent = K.tipusNev(a);
     var r = [];
     if (a.tipus !== 'aktualis') { var ek = K.eletkor(a); if (ek >= 0 && ek < 150) r.push(ek + ' é'); }
@@ -212,9 +212,12 @@
       return '<button type="button" data-valt="' + i + '" aria-current="' + (i === aktiv) + '"><span class="mini">' + x.mini + '</span>' +
         '<span class="ln"><b>' + R.esc(K.cim(x.adat)) + '</b><small>' + R.esc(K.tipusNev(x.adat)) + '</small></span></button>';
     }).join('') + '</nav>' +
-      '<main class="reszlet" aria-label="Részletes nézet"><section class="fo-kerek"><div class="fej"><b>' + R.esc(K.cim(k.adat)) + '</b> ' +
+      '<main class="reszlet" aria-label="Részletes nézet" style="--kerek-arany:' + (aranyKorlat(beall.reszletArany) * 100).toFixed(1) + '%"><section class="fo-kerek"><div class="fej"><b>' + R.esc(K.cim(k.adat)) + '</b> ' +
       tipusCimke(k) + '<span class="tolt"></span><button type="button" class="gomb fo" data-tett="vissza">Vissza a mozaikhoz (Esc)</button></div>' +
       '<div class="kerek"></div></section>' +
+      '<div class="elvalaszto" role="separator" tabindex="0" aria-orientation="vertical" aria-controls="tablaTart" ' +
+      'aria-label="A kerék és a táblák szélességének állítása" aria-valuemin="30" aria-valuemax="80" aria-valuenow="' +
+      Math.round(aranyKorlat(beall.reszletArany) * 100) + '" title="Húzd oldalra (vagy ←/→); dupla kattintás: alapméret"></div>' +
       '<aside class="tablak" aria-label="Táblák"><div class="fulek" role="tablist">' + FULEK.map(function (f) {
         return '<button type="button" role="tab" data-ful="' + f[0] + '" aria-selected="' + (ful === f[0]) + '"' +
           (f[2] ? ' title="' + f[2] + '"' : '') + '>' + f[1] + '</button>';
@@ -222,6 +225,46 @@
     kerekRajzol(hova.querySelector('.fo-kerek .kerek'), k);
     renderTabla($('tablaTart'), k);
   }
+  /* ---------- elválasztó a részletes nézetben ---------- */
+  function aranyKorlat(x) { x = +x; return isFinite(x) ? Math.min(0.8, Math.max(0.3, x)) : 0.58; }
+  function aranyBeallit(x, ment) {
+    x = aranyKorlat(x);
+    var m = document.querySelector('.reszlet'), e = document.querySelector('.elvalaszto');
+    if (m) m.style.setProperty('--kerek-arany', (x * 100).toFixed(1) + '%');
+    if (e) e.setAttribute('aria-valuenow', String(Math.round(x * 100)));
+    beall.reszletArany = x;
+    if (ment) beallMent();
+  }
+  function elvalasztoInit() {
+    var huz = null;
+    $('asztal').addEventListener('pointerdown', function (e) {
+      var el = e.target.closest('.elvalaszto'); if (!el || e.button !== 0) return;
+      var m = el.parentNode, r = m.getBoundingClientRect(), cs = getComputedStyle(m);
+      huz = { el: el, bal: r.left + parseFloat(cs.paddingLeft), szel: r.width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - el.offsetWidth };
+      el.setPointerCapture(e.pointerId); el.classList.add('huz'); document.body.classList.add('huzas');
+      e.preventDefault();
+    });
+    $('asztal').addEventListener('pointermove', function (e) {
+      if (!huz) return;
+      aranyBeallit((e.clientX - huz.bal - huz.el.offsetWidth / 2) / huz.szel, false);
+    });
+    function vege() {
+      if (!huz) return;
+      huz.el.classList.remove('huz'); document.body.classList.remove('huzas'); huz = null;
+      beallMent();
+    }
+    $('asztal').addEventListener('pointerup', vege);
+    $('asztal').addEventListener('pointercancel', vege);
+    $('asztal').addEventListener('dblclick', function (e) { if (e.target.closest('.elvalaszto')) aranyBeallit(0.58, true); });
+    $('asztal').addEventListener('keydown', function (e) {
+      if (!e.target.classList || !e.target.classList.contains('elvalaszto')) return;
+      var d = { ArrowLeft: -0.02, ArrowRight: 0.02 }[e.key];
+      if (d) { e.preventDefault(); aranyBeallit(beall.reszletArany + d, true); }
+      else if (e.key === 'Home') { e.preventDefault(); aranyBeallit(0.3, true); }
+      else if (e.key === 'End') { e.preventDefault(); aranyBeallit(0.8, true); }
+    });
+  }
+
   function renderTabla(hova, k) {
     if (!k.e) { hova.innerHTML = k.hiba ? '<p class="hiba">' + R.esc(k.hiba) + '</p>' : '<p class="betolt">számítás…</p>'; return; }
     if (ful === 'fenyszogek') { T.fenyszogek(hova, k.e, beall); return; }
@@ -513,7 +556,7 @@
   /* ====================================================================== */
   function alapAdat() {
     var a = K.ures(), h = beall.alapHely;
-    a.telepules = h.telepules; a.orszag = h.orszag; a.orszagKod = h.orszagKod; a.lat = h.lat; a.lon = h.lon; a.tz = h.tz;
+    a.telepules = h.telepules; a.telepulesKijelzes = h.telepulesKijelzes || ''; a.orszag = h.orszag; a.orszagKod = h.orszagKod; a.lat = h.lat; a.lon = h.lon; a.tz = h.tz;
     a.zonaMod = h.tz ? 'iana' : 'lmt';
     var n = new Date(); a.ev = n.getFullYear(); a.ho = n.getMonth() + 1; a.nap = n.getDate(); a.ora = n.getHours(); a.perc = n.getMinutes(); a.mp = 0;
     return a;
@@ -553,7 +596,7 @@
     if (!beall.aktualisFrissit) return;
     kepletek.forEach(function (k) {
       if (k.adat.tipus !== 'aktualis' || lepettE(k)) return;
-      var u = aktualisAdat(); u.telepules = k.adat.telepules; u.orszag = k.adat.orszag; u.orszagKod = k.adat.orszagKod;
+      var u = aktualisAdat(); u.telepules = k.adat.telepules; u.telepulesKijelzes = k.adat.telepulesKijelzes || ''; u.orszag = k.adat.orszag; u.orszagKod = k.adat.orszagKod;
       u.lat = k.adat.lat; u.lon = k.adat.lon; u.tz = k.adat.tz; u.zonaMod = k.adat.zonaMod; u.eltolas = k.adat.eltolas;
       if (u.zonaMod !== 'iana') { var d = new Date(Date.now() + K.zona(u).orak * 3600000);
         u.ev = d.getUTCFullYear(); u.ho = d.getUTCMonth() + 1; u.nap = d.getUTCDate(); u.ora = d.getUTCHours(); u.perc = d.getUTCMinutes(); u.mp = d.getUTCSeconds(); }
@@ -711,11 +754,11 @@
   function egyebekDlg() {
     var d = $('dlgEgyeb'), h = beall.alapHely;
     egyebHely = JSON.parse(JSON.stringify(h));
-    $('eTelep').value = h.telepules;
+    $('eTelep').value = h.telepulesKijelzes || h.telepules;
     $('eInfo').textContent = helyInfo(h);
     $('eFrissit').checked = beall.aktualisFrissit;
     if (!egyebKereso) egyebKereso = R.TelepulesKereso($('eTelep'), $('eTalalat'), function (t) {
-      egyebHely = { telepules: t.nev, orszag: t.orszag, orszagKod: t.orszagKod, lat: t.lat, lon: t.lon, tz: t.tz };
+      egyebHely = { telepules: t.adatNev || t.nev, telepulesKijelzes: t.nev, orszag: t.orszag, orszagKod: t.orszagKod, lat: t.lat, lon: t.lon, tz: t.tz };
       $('eInfo').textContent = helyInfo(egyebHely);
     });
     d.returnValue = ''; d.showModal();
@@ -726,7 +769,7 @@
     };
   }
   function helyInfo(h) {
-    return h.telepules + ', ' + h.orszag + ' – ' + R.fokStr(Math.abs(h.lat), false) + (h.lat >= 0 ? ' É' : ' D') + ', ' +
+    return (h.telepulesKijelzes || h.telepules) + ', ' + h.orszag + ' – ' + R.fokStr(Math.abs(h.lat), false) + (h.lat >= 0 ? ' É' : ' D') + ', ' +
       R.fokStr(Math.abs(h.lon), false) + (h.lon >= 0 ? ' K' : ' Ny') + (h.tz ? ' · ' + h.tz : '');
   }
   function gyariBeall() {
@@ -929,7 +972,7 @@
   /* ====================================================================== */
   /* Indulás                                                                 */
   /* ====================================================================== */
-  menuEpit(); eszkoztarEpit();
+  menuEpit(); eszkoztarEpit(); elvalasztoInit();
   munkamenetBetolt();
   render();
   fetch('../proba/tesztkepletek.json', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : []; })

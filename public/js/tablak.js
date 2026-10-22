@@ -175,7 +175,7 @@
       'ΔT', e.deltaT.toFixed(2) + ' mp',
       'Helyi csillagidő', R.pad(sth) + ':' + R.pad(stm) + ':' + R.pad(sts),
       'Ekliptika ferdesége', R.fokStr(e.eps),
-      'Földrajzi hely', R.esc([a.telepules, a.orszag].filter(Boolean).join(', ')) + ' – ' +
+      'Földrajzi hely', R.esc([R.Keplet.helyNev(a), a.orszag].filter(Boolean).join(', ')) + ' – ' +
         R.fokStr(Math.abs(a.lat), false) + ' ' + (a.lat >= 0 ? 'É' : 'D') + ', ' + R.fokStr(Math.abs(a.lon), false) + ' ' + (a.lon >= 0 ? 'K' : 'Ny'),
       'Házrendszer', (e.hz.kos0 ? 'Kos 0° képlet (egyenlő házak a Kostól)' : R.HAZRENDSZER[e.hsys]) + (e.sid ? ', sziderikus' : ', tropikus'),
       'Számítás', 'Swiss Ephemeris (WebAssembly)'

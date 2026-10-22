@@ -22,7 +22,8 @@
     $('aEv').value = a.ev; $('aHo').value = a.ho; $('aNap').value = a.nap;
     $('aOra').value = a.ora; $('aPerc').value = a.perc; $('aMp').value = a.mp || 0;
     $('aIsm').checked = !!a.ismeretlen;
-    $('aTelep').value = a.telepules || ''; $('aOrszag').value = a.orszag || ''; $('aOrszagKod').value = a.orszagKod || '';
+    $('aTelep').value = K.helyNev(a); $('aTelep').dataset.adat = a.telepules || ''; $('aTelep').dataset.megj = K.helyNev(a);
+    $('aOrszag').value = a.orszag || ''; $('aOrszagKod').value = a.orszagKod || '';
     var sz = fokPerc(a.lat), ho = fokPerc(a.lon);
     $('aSzF').value = sz[0]; $('aSzP').value = sz[1]; $('aSzI').value = a.lat < 0 ? '-1' : '1';
     $('aHoF').value = ho[0]; $('aHoP').value = ho[1]; $('aHoI').value = a.lon < 0 ? '-1' : '1';
@@ -58,7 +59,11 @@
       a.ora = szam('aOra', 0, 23, 'Óra'); a.perc = szam('aPerc', 0, 59, 'Perc'); a.mp = szam('aMp', 0, 59, 'Másodperc');
     }
     if (a.ismeretlen && a.tipus !== 'kos0') a.tipus = 'radix';
-    a.telepules = $('aTelep').value.trim(); a.orszag = $('aOrszag').value.trim(); a.orszagKod = $('aOrszagKod').value.trim();
+    var tv = $('aTelep').value.trim();
+    // kiválasztott település: a .szk-ba az adatbázis-név kerül, a felületen a magyar megjelenítési név látszik
+    if (tv && tv === $('aTelep').dataset.megj) { a.telepules = $('aTelep').dataset.adat || tv; a.telepulesKijelzes = tv !== a.telepules ? tv : ''; }
+    else { a.telepules = tv; a.telepulesKijelzes = ''; }
+    a.orszag = $('aOrszag').value.trim(); a.orszagKod = $('aOrszagKod').value.trim();
     a.lat = (+$('aSzI').value) * (szam('aSzF', 0, 90, 'Szélesség (fok)') + szam('aSzP', 0, 59, 'Szélesség (perc)') / 60);
     a.lon = (+$('aHoI').value) * (szam('aHoF', 0, 180, 'Hosszúság (fok)') + szam('aHoP', 0, 59, 'Hosszúság (perc)') / 60);
     if (ell && (Math.abs(a.lat) > 90 || Math.abs(a.lon) > 180)) throw new Error('Érvénytelen földrajzi koordináta.');
@@ -121,6 +126,7 @@
     $('tzLista').innerHTML = tzl.map(function (z) { return '<option value="' + R.esc(z) + '">'; }).join('');
 
     R.TelepulesKereso($('aTelep'), $('aTalalat'), function (t) {
+      $('aTelep').dataset.adat = t.adatNev || t.nev; $('aTelep').dataset.megj = t.nev;
       $('aOrszag').value = t.orszag; $('aOrszagKod').value = t.orszagKod;
       var sz = fokPerc(t.lat), ho = fokPerc(t.lon);
       $('aSzF').value = sz[0]; $('aSzP').value = sz[1]; $('aSzI').value = t.lat < 0 ? '-1' : '1';

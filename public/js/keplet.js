@@ -4,7 +4,8 @@
  * Licenc: AGPL-3.0.
  *
  * Képletadat (a .szk [BirthInfo] megfelelője):
- *   { nev, ev, ho, nap, ora, perc, mp, ismeretlen, telepules, orszag, orszagKod, lat, lon,
+ *   { nev, ev, ho, nap, ora, perc, mp, ismeretlen, telepules (adatbázis-név → .szk LocCity),
+ *     telepulesKijelzes (pl. „Bécs (Wien)”), orszag, orszagKod, lat, lon,
  *     zonaMod: 'iana' | 'lmt' | 'kezi', tz, eltolas, tzKod, nyari, jegyzet, cimkek: [], tipus: 'radix' | 'kos0' | 'aktualis' }
  */
 (function (global) {
@@ -20,6 +21,8 @@
       zonaMod: 'iana', tz: 'Europe/Budapest', eltolas: 1, tzKod: '', nyari: false, jegyzet: '', cimkek: [], tipus: 'radix' };
   };
   K.masol = function (a) { return JSON.parse(JSON.stringify(a)); };
+  /** A település megjelenített neve (magyar név, ha van) */
+  K.helyNev = function (a) { return a.telepulesKijelzes || a.telepules || ''; };
 
   /** Kos 0° képlet: ismeretlen születési időnél automatikusan, vagy a Speciális menüből bármely képletre. */
   K.kos0e = function (a) { return !!(a.ismeretlen || a.tipus === 'kos0'); };
