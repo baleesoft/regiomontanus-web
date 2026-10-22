@@ -274,7 +274,23 @@ dialog textarea { width: 100%; min-height: 70px; resize: vertical; }
   .reszlet .fo-kerek .kerek { flex: none; }
   .elvalaszto { display: none; }
   .reszlet .fo-kerek .kerek > svg, .tablak { height: auto !important; }
-  .tabla-tart { flex: none; overflow: visible; }
+  /* a széles táblák (pl. Állócsillagok) a saját dobozukban görgetnek, nem az egész oldal */
+  .tabla-tart { flex: none; overflow-x: auto; overflow-y: hidden; }
+}
+/* telefonon: tömörebb táblák, hogy elférjenek */
+@media (max-width: 560px) {
+  table.t th, table.t td { padding: 3px 4px; }
+  .t-gl { width: 18px; }
+  table.t-pl th:nth-child(4), table.t-pl td:nth-child(4),   /* a jegy neve – a jele ott marad */
+  table.t-pl th:nth-child(9), table.t-pl td:nth-child(9) { display: none; }   /* sebesség */
+  table.t-pl td:nth-child(2) { white-space: normal; }       /* „Felsz.holdcs.(valódi)” két sorba törhet */
+  table.t-enall td:last-child { white-space: normal; }
+  table.t-es th, table.t-es td { padding: 3px; }
+}
+@media (max-width: 360px) {
+  table.t { font-size: 11px; }
+  table.t th, table.t td { padding: 3px 2px; }
+  .t-gl { font-size: 14px; width: 16px; }
 }
 @media (max-width: 760px) {
   .mozaik, .mozaik.r4 { grid-template-columns: minmax(0, 1fr); grid-auto-rows: auto; }

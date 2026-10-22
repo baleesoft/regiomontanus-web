@@ -41,7 +41,7 @@
         '<td>' + urak + '</td><td>' + jel.join(' ') + '</td>' +
         '<td class="t-num">' + x.speedLon.toFixed(4) + '</td></tr>';
     });
-    return nincsElemzes(e) + '<table class="t"><thead><tr><th></th><th>Planéta</th><th></th><th>Jegy</th><th>Pozíció</th>' +
+    return nincsElemzes(e) + '<table class="t t-pl"><thead><tr><th></th><th>Planéta</th><th></th><th>Jegy</th><th>Pozíció</th>' +
       '<th>Ház</th><th>Házúr</th><th>Jelölés</th><th>Seb. (°/nap)</th></tr></thead><tbody>' + sor.join('') + '</tbody></table>';
   };
 
@@ -179,7 +179,7 @@
       return '<tr><td class="t-gl">' + R.jegyGlif(m.sign) + '</td><td>' + R.JEGYEK[m.sign] + '</td><td class="t-gl">' +
         R.jegyGlif(m.sign) + '</td><td>' + R.JEGYEK[m.sign] + ', mint az 1. Házba bezárt jegy</td></tr>';
     });
-    return '<table class="t"><thead><tr><th>Jele</th><th>Neve</th><th></th><th>Helye</th></tr></thead><tbody>' +
+    return '<table class="t t-enall"><thead><tr><th>Jele</th><th>Neve</th><th></th><th>Helye</th></tr></thead><tbody>' +
       sor.join('') + '</tbody></table>' +
       (e.hz.kos0 ? '<p class="t-hint">Kos 0° képletnél az Ascendens a Kos 0°-a.</p>' : '');
   };
