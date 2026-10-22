@@ -157,6 +157,44 @@
   </form>
 </dialog>
 
+<!-- Beállítások – Színek és szimbólumok (fBeallitasok_Szinek) -->
+<dialog id="dlgSzin" class="szin-dlg" aria-labelledby="dlgSzinCim">
+  <form method="dialog">
+    <div class="dfej"><span id="dlgSzinCim">Megjelenítendő színek</span></div>
+    <div class="dtorzs">
+      <div class="orb-fulek" role="tablist">
+        <button type="button" role="tab" data-szinful="szinek" aria-selected="true">Színek I.</button>
+        <button type="button" role="tab" data-szinful="szimb" aria-selected="false">Szimbólumok</button>
+      </div>
+      <div data-szinlap="szinek">
+        <fieldset><legend>Elemek színei</legend>
+          <div class="szin-elemek">
+            <label class="szin-sor"><span>Tüzes:</span><input type="color" data-szin="fire"></label>
+            <label class="szin-sor"><span>Földes:</span><input type="color" data-szin="earth"></label>
+            <label class="szin-sor"><span>Levegős:</span><input type="color" data-szin="air"></label>
+            <label class="szin-sor"><span>Vizes:</span><input type="color" data-szin="water"></label>
+          </div>
+        </fieldset>
+        <fieldset><legend>Fényszögek színei és jelölések</legend><div class="szin-fsz" id="szFsz"></div></fieldset>
+        <div class="szin-also">
+          <fieldset><legend>További színek</legend>
+            <label class="szin-sor"><span>Fényszögek háttérszíne:</span><input type="color" data-szin="aspectBg"></label>
+          </fieldset>
+          <fieldset><legend>Alap vonalak vastagsága</legend>
+            <label class="szin-sor"><span>Vastagság:</span><input type="number" id="szVonal" min="1" max="5" step="1" class="sz2"></label>
+          </fieldset>
+        </div>
+      </div>
+      <div data-szinlap="szimb" hidden>
+        <fieldset><legend>Uránusz</legend><div class="szimb-valaszt" id="szUranusz"></div></fieldset>
+        <fieldset><legend>Plútó</legend><div class="szimb-valaszt" id="szPluto"></div></fieldset>
+      </div>
+    </div>
+    <div class="dlab"><button type="button" class="gomb" id="szAlap">Alapértékek</button><span class="tolt"></span>
+      <button type="submit" class="gomb fo" value="ok">Rendben</button><button type="submit" class="gomb" value="">Mégsem</button></div>
+  </form>
+</dialog>
+
 <!-- Beállítások – Fényszög orbisok (fOrbisSettings) -->
 <dialog id="dlgOrb" class="orb-dlg" aria-labelledby="dlgOrbCim">
   <form method="dialog">

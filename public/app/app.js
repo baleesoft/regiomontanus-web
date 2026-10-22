@@ -9,6 +9,12 @@
   var $ = function (id) { return document.getElementById(id); };
 
   var se = null, beall = S.beallitasok();
+  /* a Windows-os cURANUSLETTERS / cPLUTOLETTERS megfelelői (RegiomontanusWIN 'k' '!' és ';' '¦' '_') */
+  var URANUSZ_JEL = ['♅', '⛢'], PLUTO_JEL = ['⯓', '⯖', '♇'];
+  function jelek() { return { 7: URANUSZ_JEL[beall.szin.uranusz] || '♅', 9: PLUTO_JEL[beall.szin.pluto] || '⯓' }; }
+  /** a táblák és a nyomtatás is a beállított jelet használja */
+  function szimbolumAlkalmaz() { var j = jelek(); R.PLANETA[7][1] = j[7]; R.PLANETA[9][1] = j[9]; }
+  szimbolumAlkalmaz();
   /*
    * Ideiglenesen kikapcsolt funkciók – amíg nincs adatbázis a háttérben (Nemes Balázs döntése, 2026-10-22):
    * jegyzetek (szerkesztő, „!” jelek, .mgj) és csatolás (fénykép, dokumentum, URL/e-mail – az oldalsáv).
@@ -170,10 +176,12 @@
     if (b.nodes) pl.push(beall.csomo, beall.csomo === 11 ? 25 : 24);
     if (b.asteroids) beall.kisb.forEach(function (id) { pl.push(id); });
     if (beall.allo && beall.allo.megj && k.e && k.e.csillagok) k.e.csillagok.forEach(function (c) { pl.push(c.id); });
-    return { planets: pl, csillagMind: !!(beall.allo && beall.allo.mind), houseLords: b.houseLords, feral: b.feral, retrograde: b.retrograde, stationary: b.stationary,
+    var sz = beall.szin, ff = nyomtatFelul && nyomtatFelul.colors;
+    return { planets: pl, csillagMind: !!(beall.allo && beall.allo.mind), jelek: jelek(), vonal: sz.vonal,
+      aspectColors: ff ? null : sz.fsz, aspectStyles: sz.stilus, houseLords: b.houseLords, feral: b.feral, retrograde: b.retrograde, stationary: b.stationary,
       selfMarkers: b.selfMarkers && !(k.e && k.e.hz.kos0), cuspLabels: b.cuspLabels, szemely: !!k.szemely && !k.fajta,
       aspectTypes: b.conjLines ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] : RegioKerek.ALAP.aspectTypes,
-      colors: nyomtatFelul && nyomtatFelul.colors ? nyomtatFelul.colors : undefined };
+      colors: ff || { fire: sz.fire, earth: sz.earth, air: sz.air, water: sz.water, aspectBg: sz.aspectBg, aspect: '#000000' } };
   }
   function kerekRajzol(hova, k) {
     if (k.fajta) return osszKerekRajzol(hova, k);
@@ -223,8 +231,10 @@
   function miniSvg(k) {
     if (!k.e) return '';
     var d = document.createElement('div');
+    var sz = beall.szin;
     RegioKerek.rajzol(d, T.kerekAdat(k.e), { houseLords: false, cuspLabels: false, selfMarkers: false, feral: false,
-      aspectSymbols: [] });
+      aspectSymbols: [], jelek: jelek(), aspectColors: sz.fsz, aspectStyles: sz.stilus,
+      colors: { fire: sz.fire, earth: sz.earth, air: sz.air, water: sz.water, aspectBg: sz.aspectBg, aspect: '#000000' } });
     var s = d.firstChild; s.removeAttribute('style'); s.setAttribute('aria-hidden', 'true'); s.removeAttribute('role');
     Array.prototype.forEach.call(s.querySelectorAll('title'), function (t) { t.parentNode.removeChild(t); });
     return s.outerHTML;
@@ -743,7 +753,7 @@
       if (!beall.allo.megj) { uzen('Az állócsillagok fényszög-táblázata csak akkor érhető el, ha a megjelenítésük is be van kapcsolva!'); return; }
       tablaMutat('allo');
     },
-    alloBeall: alloDlg, orbisok: orbDlg,
+    alloBeall: alloDlg, orbisok: orbDlg, szinek: szinDlg,
     inkognito: function () {
       beall.nyomtatas = beall.nyomtatas || {}; beall.nyomtatas.inkognito = !beall.nyomtatas.inkognito; beallMent(); render();
       uzen(inkognito() ? 'Személyes adatok elrejtve (születési idő, hely, életkor) – a képernyőn és a nyomtatásban.' : 'Személyes adatok megjelenítve.');
@@ -782,7 +792,7 @@
     if (t === 'kulsoKulon' && !(akt() && akt().fajta && akt().fajta !== 'pd')) return false;
     return engedelyezettAlap(t);
   }
-  function engedelyezettAlap(t) { return !!TETT[t] && (!KELL_AKT[t] || vanAkt()) && (betoltve || ['nevjegy', 'segitseg', 'facebook', 'iskola', 'megjelenites', 'egyebek', 'gyari', 'alloBeall', 'allo', 'inkognito', 'orbisok'].indexOf(t) >= 0 || t.indexOf('hsys') === 0 || t.indexOf('zod') === 0); }
+  function engedelyezettAlap(t) { return !!TETT[t] && (!KELL_AKT[t] || vanAkt()) && (betoltve || ['nevjegy', 'segitseg', 'facebook', 'iskola', 'megjelenites', 'egyebek', 'gyari', 'alloBeall', 'allo', 'inkognito', 'orbisok', 'szinek'].indexOf(t) >= 0 || t.indexOf('hsys') === 0 || t.indexOf('zod') === 0); }
   function vegrehajt(t) { if (engedelyezett(t)) TETT[t](); }
 
   function legutobbiMenu() {
@@ -828,7 +838,7 @@
           { c: '... egymás mellett', t: 'egymasmellett', radio: true, pipa: function () { return m === 'egymasmellett'; } }];
       } }, '-', { c: 'A külső kör önálló képletként', t: 'kulsoKulon' }] },
     { c: 'Beállítások', l: [
-      { c: 'Megjelenítés', t: 'megjelenites' }, { c: 'Állócsillagok', t: 'alloBeall' }, { c: 'Egyebek', t: 'egyebek' }, { c: 'Fényszög orbisok', t: 'orbisok' }, { c: 'Színek és szimbólumok', f: 5 },
+      { c: 'Megjelenítés', t: 'megjelenites' }, { c: 'Állócsillagok', t: 'alloBeall' }, { c: 'Egyebek', t: 'egyebek' }, { c: 'Fényszög orbisok', t: 'orbisok' }, { c: 'Színek és szimbólumok', t: 'szinek' },
       { c: 'Házrendszer', al: function () {
         return ['P', 'R', 'C', 'K', 'O', 'A'].map(function (h) { return { c: R.HAZRENDSZER[h], t: 'hsys' + h, radio: true, pipa: function () { return beall.hsys === h; } }; });
       } },
@@ -1393,7 +1403,8 @@
   var fontCache = null;
   function fontDataUri() {
     if (fontCache) return fontCache;
-    var fajlok = [['../fonts/regio-symbols-1.woff2', 'U+260A-260D, U+263D-2653, U+26B3-26BC'], ['../fonts/regio-symbols-2.woff2', 'U+2609, U+25A1, U+25B3']];
+    var fajlok = [['../fonts/regio-symbols-1.woff2', 'U+260A-260D, U+263D-2653, U+26B3-26BC'], ['../fonts/regio-symbols-2.woff2', 'U+2609, U+25A1, U+25B3'],
+      ['../fonts/regio-symbols-3.woff2', 'U+26E2'], ['../fonts/regio-symbols-4.woff2', 'U+2BD3, U+2BD6']];
     fontCache = Promise.all(fajlok.map(function (f) {
       return fetch(f[0]).then(function (r) { return r.blob(); }).then(function (b) {
         return new Promise(function (res) { var o = new FileReader(); o.onload = function () { res('@font-face{font-family:"Regio Symbols";src:url(' + o.result + ') format("woff2");unicode-range:' + f[1] + ';}'); }; o.readAsDataURL(b); });
@@ -1535,6 +1546,68 @@
   /* ---------- Beállítások › Állócsillagok ---------- */
   var alloLista = null;   // név szerint rendezett [{ id, nev, nomen, latin, hun }]
   function alloKulcs() { var a = beall.allo; return JSON.stringify([a.megj, a.ids, a.orb, a.fsz, beall.kerek.asteroids, beall.kisb, beall.orb]); }
+
+  /* ---------- Beállítások › Színek és szimbólumok (fBeallitasok_Szinek) ---------- */
+  var STILUSOK = ['Sima', 'Szaggatott', 'Pettyezett'];
+  // a fényszögek a program szokásos sorrendjében (a Windows-os ablak két oszlopa helyett soronként kettő)
+  var SZIN_SORREND = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  function szinDlg() {
+    var d = $('dlgSzin'), o = JSON.parse(JSON.stringify(beall.szin));
+    function mintaVonal(st, szin) {
+      var da = st === 1 ? '6 5' : st === 2 ? '1 3' : '';
+      return '<svg class="szin-minta" viewBox="0 0 46 10" aria-hidden="true"><line x1="1" y1="5" x2="45" y2="5" stroke="' + szin + '" stroke-width="2"' +
+        (da ? ' stroke-dasharray="' + da + '"' : '') + (st === 2 ? ' stroke-linecap="round"' : '') + '/></svg>';
+    }
+    $('szFsz').innerHTML = SZIN_SORREND.map(function (k) {
+      return '<div class="szin-sor"><span>' + R.FENYSZOG[k][0] + ':</span><input type="color" data-fszszin="' + k + '" aria-label="' + R.FENYSZOG[k][0] + ' színe">' +
+        '<select data-fszstil="' + k + '" aria-label="' + R.FENYSZOG[k][0] + ' vonala">' + STILUSOK.map(function (n, i) { return '<option value="' + i + '">' + n + '</option>'; }).join('') +
+        '</select><span class="minta" data-minta="' + k + '"></span></div>';
+    }).join('');
+    $('szUranusz').innerHTML = URANUSZ_JEL.map(function (j, i) {
+      return '<label><input type="radio" name="szUr" value="' + i + '"><span class="jel">' + j + '︎</span></label>';
+    }).join('');
+    $('szPluto').innerHTML = PLUTO_JEL.map(function (j, i) {
+      return '<label><input type="radio" name="szPl" value="' + i + '"><span class="jel">' + j + '︎</span></label>';
+    }).join('');
+    function minta(k) { var m = d.querySelector('[data-minta="' + k + '"]'); m.innerHTML = mintaVonal(+d.querySelector('[data-fszstil="' + k + '"]').value, d.querySelector('[data-fszszin="' + k + '"]').value); }
+    function kitolt(x) {
+      Array.prototype.forEach.call(d.querySelectorAll('[data-szin]'), function (c) { c.value = x[c.getAttribute('data-szin')]; });
+      SZIN_SORREND.forEach(function (k) {
+        d.querySelector('[data-fszszin="' + k + '"]').value = x.fsz[k];
+        d.querySelector('[data-fszstil="' + k + '"]').value = String(x.stilus[k]);
+        minta(k);
+      });
+      $('szVonal').value = x.vonal;
+      Array.prototype.forEach.call(d.querySelectorAll('input[name="szUr"]'), function (r) { r.checked = +r.value === x.uranusz; });
+      Array.prototype.forEach.call(d.querySelectorAll('input[name="szPl"]'), function (r) { r.checked = +r.value === x.pluto; });
+    }
+    kitolt(o);
+    Array.prototype.forEach.call(d.querySelectorAll('[data-fszszin],[data-fszstil]'), function (c) {
+      c.oninput = c.onchange = function () { minta(c.getAttribute('data-fszszin') || c.getAttribute('data-fszstil')); };
+    });
+    function ful(nev) {
+      Array.prototype.forEach.call(d.querySelectorAll('[data-szinful]'), function (b) { b.setAttribute('aria-selected', String(b.getAttribute('data-szinful') === nev)); });
+      Array.prototype.forEach.call(d.querySelectorAll('[data-szinlap]'), function (l) { l.hidden = l.getAttribute('data-szinlap') !== nev; });
+    }
+    Array.prototype.forEach.call(d.querySelectorAll('[data-szinful]'), function (b) { b.onclick = function () { ful(b.getAttribute('data-szinful')); }; });
+    ful('szinek');
+    $('szAlap').onclick = function () { kitolt(JSON.parse(JSON.stringify(S.ALAP.szin))); };
+    d.returnValue = ''; d.showModal();
+    d.onclose = function () {
+      if (d.returnValue !== 'ok') return;
+      Array.prototype.forEach.call(d.querySelectorAll('[data-szin]'), function (c) { o[c.getAttribute('data-szin')] = c.value; });
+      SZIN_SORREND.forEach(function (k) {
+        o.fsz[k] = d.querySelector('[data-fszszin="' + k + '"]').value;
+        o.stilus[k] = +d.querySelector('[data-fszstil="' + k + '"]').value;
+      });
+      var v = parseInt($('szVonal').value, 10); o.vonal = isFinite(v) ? Math.max(1, Math.min(5, v)) : 1;
+      var u = d.querySelector('input[name="szUr"]:checked'), pl = d.querySelector('input[name="szPl"]:checked');
+      o.uranusz = u ? +u.value : 0; o.pluto = pl ? +pl.value : 0;
+      beall.szin = o; beallMent(); szimbolumAlkalmaz();
+      kepletek.forEach(function (k) { k.mini = miniSvg(k); });
+      render();
+    };
+  }
 
   /* ---------- Beállítások › Fényszög orbisok (fOrbisSettings) ---------- */
   var ORB_SOROK = ['Nap', 'Hold', 'Merkúr', 'Vénusz', 'Mars', 'Jupiter', 'Szaturnusz', 'Uránusz', 'Neptunusz', 'Plútó', 'Asc', 'MC', 'Holdcsomó', 'Házsarkak'];
@@ -1705,7 +1778,7 @@
     kerdez('Visszaállítod a program alapértelmezett beállításait?', false).then(function (v) {
       if (v !== 'igen') return;
       var h = beall.hsys, s = beall.sid, al = alloKulcs();
-      beall = S.gyari();
+      beall = S.gyari(); szimbolumAlkalmaz(); kepletek.forEach(function (k) { k.mini = miniSvg(k); });
       if (beall.hsys !== h || beall.sid !== s || alloKulcs() !== al) mindSzamol();
       render(); uzen('Az alapértelmezések visszaálltak.');
     });
@@ -1719,7 +1792,7 @@
       var f = i.files[0]; if (!f) return;
       f.text().then(function (t) {
         var v = JSON.parse(t), h = beall.hsys, s = beall.sid, al = alloKulcs();
-        S.beallitasMent(v); beall = S.beallitasok();
+        S.beallitasMent(v); beall = S.beallitasok(); szimbolumAlkalmaz(); kepletek.forEach(function (k) { k.mini = miniSvg(k); });
         if (beall.hsys !== h || beall.sid !== s || alloKulcs() !== al) mindSzamol();
         render(); uzen('Beállítások betöltve.');
       }).catch(function (e) { uzen('A beállításfájl nem olvasható: ' + e.message); });

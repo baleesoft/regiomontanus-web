@@ -29,7 +29,10 @@
     aspectTypes: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], // chkbFenyszogek: együttállás-vonal nincs
     aspectSymbols: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     aspectPlanets: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],     // chkbFenyszogeltBolygok
-    dashed: [6, 7, 8, 9, 10, 11, 12],                  // chkbFenyszogStyle: harmadfénytől szaggatott
+    dashed: [6, 7, 8, 9, 10, 11, 12],                  // chkbFenyszogStyle: harmadfénytől szaggatott (ha nincs aspectStyles)
+    // aspectStyles: { fényszög: 0 sima | 1 szaggatott | 2 pettyezett }, aspectColors: { fényszög: szín } (fBeallitasok_Szinek)
+    // vonal: alapvonal-vastagság (GetBaseLinePenWidth: körök, házcsúcsok); jelek: { 7: Uránusz-, 9: Plútó-jel } (cURANUSLETTERS, cPLUTOLETTERS)
+    vonal: 1,
     houseLords: true, feral: true, retrograde: false, stationary: false,
     selfMarkers: true, selfMarkerAtOrigPlace: true, cuspLabels: true,
     colors: { fire: '#FB031B', earth: '#0BCA02', air: '#FFFF55', water: '#2A6AFF', aspectBg: '#FFFFFF', aspect: '#000000' }
@@ -114,6 +117,16 @@
     if (kulso) { o.selfMarkers = false; o.cuspLabels = false; o.outerTicks = true; }
 
     var r = 400, R = r * (kulso ? 1.3 : 1.2);
+    // planétajelek a beállított Uránusz-/Plútó-változattal
+    var PLJ = {}, pj;
+    for (pj in PLANETA) PLJ[pj] = PLANETA[pj];
+    for (pj in (o.jelek || {})) PLJ[pj] = o.jelek[pj];
+    var VV = Math.max(1, +o.vonal || 1);
+    var fszSzin = function (a) { return (o.aspectColors && o.aspectColors[a]) || o.colors.aspect; };
+    var fszVonal = function (a) {
+      var st = o.aspectStyles ? +o.aspectStyles[a] || 0 : (o.dashed.indexOf(a) >= 0 ? 1 : 0);
+      return st === 1 ? '6 5' : st === 2 ? '1 3' : null;
+    };
     var asc = k.asc;
     // Képernyőszög: az ASC balra, a zodiákus az óramutatóval ellentétesen nő
     function pont(lon, rad) {
@@ -162,7 +175,7 @@
       // jegyzet jelzése (DJ 26–95): a Kos, Oroszlán, Nyilas (piros sáv) jelénél fehér, máshol piros „!”
       if (jJel['J_' + j]) felkialt(pj[0] + pxJegy * 0.42, pj[1] - pxJegy * 0.42, j % 4 === 0 ? '#fff' : '#d00000', gZod);
     }
-    var gVonal = el('g', { stroke: '#000', fill: 'none', 'stroke-width': 1 }, svg);
+    var gVonal = el('g', { stroke: '#000', fill: 'none', 'stroke-width': VV }, svg);
     [r, R_ZOD_SAV, R_ZOD_BELSO, R_HAZ_KULSO].forEach(function (rr) { el('circle', { r: rr }, gVonal); });
     el('circle', { r: R_FSZ, fill: o.colors.aspectBg }, gVonal);
     // fokbeosztás: 30° teljes, 10° r/48, 5° r/72, 1° r/96 (a 0,833 r körről kifelé)
@@ -282,9 +295,9 @@
     /* ---------- házcsúcsok ---------- */
     var gHaz = el('g', { stroke: '#000' }, svg);
     for (var hz = 1; hz <= 12; hz++) {
-      var vast = (hz === 1 || hz === 4 || hz === 7 || hz === 10) ? 2.2 : 1;
+      var vast = ((hz === 1 || hz === 4 || hz === 7 || hz === 10) ? 2.2 : 1) * VV;
       if (cikk[hz]) {
-        vonal(cs[hz], R_ZOD_BELSO, R_HAZ_KULSO, { 'stroke-width': 1, 'stroke-dasharray': '1.5 3' }, gHaz);
+        vonal(cs[hz], R_ZOD_BELSO, R_HAZ_KULSO, { 'stroke-width': VV, 'stroke-dasharray': '1.5 3' }, gHaz);
         vonal(cs[hz], R_HAZ_KULSO, R_FSZ, { 'stroke-width': vast }, gHaz);
       } else {
         vonal(cs[hz], R_ZOD_BELSO, R_FSZ, { 'stroke-width': vast }, gHaz);
@@ -309,7 +322,8 @@
       if (o.aspectPlanets.indexOf(id1) < 0 && o.aspectPlanets.indexOf(id2) < 0) return;
       var p = pont(hely[id1], R_FSZ), q = pont(hely[id2], R_FSZ);
       var vonalE = el('line', { x1: p[0].toFixed(2), y1: p[1].toFixed(2), x2: q[0].toFixed(2), y2: q[1].toFixed(2),
-        'stroke-dasharray': o.dashed.indexOf(a.aspect) >= 0 ? '6 5' : null }, gFsz);
+        stroke: fszSzin(a.aspect), 'stroke-dasharray': fszVonal(a.aspect),
+        'stroke-linecap': fszVonal(a.aspect) === '1 3' ? 'round' : null }, gFsz);
       var leiras = nevE(id1) + ' – ' + nevE(id2) + ': ' + FSZNEV[a.aspect] + ' (' + fokStr(a.orb).replace(/\d+"$/, '') + ')';
       cim(vonalE, leiras);
       if (o.aspectSymbols.indexOf(a.aspect) >= 0) {
@@ -317,7 +331,7 @@
         cim(szoveg(FSZ[a.aspect] + (FSZ[a.aspect].length === 1 ? VS : ''), { x: mx, y: my,
           'font-size': FSZ[a.aspect].length > 1 || a.aspect === 10 ? pxFsz * 0.75 : pxFsz,
           'font-family': a.aspect >= 10 ? TXT : SYM, 'font-weight': a.aspect >= 10 ? 'bold' : null,
-          'text-anchor': 'middle', 'dominant-baseline': 'central', fill: o.colors.aspect, stroke: 'none' }, gFsz), leiras);
+          'text-anchor': 'middle', 'dominant-baseline': 'central', fill: fszSzin(a.aspect), stroke: 'none' }, gFsz), leiras);
       }
     });
 
@@ -363,7 +377,7 @@
         (p.speed < 0 ? ', retrográd' : '') + (p.feral ? ', ferális' : '') + (p.isolated ? ', izolált' : ''));
       el('rect', { x: e.bal, y: e.fent, width: e.w, height: e.h, fill: '#fff' }, g);
       if (p.id === PHOLUS) pholusJel(e.x, e.y, pxPlaneta, g);
-      else szoveg(PLANETA[p.id] + VS, { x: e.x, y: e.y, 'font-size': pxPlaneta, 'font-family': SYM, 'text-anchor': 'middle',
+      else szoveg(PLJ[p.id] + VS, { x: e.x, y: e.y, 'font-size': pxPlaneta, 'font-family': SYM, 'text-anchor': 'middle',
         'dominant-baseline': 'central', fill: '#000' }, g);
       if (jJel['P_' + p.id]) felkialt(e.bal + e.w + F * 0.15, e.fent + F * 0.3, '#d00000', g);
       if (e.ur) {
@@ -503,7 +517,7 @@
         cim(g, 'Külső kör – ' + nevE(p.id) + ': ' + JNEV[jk] + ' ' + fokStr(fjk) + (p.house ? ', ' + p.house + '. ház (saját képletében)' : '') +
           (p.speed < 0 ? ', retrográd' : '') + (p.feral ? ', ferális' : '') + (p.isolated ? ', izolált' : '') + (kulso.cimKieg && kulso.cimKieg[p.id] ? '\n' + kulso.cimKieg[p.id] : ''));
         if (p.id === PHOLUS) pholusJel(e.x, e.y, pxPlaneta, g);
-        else szoveg(PLANETA[p.id] + VS, { x: e.x, y: e.y, 'font-size': pxPlaneta, 'font-family': SYM, 'text-anchor': 'middle',
+        else szoveg(PLJ[p.id] + VS, { x: e.x, y: e.y, 'font-size': pxPlaneta, 'font-family': SYM, 'text-anchor': 'middle',
           'dominant-baseline': 'central', fill: '#000' }, g);
         // vezetővonal: a doboz szélétől a valódi helyig a zodiákus külső körén (D 435–470)
         var z = pont(e.orig, r), dx = z[0] - e.x, dy = z[1] - e.y, tm = Infinity;

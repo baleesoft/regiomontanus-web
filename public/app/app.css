@@ -3,6 +3,11 @@
              unicode-range: U+260A-260D, U+263D-2653, U+26B3-26BC; font-display: block; }
 @font-face { font-family: 'Regio Symbols'; src: url(../fonts/regio-symbols-2.woff2) format('woff2');
              unicode-range: U+2609, U+25A1, U+25B3; font-display: block; }
+/* az Uránusz és a Plútó választható jelei (Színek és szimbólumok): ⛢ (Noto Sans Symbols), ⯓ ⯖ (Noto Sans Symbols 2) */
+@font-face { font-family: 'Regio Symbols'; src: url(../fonts/regio-symbols-3.woff2) format('woff2');
+             unicode-range: U+26E2; font-display: block; }
+@font-face { font-family: 'Regio Symbols'; src: url(../fonts/regio-symbols-4.woff2) format('woff2');
+             unicode-range: U+2BD3, U+2BD6; font-display: block; }
 
 :root {
   --bg: #ece9e2; --panel: #fbfaf7; --ink: #1f1d1a; --ink2: #4f4a42; --muted: #6b665d; --line: #cfc9bd; --line2: #eee8dc;
@@ -485,3 +490,20 @@ dialog .halv { color: #6b665d; font-size: 12px; }
 .orb-mod { display: flex; gap: 18px; }
 @media (max-width: 660px) { .orb-egyszeru, .orb-reszletes { grid-template-columns: minmax(0, 1fr); }
   .orb-ertekek { grid-template-columns: max-content; grid-template-rows: none; grid-auto-flow: row; } }
+
+/* ---------- Színek és szimbólumok (fBeallitasok_Szinek) ---------- */
+.szin-dlg { width: min(780px, calc(100vw - 24px)); }
+.szin-elemek { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px 14px; }
+.szin-sor { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+.szin-sor input[type=color] { width: 44px; height: 24px; padding: 0 2px; border: 1px solid var(--line); background: #fff; cursor: pointer; }
+.szin-sor input[type=number] { width: 52px; padding: 3px 5px; border: 1px solid var(--line); background: #fff; color: var(--ink); }
+.szin-fsz { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 18px; }
+.szin-fsz .szin-sor { display: grid; grid-template-columns: minmax(140px, 1fr) 44px 104px 46px; }
+.szin-sor input[type=color] { flex: none; }
+.szin-fsz select { padding: 2px 4px; border: 1px solid var(--line); background: #fff; color: var(--ink); }
+.szin-minta { width: 46px; height: 10px; }
+.szin-also { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.szimb-valaszt { display: flex; gap: 22px; flex-wrap: wrap; }
+.szimb-valaszt label { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.szimb-valaszt .jel { font-family: var(--sym); font-size: 26px; line-height: 1; min-width: 30px; text-align: center; }
+@media (max-width: 780px) { .szin-elemek { grid-template-columns: repeat(2, minmax(0, 1fr)); } .szin-fsz, .szin-also { grid-template-columns: minmax(0, 1fr); } }
