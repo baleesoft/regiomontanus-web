@@ -20,7 +20,14 @@
 
   /** A nyomtatási beállítások alapértékei (Beállítások › Megjelenítés › „Nyomtatás és Exportálás”, D K 727–758). */
   var ALAP = { fejlec: true, lablec: true, fenyszog: true, eletstrat: true, planetak: true, hazak: true, kerek: true,
-    szines: false, inkognito: false };
+    szines: false, inkognito: false,
+    // a Megjelenítés › Nyomtatás és Exportálás részletei (chkbBolygoTablazat, chkbHazTablazat, chkbFejlecKijelzesek,
+    // chkbLablecKijelzesek) – gyárilag mind be
+    plFok: true, plJegy: true, plHaz: true, plUr: true, hzFok: true, hzJegy: true,
+    fNev: true, fDatum: true, fIdo: true, fNap: true, fZona: true, fNyari: true, fUT: true, fST: true, fTipus: true,
+    fHely: true, fKoord: true, fHaz: true, lAlap: true, lReg: true };
+  /** a beállítások (b) szerint: sarokházak római számmal, ha nincs „arab” (cHOUSECAPTIONS) */
+  function hazStr(n, b) { return !b || !b.kerek || b.kerek.arab !== false ? String(n) : ({ 1: 'I', 4: 'IV', 7: 'VII', 10: 'X' }[n] || String(n)); }
 
   /* ---------- betűmetrika (Windows: TextHeight = ascent + descent = 1,117 em Arialnál és a RegiomontanusWIN-nél) ---------- */
   var mctx = null;
@@ -87,10 +94,16 @@
 
   /* ---------- fejléc szövegei (PrintFejlec) ---------- */
   function pad(n) { return (n < 10 ? '0' : '') + n; }
-  function szulIdo(e) {
+  /** GetSzuletesiIdo: dátum, idő és a hét napja külön kapcsolható (a Windows-osban a dátum/idő pipa az egész sort,
+   *  a „Születés napja” semmit nem kapcsolt); az életkor az „Életkor kijelzés elrejtése” szerint (GetHideEletkor) */
+  function szulIdo(e, o, b) {
+    o = o || ALAP;
     var a = e.adat, nap = new Date(Date.UTC(a.ev, a.ho - 1, a.nap)).getUTCDay();
-    var s = R.datumStr(a.ev, a.ho, a.nap) + ' - ' + (a.ismeretlen ? '12:00' : pad(a.ora) + ':' + pad(a.perc)) + '  (' + NAPOK[nap] + ')';
-    if (a.tipus !== 'aktualis') { var ek = R.Keplet.eletkor(a); if (ek >= 0 && ek < 150) s += ' - ' + ek + 'é'; }
+    var s = [o.fDatum ? R.datumStr(a.ev, a.ho, a.nap) : '', o.fIdo ? (a.ismeretlen ? '12:00' : pad(a.ora) + ':' + pad(a.perc)) : '']
+      .filter(Boolean).join(' - ');
+    if (o.fNap) s += (s ? '  ' : '') + '(' + NAPOK[nap] + ')';
+    if (!s) return '';
+    if (a.tipus !== 'aktualis' && !(b && b.kerek && b.kerek.eletkorRejt)) { var ek = R.Keplet.eletkor(a); if (ek >= 0 && ek < 150) s += ' - ' + ek + 'é'; }
     return s;
   }
   function szulHely(e) { return [R.Keplet.helyNev(e.adat), e.adat.orszag].filter(Boolean).join(', '); }
@@ -117,47 +130,51 @@
   function hazrendszer(e) { return e.hz.persp !== undefined ? R.HAZRENDSZER.A : R.HAZRENDSZER[e.hsys] || e.hsys; }
   function zodiakus(e) { return e.sid ? 'Sziderikus' : 'Tropikus'; }
 
-  function fejlec(g, d, o) {
-    var top = LEFT, s;
-    out(g, LEFT, top, d.cim, FS);
-    out(g, W - LEFT, top + 3, d.tipus, FS, { jobb: true });
+  function fejlec(g, d, o, b) {
+    var top = LEFT;
+    // a mezők egyenként kapcsolhatók (chkbFejlecKijelzesek); a sorok helye kikapcsolva is megmarad, mint a Windows-osban
+    var ki = function (x, y, t, pt, op, kell) { if (kell && t) out(g, x, y, t, pt, op); };
+    ki(LEFT, top, d.cim, FS, null, o.fNev);
+    ki(W - LEFT, top + 3, d.tipus, FS, { jobb: true }, o.fTipus);
     top += th(FS) + GAP * 4;
     top += GAP * 4;                                    // (a Windows-os csík nem látszik a lapon)
     var f = Math.round(FS * 0.8), lep = th(f) + GAP;
     if (!d.kulso) {
       var e = d.e;
       if (!o.inkognito) {
-        out(g, LEFT, top, szulIdo(e), f); out(g, W - LEFT, top, szulHely(e), f, { jobb: true }); top += lep;
-        out(g, LEFT, top, zona(e), f); out(g, W - LEFT, top, koord(e), f, { jobb: true }); top += lep;
-        out(g, LEFT, top, ut(e), f); top += lep;
-        out(g, LEFT, top, st(e), f);
+        ki(LEFT, top, szulIdo(e, o, b), f, null, true); ki(W - LEFT, top, szulHely(e), f, { jobb: true }, o.fHely); top += lep;
+        ki(LEFT, top, zona(e), f, null, o.fZona); ki(W - LEFT, top, koord(e), f, { jobb: true }, o.fKoord); top += lep;
+        ki(LEFT, top, ut(e), f, null, o.fUT); top += lep;
+        ki(LEFT, top, st(e), f, null, o.fST);
       }
-      out(g, W - LEFT, top, hazrendszer(e), f, { jobb: true }); top += lep;
+      ki(W - LEFT, top, hazrendszer(e), f, { jobb: true }, o.fHaz); top += lep;
       out(g, W - LEFT, top, zodiakus(e), f, { jobb: true }); top += lep;
-      if (!o.inkognito && e.zona.nyari) out(g, LEFT, top, 'Nyári időszámítás', f);
+      ki(LEFT, top, 'Nyári időszámítás', f, null, !o.inkognito && o.fNyari && e.zona.nyari);
       return;
     }
     // két képlet: balra a belső, jobbra a külső kör (D P 362–507)
     [[d.e, 'Belső kör:', d.belsoNev, false], [d.kulso.e, 'Külső kör:', d.kulsoNev, true]].forEach(function (k) {
       var y = top, e = k[0], j = k[3], x = j ? W - LEFT : LEFT, op = { jobb: j };
       out(g, x, y, k[1], f, op); y += lep;
-      out(g, x, y, k[2], f, op); y += lep;
+      ki(x, y, k[2], f, op, o.fNev); y += lep;
       if (!e) return;
       if (j && (d.fajta === 'pd' || d.fajta === 'ph')) { if (d.kulsoMikor) out(g, x, y, d.kulsoMikor, f, op); return; }
       if (o.inkognito) return;
-      [szulIdo(e), szulHely(e), zona(e), koord(e), hazrendszer(e), zodiakus(e)].forEach(function (t) { out(g, x, y, t, f, op); y += lep; });
+      [[szulIdo(e, o, b), true], [szulHely(e), o.fHely], [zona(e), o.fZona], [koord(e), o.fKoord], [hazrendszer(e), o.fHaz], [zodiakus(e), true]]
+        .forEach(function (t) { ki(x, y, t[0], f, op, t[1]); y += lep; });
     });
   }
 
   /* ---------- lábléc (PrintLablec) ---------- */
-  function lablec(g) {
+  function lablec(g, o) {
     var f = div(FS, 5) * 3, top = H - Math.round(LEFT * 1.55);
     top += th(f) + GAP;
-    out(g, LEFT, top, 'Regiomontanus web - Nemes Balázs 2009 - ' + new Date().getFullYear(), f);
-    out(g, W - LEFT, top, 'Regisztrálva: Humanisztikus Asztrológia Iskola', f, { jobb: true });
+    // bal oldal: program-alapinformációk, jobb oldal: regisztrációs adatok (chkbLablecKijelzesek)
+    if (o.lAlap) out(g, LEFT, top, 'Regiomontanus web - Nemes Balázs 2009 - ' + new Date().getFullYear(), f);
+    if (o.lReg) out(g, W - LEFT, top, 'Regisztrálva: Humanisztikus Asztrológia Iskola', f, { jobb: true });
     top += th(f) + GAP;
-    out(g, LEFT, top, 'http://www.regiomontanus.hu     info@regiomontanus.hu     http://www.facebook.com/regiomontanus.astrology', f);
-    out(g, W - LEFT, top, 'Swiss Ephemeris inside', f, { jobb: true });
+    if (o.lAlap) out(g, LEFT, top, 'http://www.regiomontanus.hu     info@regiomontanus.hu     http://www.facebook.com/regiomontanus.astrology', f);
+    if (o.lReg) out(g, W - LEFT, top, 'Swiss Ephemeris inside', f, { jobb: true });
   }
 
   /* ---------- fényszögek (PrintFenyszogek, D P 810–1073) ---------- */
@@ -265,7 +282,7 @@
     }
     return l.join(',');
   }
-  function planetak(g, e, radix, b) {
+  function planetak(g, e, radix, b, o) {
     var f = Math.round(FS * 0.8), cw = 'OR18°47,K1212,(11),', cim = 'Planéták', x0, top;
     var bw = Math.round(tw('MI', f) * 1.1);
     if (radix) {
@@ -294,10 +311,11 @@
       if (p.feral) jel += (jel ? ',' : '') + 'F';
       if (p.isolated) jel += (jel ? ',' : '') + 'i';
       if (jel) out(g, x0 + bw, top + FS - div(FS, 2), jel, div(FS, 2));
-      out(g, x0 + bw * 5, top, R.fokStr(jf.fok), kis, { jobb: true });
-      out(g, x0 + Math.round(bw * 5.5), top - 2, jegyJel(jf.j), FS, { sym: true });
-      if (p.house) out(g, x0 + bw * 7, top, String(p.house), kis);
-      out(g, x0 + Math.round(bw * 8.5), top, urSzoveg(p), kis);
+      // oszlopok (chkbBolygoTablazat): fokszám, jegy, ház, házurak
+      if (o.plFok) out(g, x0 + bw * 5, top, R.fokStr(jf.fok), kis, { jobb: true });
+      if (o.plJegy) out(g, x0 + Math.round(bw * 5.5), top - 2, jegyJel(jf.j), FS, { sym: true });
+      if (o.plHaz && p.house) out(g, x0 + bw * 7, top, hazStr(p.house, b), kis);
+      if (o.plUr) out(g, x0 + Math.round(bw * 8.5), top, urSzoveg(p), kis);
       top += lep;
     });
     [['AC', e.hz.asc], ['MC', e.hz.mc]].forEach(function (t) {
@@ -310,7 +328,7 @@
   }
 
   /* ---------- házak (PrintHazak, D P 750–808) ---------- */
-  function hazak(g, e, radix) {
+  function hazak(g, e, radix, b, o) {
     var f = Math.round(FS * 0.8), cim = 'Házak', x0, top;
     var bw = Math.round(tw('MI', f) * 1.1);
     if (radix) {
@@ -327,9 +345,10 @@
     var kis = div(FS, 4) * 3, lep = th(kis) + GAP;
     for (var h = 1; h <= 12; h++) {
       var jf = R.jegyben(e.hz.cusps[h]);
-      out(g, x0, top, String(h), kis);
-      out(g, x0 + Math.round(bw * 4.5), top, R.fokStr(jf.fok), kis, { jobb: true });
-      out(g, x0 + Math.round(bw * 5.2), top - 2, jegyJel(jf.j), FS, { sym: true });
+      out(g, x0, top, hazStr(h, b), kis);
+      // oszlopok (chkbHazTablazat; a Windows-os nyomtatás ezeket nem nézte): fokszám, jegy
+      if (o.hzFok) out(g, x0 + Math.round(bw * 4.5), top, R.fokStr(jf.fok), kis, { jobb: true });
+      if (o.hzJegy) out(g, x0 + Math.round(bw * 5.2), top - 2, jegyJel(jf.j), FS, { sym: true });
       top += lep;
     }
   }
@@ -414,8 +433,8 @@
       }
     }
     var g = el('g', {}, svg);
-    if (o.fejlec) fejlec(g, d, o);
-    if (o.lablec) lablec(g);
+    if (o.fejlec) fejlec(g, d, o, b);
+    if (o.lablec) lablec(g, o);
     if (d.kulso) {
       if (o.fenyszog) keresztFenyszogek(g, d, radix, !!o.kepExport);
       return svg;
@@ -423,8 +442,8 @@
     var e = d.e;
     if (!e) return svg;
     if (o.fenyszog) fenyszogek(g, e, radix, b);
-    if (o.planetak) planetak(g, e, radix, b);
-    if (o.hazak) hazak(g, e, radix);
+    if (o.planetak) planetak(g, e, radix, b, o);
+    if (o.hazak) hazak(g, e, radix, b, o);
     if (o.eletstrat) eletstrat(g, e, radix);
     return svg;
   }

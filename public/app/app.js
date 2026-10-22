@@ -1615,11 +1615,16 @@
       Array.prototype.forEach.call(d.querySelectorAll('input[name="mElhely"]'), function (r) { r.checked = r.value === x.osszElhely; });
       Array.prototype.forEach.call(d.querySelectorAll('input[data-b]'), function (c) { c.checked = !!x[c.getAttribute('data-b')]; });
       $('mMeret').value = (+kr.meret || 1).toFixed(1);
+      // Nyomtatás és Exportálás: a nyomtatási ablakkal közös beállítások (beall.nyomtatas)
+      var ny = x.nyomtatas || {};
+      Array.prototype.forEach.call(d.querySelectorAll('input[data-ny2]'), function (c) {
+        var k = c.getAttribute('data-ny2'); c.checked = ny[k] !== undefined ? !!ny[k] : !!R.Nyomtatas.ALAP[k];
+      });
       hatarMind();
     }
     kitolt(beall.kerek, beall);
     megjFul('a1');
-    $('mAlap').onclick = function () { var g = JSON.parse(JSON.stringify(S.ALAP)); kitolt(g.kerek, g); };
+    $('mAlap').onclick = function () { var g = JSON.parse(JSON.stringify(S.ALAP)); g.nyomtatas = {}; kitolt(g.kerek, g); };
     var kisbElotte = JSON.stringify([beall.kerek.asteroids, beall.kisb]), fszElotte = fszKulcs();
     d.returnValue = ''; d.showModal();
     d.onclose = function () {
@@ -1637,6 +1642,8 @@
       var m = +String($('mMeret').value).replace(',', '.');
       kr.meret = isFinite(m) && m > 0 ? Math.round(Math.min(2, Math.max(0.5, m)) * 10) / 10 : 1;
       Array.prototype.forEach.call(d.querySelectorAll('input[data-b]'), function (c) { beall[c.getAttribute('data-b')] = c.checked; });
+      beall.nyomtatas = beall.nyomtatas || {};
+      Array.prototype.forEach.call(d.querySelectorAll('input[data-ny2]'), function (c) { beall.nyomtatas[c.getAttribute('data-ny2')] = c.checked; });
       // a kiválasztott kisbolygók a Windows-os lista sorrendjében
       beall.kisb = Array.prototype.filter.call(kb.querySelectorAll('input'), function (c) { return c.checked; })
         .map(function (c) { return +c.getAttribute('data-kisb'); });

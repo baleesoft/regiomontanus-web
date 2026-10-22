@@ -523,6 +523,8 @@ dialog .halv { color: #6b665d; font-size: 12px; }
 .megj-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 2px 12px; }
 .megj-lista + .megj-lista { margin-top: 4px; }
 .megj-kulon { margin-top: 6px; }
+.megj-bel { margin-left: 22px; }
+.megj-lista.megj-bel { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); margin-top: 2px; }
 .megj-oszlop { display: flex; flex-direction: column; gap: 3px; }
 .megj-al { display: block; font-size: 12px; color: var(--ink2); margin: 6px 0 2px; }
 .megj-elval { width: 1px; align-self: stretch; background: var(--line); margin: 0 4px; }

@@ -128,6 +128,7 @@
         <button type="button" role="tab" data-megjful="a1" aria-selected="true">Általános I.</button>
         <button type="button" role="tab" data-megjful="a2" aria-selected="false">Általános II.</button>
         <button type="button" role="tab" data-megjful="fsz" aria-selected="false">Fényszögek</button>
+        <button type="button" role="tab" data-megjful="ny" aria-selected="false">Nyomtatás és Exportálás</button>
       </div>
       <div data-megjlap="a1" class="megj-lap">
         <fieldset><legend>Zodiákusjelek</legend>
@@ -242,6 +243,43 @@
             <div class="megj-lista" data-tomb="fszPl"></div>
             <span class="megj-al">Kisbolygók/Aszteroidák</span>
             <div class="megj-lista" data-tomb="fszKisb"></div>
+          </fieldset>
+        </div>
+      </div>
+      <div data-megjlap="ny" class="megj-lap" hidden>
+        <div class="megj-ket">
+          <fieldset><legend>Táblázatok</legend>
+            <div class="megj-oszlop">
+              <label class="pipa"><input type="checkbox" data-ny2="planetak"> Planéták táblázatának megjelenítése</label>
+              <label class="pipa megj-bel"><input type="checkbox" data-ny2="plFok"> Fokszáma</label>
+              <label class="pipa megj-bel"><input type="checkbox" data-ny2="plJegy"> Zodiákusjegye</label>
+              <label class="pipa megj-bel"><input type="checkbox" data-ny2="plHaz"> Mely házban van</label>
+              <label class="pipa megj-bel"><input type="checkbox" data-ny2="plUr"> Mely ház(ak) ura(i)</label>
+              <label class="pipa"><input type="checkbox" data-ny2="hazak"> Háztáblázat megjelenítése</label>
+              <label class="pipa megj-bel"><input type="checkbox" data-ny2="hzFok"> Fokszáma</label>
+              <label class="pipa megj-bel"><input type="checkbox" data-ny2="hzJegy"> Zodiákusjegye</label>
+              <label class="pipa"><input type="checkbox" data-ny2="fenyszog"> Fényszög táblázat megjelenítése</label>
+              <label class="pipa"><input type="checkbox" data-ny2="eletstrat"> Életstratégia táblázat megjelenítése</label>
+            </div>
+          </fieldset>
+          <fieldset><legend>Fejléc</legend>
+            <div class="megj-oszlop">
+              <label class="pipa"><input type="checkbox" data-ny2="fejlec"> Fejléc megjelenítése</label>
+              <div class="megj-lista megj-bel"><label class="pipa"><input type="checkbox" data-ny2="fNev"> Név</label><label class="pipa"><input type="checkbox" data-ny2="fDatum"> Születés ideje (éééé.hh.nn)</label><label class="pipa"><input type="checkbox" data-ny2="fIdo"> Születés ideje (óó.pp)</label><label class="pipa"><input type="checkbox" data-ny2="fNap"> Születés napja</label><label class="pipa"><input type="checkbox" data-ny2="fZona"> Időzóna</label><label class="pipa"><input type="checkbox" data-ny2="fNyari"> Nyári időszámítás</label><label class="pipa"><input type="checkbox" data-ny2="fUT"> Univerzális idő (UT)</label><label class="pipa"><input type="checkbox" data-ny2="fST"> Csillagidő (ST)</label><label class="pipa"><input type="checkbox" data-ny2="fTipus"> Nyomtatási kép típusa</label><label class="pipa"><input type="checkbox" data-ny2="fHely"> Születés települése</label><label class="pipa"><input type="checkbox" data-ny2="fKoord"> Település koordinátái</label><label class="pipa"><input type="checkbox" data-ny2="fHaz"> Házrendszer</label></div>
+            </div>
+          </fieldset>
+          <fieldset><legend>Lábléc</legend>
+            <div class="megj-oszlop">
+              <label class="pipa"><input type="checkbox" data-ny2="lablec"> Lábléc megjelenítése</label>
+              <label class="pipa megj-bel"><input type="checkbox" data-ny2="lAlap"> Program-alapinformációk</label>
+              <label class="pipa megj-bel"><input type="checkbox" data-ny2="lReg"> Regisztrációs adatok</label>
+            </div>
+          </fieldset>
+          <fieldset><legend>Egyéb</legend>
+            <div class="megj-oszlop">
+              <label class="pipa"><input type="checkbox" data-ny2="szines"> Nyomtatás színesben</label>
+              <label class="pipa"><input type="checkbox" data-ny2="inkognito"> Születési adatok elrejtése</label>
+            </div>
           </fieldset>
         </div>
       </div>

@@ -77,6 +77,8 @@
   }
   S.beallitasok = function () {
     var v = olvas('beallitasok', null), b = osszefesul(S.ALAP, v);
+    // a nyomtatási beállítások (Nyomtatas.ALAP kulcsai) szabad szerkezetűek: egészében megmaradnak
+    if (v && v.nyomtatas && typeof v.nyomtatas === 'object') b.nyomtatas = melyMasol(v.nyomtatas);
     // a régi „Együttállás-vonalak” kapcsoló a fényszögfajták közé került
     if (v && v.kerek && v.kerek.conjLines === true && !v.kerek.fszTipus && b.kerek.fszTipus.indexOf(1) < 0) b.kerek.fszTipus.unshift(1);
     return b;
