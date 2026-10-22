@@ -1518,8 +1518,24 @@
       $('aDb').textContent = 'Kiválasztva: ' + kij.length + ' db';
       $('aDb').title = kij.map(A.nev).join(', ');
     }
+    // „Csak a kiválasztottak”: a nem kijelölt sorok elrejtése. A szűrés a bekapcsoláskor / törléskor fut újra,
+    // így a szűrt listában visszavont kijelölés sora látható marad (újra kijelölhető).
+    function szur() {
+      var csak = $('aCsakKij').checked;
+      Array.prototype.forEach.call(sorok, function (tr) { tr.hidden = csak && kij.indexOf(+tr.getAttribute('data-id')) < 0; });
+      if (akt >= 0 && sorok[akt].hidden) { sorok[akt].classList.remove('akt'); akt = -1; }
+      if (akt < 0) aktival(lep(-1, 1), false);
+      lista.scrollTop = 0;
+    }
+    function lathato(i) { return i >= 0 && i < sorok.length && !sorok[i].hidden; }
+    /** a következő látható sor i-től irányba (d = ±1), n lépésnyit */
+    function lep(i, d, n) {
+      var j = i, utolso = -1; n = n || 1;
+      while (n > 0) { j += d; if (j < 0 || j >= sorok.length) break; if (lathato(j)) { utolso = j; n--; } }
+      return utolso;
+    }
     function aktival(i, gorget) {
-      if (i < 0 || i >= sorok.length) return;
+      if (!lathato(i)) return;
       if (akt >= 0) sorok[akt].classList.remove('akt');
       akt = i; sorok[i].classList.add('akt');
       if (gorget) {
@@ -1538,26 +1554,32 @@
       var q = $('aKeres').value.trim().toUpperCase(); if (!q) return;
       var csak = $('aCsakNev').checked;
       for (var i = 0; i < alloLista.length; i++) {
+        if (!lathato(i)) continue;
         var c = alloLista[i];
         var ok = csak ? c.nev.toUpperCase().indexOf(q) === 0 : [c.nev, c.nomen, c.latin, c.hun].join(' ').toUpperCase().indexOf(q) >= 0;
         if (ok) { aktival(i, true); return; }
       }
     }
-    $('aKeres').value = ''; $('aCsakNev').checked = true;
+    $('aKeres').value = ''; $('aCsakNev').checked = true; $('aCsakKij').checked = false;
     $('aMegj').checked = !!a.megj; $('aMind').checked = !!a.mind; $('aOrb').value = a.orb;
     Array.prototype.forEach.call($('aFsz').querySelectorAll('input'), function (c) { c.checked = a.fsz.indexOf(+c.value) >= 0; });
-    frissit(); aktival(0, false); lista.scrollTop = 0;
-    $('aKeres').oninput = keres; $('aCsakNev').onchange = keres;
+    akt = -1; Array.prototype.forEach.call(sorok, function (tr) { tr.classList.remove('akt'); });
+    frissit(); szur();
+    $('aKeres').oninput = keres; $('aCsakNev').onchange = keres; $('aCsakKij').onchange = szur;
     tb.onclick = function (e) { var tr = e.target.closest('tr'); if (tr) aktival(+tr.getAttribute('data-i'), false); };
     tb.ondblclick = function (e) { var tr = e.target.closest('tr'); if (tr) { aktival(+tr.getAttribute('data-i'), false); valt(akt); } };
     lista.onkeydown = function (e) {
       var l = { ArrowDown: 1, ArrowUp: -1, PageDown: 12, PageUp: -12 }[e.key];
-      if (l) { e.preventDefault(); aktival(Math.max(0, Math.min(sorok.length - 1, akt + l)), true); }
+      if (l) {
+        e.preventDefault();
+        var c = lep(akt, l > 0 ? 1 : -1, Math.abs(l));
+        aktival(c >= 0 ? c : lep(l > 0 ? sorok.length : -1, l > 0 ? -1 : 1), true);
+      }
       else if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); valt(akt); }
-      else if (e.key === 'Home') { e.preventDefault(); aktival(0, true); }
-      else if (e.key === 'End') { e.preventDefault(); aktival(sorok.length - 1, true); }
+      else if (e.key === 'Home') { e.preventDefault(); aktival(lep(-1, 1), true); }
+      else if (e.key === 'End') { e.preventDefault(); aktival(lep(sorok.length, -1), true); }
     };
-    $('aTorol').onclick = function () { kij = []; frissit(); };
+    $('aTorol').onclick = function () { kij = []; frissit(); szur(); };
     d.returnValue = ''; d.showModal(); $('aKeres').focus();
     d.onclose = function () {
       if (d.returnValue !== 'ok') return;
