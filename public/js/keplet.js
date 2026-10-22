@@ -125,6 +125,8 @@
         cusps: hz.cusps.slice(1, 13),
         ascmc: [hz.asc, hz.mc, hz.armc, hz.vertex, hz.equAsc, hz.coAscKoch, hz.coAscMunkasey, hz.polarAsc]
       };
+      eredmeny.kuld = kuld;
+      if (opt.csakPoz) return eredmeny;     // keresés: a pozíciók elegendők (az elemzés kötegelve, api/kereses.php)
       return apiHivas(opt.api || K.API, kuld).then(function (el) {
         eredmeny.elemzes = el;
         el.planets.forEach(function (p) { eredmeny.elemPl[p.id] = p; });
@@ -151,6 +153,14 @@
   K.osszevet = function (eBelso, eKulso, api) {
     return apiHivas(api || K.API_OSSZ, { belso: kuldes(eBelso), kulso: kuldes(eKulso) });
   };
+
+  K.API_KER = '../api/kereses.php';
+  /** Kötegelt keresés: feltetel { mod, planeta, jegyek, hazak }, kepletek [{ id, planets, cusps, ascmc }] (≤ 25) */
+  K.kereses = function (feltetel, kepletek, api) { return apiHivas(api || K.API_KER, { feltetel: feltetel, kepletek: kepletek }); };
+
+  K.API_JJ = '../api/jj.php';
+  /** A „Jegyek és játszmák” kártya adatai (Promise<{ enallapotok, trikofeliratok, szuloiProgramok, idoNelkul }>) */
+  K.jj = function (e, idoNelkul, api) { var x = kuldes(e); x.idoNelkul = !!idoNelkul; return apiHivas(api || K.API_JJ, x); };
 
   K.API_OLV = '../api/olvaso.php';
   /** A horoszkópolvasó szövegei egy képlethez (Promise<{ signs, houses, planets, houseLords, selfMarkers }>) */

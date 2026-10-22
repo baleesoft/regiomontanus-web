@@ -89,7 +89,7 @@
   function rajzol(hova, k, beall, kulso) {
     var o = {}, kk;
     for (kk in ALAP) o[kk] = ALAP[kk];
-    for (kk in (beall || {})) o[kk] = beall[kk];
+    for (kk in (beall || {})) if (beall[kk] !== undefined) o[kk] = beall[kk];
     if (kulso) { o.selfMarkers = false; o.cuspLabels = false; o.outerTicks = true; }
 
     var r = 400, R = r * (kulso ? 1.3 : 1.2);
@@ -124,6 +124,12 @@
 
     /* ---------- zodiákus-sáv ---------- */
     var gZod = el('g', {}, svg);
+    // elemenkénti jegyzetek jelzése: k.jegyzetJelek = { 'P_0': true, 'H_1': true, 'J_0': true, … } (nyomtatásban nincs)
+    var jJel = k.jegyzetJelek || {};
+    function felkialt(x, y, szin, szulo) {
+      return szoveg('!', { x: x, y: y, 'font-size': F * 0.95, 'font-weight': 'bold', 'text-anchor': 'middle',
+        'dominant-baseline': 'central', fill: szin, stroke: 'none', 'class': 'jegyzetjel', 'pointer-events': 'none' }, szulo);
+    }
     for (var j = 0; j < 12; j++) {
       var a0 = j * 30, a1 = j * 30 + 30;
       var p0 = pont(a0, r), p1 = pont(a1, r), q1 = pont(a1, R_ZOD_SAV), q0 = pont(a0, R_ZOD_SAV);
@@ -132,6 +138,8 @@
       var pj = pont(j * 30 + 15, (r + R_ZOD_SAV) / 2);
       cim(szoveg(JEGY[j] + VS, { x: pj[0], y: pj[1], 'font-size': pxJegy, 'font-family': SYM, 'text-anchor': 'middle',
         'dominant-baseline': 'central', fill: '#000', 'data-olv': 'jegy:' + j }, gZod), JNEV[j]);
+      // jegyzet jelzése (DJ 26–95): a Kos, Oroszlán, Nyilas (piros sáv) jelénél fehér, máshol piros „!”
+      if (jJel['J_' + j]) felkialt(pj[0] + pxJegy * 0.42, pj[1] - pxJegy * 0.42, j % 4 === 0 ? '#fff' : '#d00000', gZod);
     }
     var gVonal = el('g', { stroke: '#000', fill: 'none', 'stroke-width': 1 }, svg);
     [r, R_ZOD_SAV, R_ZOD_BELSO, R_HAZ_KULSO].forEach(function (rr) { el('circle', { r: rr }, gVonal); });
@@ -241,6 +249,7 @@
       var hp = pont(kezd + (veg - kezd) / 2, R_HAZSZAM);
       szoveg(String(hz), { x: hp[0], y: hp[1], 'font-size': pxHazszam, 'text-anchor': 'middle', 'dominant-baseline': 'central',
         fill: '#000', stroke: 'none', 'data-olv': 'haz:' + hz }, gHaz);
+      if (jJel['H_' + hz]) felkialt(hp[0] + pxHazszam * 0.75, hp[1] - pxHazszam * 0.55, '#d00000', gHaz);
     }
 
     /* ---------- fényszögek (DrawAspects) ---------- */
@@ -270,7 +279,7 @@
     var gPl = el('g', {}, svg);
     elemek.forEach(function (e) {
       if (e.tengely) {
-        var gt = el('g', { 'class': 'tengelyjel', 'data-tengely': e.tengely }, gPl), jt = jegy(e.orig);
+        var gt = el('g', { 'class': 'tengelyjel', 'data-tengely': e.tengely, 'data-megj': e.tengely === 'AC' ? 'P_-1' : 'P_-2' }, gPl), jt = jegy(e.orig);
         cim(gt, e.nev + ': ' + JNEV[jt] + ' ' + fokStr(fokNorm(e.orig) - jt * 30));
         el('rect', { x: e.bal, y: e.fent, width: e.w, height: e.w, fill: '#fff' }, gt);
         szoveg(e.tengely, { x: e.x, y: e.y, 'font-size': pxKicsi * 1.25, 'font-weight': 'bold', 'text-anchor': 'middle',
@@ -280,6 +289,7 @@
         if (dyt !== 0) tt = Math.min(tt, Math.abs((e.w / 2) / dyt));
         if (tt < 1) el('line', { x1: (e.x + dxt * tt).toFixed(2), y1: (e.y + dyt * tt).toFixed(2), x2: zt[0].toFixed(2), y2: zt[1].toFixed(2),
           stroke: '#000', 'stroke-width': 0.8 }, gt);
+        if (jJel[e.tengely === 'AC' ? 'P_-1' : 'P_-2']) felkialt(e.bal + e.w, e.fent, '#d00000', gt);
         return;
       }
       var p = e.p, g = el('g', { 'class': 'planeta', 'data-id': p.id, 'data-olv': 'pl:' + p.id }, gPl);
@@ -289,6 +299,7 @@
       el('rect', { x: e.bal, y: e.fent, width: e.w, height: e.h, fill: '#fff' }, g);
       szoveg(PLANETA[p.id] + VS, { x: e.x, y: e.y, 'font-size': pxPlaneta, 'font-family': SYM, 'text-anchor': 'middle',
         'dominant-baseline': 'central', fill: '#000' }, g);
+      if (jJel['P_' + p.id]) felkialt(e.bal + e.w + F * 0.15, e.fent + F * 0.3, '#d00000', g);
       if (e.ur) {
         // házúr-számok: számonként külön elem (a horoszkópolvasó mindegyikhez külön szöveget ad)
         var tu = el('text', { x: e.x, y: e.fent + e.w + pxKicsi * 0.45, 'font-size': pxKicsi, 'text-anchor': 'middle',

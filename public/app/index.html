@@ -201,19 +201,69 @@
   </form>
 </dialog>
 
-<input type="file" id="fajlInput" accept=".szk" multiple hidden>
+<!-- Nyomtatási / exportálási beállítások (TfrmPrintSettingsPreview) -->
+<dialog id="dlgNyomtat" class="ny-dlg" aria-labelledby="dlgNyCim">
+  <div class="dfej"><span id="dlgNyCim">Nyomtatási / exportálási beállítások</span></div>
+  <div class="dtorzs ny-torzs">
+    <fieldset class="ny-beall"><legend>Nyomtatási / exportálási beállítások</legend>
+      <div class="ny-csak"><button type="button" class="gomb" data-csak="tabla" aria-pressed="false" data-csak1>Csak a táblázatok - Radix nélkül</button>
+        <button type="button" class="gomb" data-csak="radix" aria-pressed="false">Csak a Radix - táblázatok nélkül</button></div>
+      <label><input type="checkbox" data-ny="fejlec"> Fejléc-kijelzések</label>
+      <label><input type="checkbox" data-ny="fenyszog"> Fényszögek táblázata</label>
+      <label data-csak1><input type="checkbox" data-ny="eletstrat"> Életstratégia táblázata</label>
+      <label data-csak1><input type="checkbox" data-ny="planetak"> Planéták táblázata</label>
+      <label data-csak1><input type="checkbox" data-ny="hazak"> Házak táblázata</label>
+      <label><input type="checkbox" data-ny="lablec"> Lábléc-kijelzések</label>
+      <label><input type="checkbox" data-ny="szines"> Nyomtatás színesben</label>
+      <label><input type="checkbox" data-ny="inkognito"> Személyes adatok elrejtése</label>
+      <p class="halv ny-tobb" hidden>Összevetésnél a kereszt-fényszögek táblája kerül a lapra.</p>
+      <label class="sor">Kép formátuma: <select data-kepfmt><option value="png">PNG</option><option value="jpg">JPG</option></select></label>
+      <p class="halv">A4 álló lap. Nyomtatáskor a böngésző párbeszédablakában a „Margók: nincs” és a „Háttérgrafika” beállítás ajánlott; PDF is menthető onnan.</p>
+    </fieldset>
+    <figure class="ny-elo"><figcaption>Nyomtatási / exportálási előnézet</figcaption><div class="ny-elonezet"></div></figure>
+  </div>
+  <div class="dlab"><span class="tolt"></span>
+    <button type="button" class="gomb fo" data-nyg="nyomtat">Nyomtatás</button>
+    <button type="button" class="gomb" data-nyg="kep">Mentés képként</button>
+    <button type="button" class="gomb" data-nyg="megse">Mégsem</button></div>
+</dialog>
+
+<!-- Új URL vagy e-mail cím csatolása (fAddNewURLOrMail) -->
+<dialog id="dlgUrl" aria-labelledby="dlgUrlCim">
+  <form method="dialog">
+    <div class="dfej"><span id="dlgUrlCim">Új URL vagy e-mail cím csatolása</span></div>
+    <div class="dtorzs" style="max-width:420px">
+      <fieldset><legend>Kérem adjon meg egy URL-t vagy e-mail címet</legend>
+        <label class="sor">URL / e-mail: <input type="text" id="urlMezo" autocomplete="off" style="width:260px"></label>
+        <p class="halv">Például: URL: http://www.esetneve.hu &nbsp; E-mail: esetneve@valami.hu</p>
+        <p class="hiba" id="urlHiba" role="alert"></p></fieldset>
+    </div>
+    <div class="dlab"><span class="tolt"></span>
+      <button type="submit" class="gomb fo" value="ok">Rendben</button>
+      <button type="submit" class="gomb" value="">Mégsem</button></div>
+  </form>
+</dialog>
+
+<input type="file" id="fajlInput" accept=".szk,.mgj" multiple hidden>
+<input type="file" id="mgjInput" accept=".mgj" hidden>
 
 <script src="../swe/sweph.js"></script>
 <script src="../js/kozos.js"></script>
 <script src="../js/szk.js"></script>
+<script src="../js/rtf.js"></script>
 <script src="../js/keplet.js"></script>
 <script src="../js/kerek.js"></script>
 <script src="../js/tablak.js"></script>
+<script src="../js/nyomtatas.js"></script>
 <script src="../js/idotech.js"></script>
 <script src="../js/tarolo.js"></script>
 <script src="telepules.js"></script>
 <script src="adatlap.js"></script>
 <script src="progr.js"></script>
+<script src="mappa.js"></script>
+<script src="jegyzet.js"></script>
+<script src="kereses.js"></script>
+<script src="kartyak.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

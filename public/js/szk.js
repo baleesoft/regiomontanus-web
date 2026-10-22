@@ -32,7 +32,7 @@
   /**
    * Beolvasás. Visszaad: { name, year, month, day, hour, minute, second, bc, timeUnknown,
    *   tzCode, tzManual, offsetHours (LMT esetén a hosszúságból), dst, city, country, countryId,
-   *   lat, lon, tags[], notes, picture, attachments[], version, raw }
+   *   lat, lon, tags[], notes, picture, attachments[], megjegyzesek{kulcs: rtf}, version, raw }
    */
   function parse(buf) {
     var d = iniOlvas(dekodol(buf));
@@ -63,7 +63,10 @@
 
     var tags = ((d.Tags || {}).Tags || '').split(';').filter(function (t) { return t; });
     var notes = Object.keys(d.Notes || {}).sort().map(function (k) { return d.Notes[k]; }).join('\n');
-    var att = Object.keys(d.Attachements || {}).sort().map(function (k) { return d.Attachements[k]; });
+    var att = Object.keys(d.Attachements || {}).map(function (k) { return d.Attachements[k]; });
+    // elemenkénti jegyzetek (webes kiegészítés: a Windows-os .mgj [Megjegyzes] kulcsai, RTF, sortörés = #S#)
+    var megj = {};
+    Object.keys(d.Megjegyzes || {}).forEach(function (k) { var v = d.Megjegyzes[k].replace(/#S#/g, '\r\n'); if (v.trim()) megj[k] = v; });
 
     return {
       name: bi.Name || '', year: I('Year'), month: I('Month'), day: I('Day'),
@@ -72,7 +75,8 @@
       tzCode: tzCode, tzManual: B('TZCodeIsManual'), offsetHours: offset, dst: B('IsDayLightSavingTime'),
       city: bi.LocCity || '', country: bi.LocCountry || '', countryId: bi.LocCountryID || '',
       lat: lat, lon: lon, tags: tags, notes: notes,
-      picture: (d.Other || {}).PictureFilename || null, attachments: att,
+      picture: (d.Other || {}).PictureFilename || null, pictureData: (d.Other || {}).PictureData || null,
+      attachments: att, megjegyzesek: megj,
       version: (d.Other || {}).FileVersionId || null, raw: d
     };
   }
@@ -118,9 +122,22 @@
     s.push('', '[Tags]', 'Tags=' + (a.cimkek || []).join(';'), '', '[Notes]');
     var jegyzet = (a.jegyzet || '').replace(/\r/g, '');
     if (jegyzet) jegyzet.split('\n').forEach(function (l, i) { s.push('Note' + (i < 9 ? '0' : '') + (i + 1) + '=' + l); });
-    s.push('', '[Other]', 'PictureFilename=' + (ot.PictureFilename || ''), 'FileVersionId=' + VERZIO, '', '[Attachements]');
-    var att = e.Attachements || {};
-    Object.keys(att).sort().forEach(function (k) { s.push(k + '=' + att[k]); });
+    // fénykép: a Windows-os program a PictureFilename útvonalat használja (hors\images\…); a webes változat a kicsinyített
+    // képet a PictureData kulcsban is eltárolja (a Windows-os program ezt nem olvassa)
+    var kepFajl = a.kepFajl !== undefined ? a.kepFajl : (ot.PictureFilename || '');
+    s.push('', '[Other]', 'PictureFilename=' + kepFajl);
+    if (a.kepAdat) s.push('PictureData=' + a.kepAdat);
+    s.push('FileVersionId=' + VERZIO, '', '[Attachements]');
+    if (Array.isArray(a.csatolmanyok)) a.csatolmanyok.forEach(function (v, i) { s.push('CsatDoc' + (i < 9 ? '0' : '') + (i + 1) + '=' + v); });
+    else { var att = e.Attachements || {}; Object.keys(att).sort().forEach(function (k) { s.push(k + '=' + att[k]); }); }
+    // elemenkénti jegyzetek – a Windows-os program ezt a szakaszt nem olvassa (ott: hors\docs\<név>.mgj)
+    var mj = a.megjegyzesek || {}, mk = Object.keys(mj).filter(function (k) { return mj[k] && mj[k].trim(); });
+    if (mk.length) {
+      s.push('', '[Megjegyzes]');
+      (global.Regio && global.Regio.Rtf ? global.Regio.Rtf.rendez(mk) : mk.sort()).forEach(function (k) {
+        s.push(k + '=' + mj[k].replace(/\r?\n/g, '#S#'));
+      });
+    }
     return s.join('\r\n') + '\r\n';
   }
 
@@ -138,7 +155,8 @@
       nev: p.name, ev: p.year, ho: p.month, nap: p.day, ora: p.hour, perc: p.minute, mp: p.second,
       ismeretlen: p.timeUnknown, telepules: p.city, orszag: p.country, orszagKod: p.countryId, lat: p.lat, lon: p.lon,
       zonaMod: p.tzCode === 'LMT' ? 'lmt' : 'kezi', tz: '', eltolas: p.offsetHours, tzKod: p.tzCode, nyari: p.dst,
-      jegyzet: p.notes, cimkek: p.tags, tipus: 'radix', eredeti: p.raw
+      jegyzet: p.notes, cimkek: p.tags, megjegyzesek: p.megjegyzesek || {}, kepFajl: p.picture || '', kepAdat: p.pictureData || '',
+      csatolmanyok: (p.attachments || []).slice(), tipus: 'radix', eredeti: p.raw
     };
   }
 
