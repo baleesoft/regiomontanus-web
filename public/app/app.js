@@ -308,7 +308,10 @@
     var k = akt();
     if (!k) { $('st1').textContent = kepletek.length ? '' : 'Nincs megnyitott képlet'; $('st2').textContent = ''; $('st3').textContent = ''; return; }
     var a = k.adat;
-    $('st1').textContent = K.cim(a) + (inkognito() && a.tipus !== 'aktualis' ? '' : ' ' + idoStr(a) + (K.helyNev(a) ? ' ' + K.helyNev(a) : ''));
+    // a Windows-os fül-súgó szerint: név, születési idő, hely, majd az életkor (GetKora + „é”)
+    var ek = a.tipus !== 'aktualis' ? K.eletkor(a) : -1;
+    $('st1').textContent = K.cim(a) + (inkognito() && a.tipus !== 'aktualis' ? '' : ' ' + idoStr(a) + (K.helyNev(a) ? ' ' + K.helyNev(a) : '') +
+      (ek >= 0 && ek < 150 ? ' · ' + ek + ' é' : ''));
     $('st2').textContent = tipusNev(k);
     if (k.fajta) {
       var rr = [kulsoMikor(k)];
@@ -318,7 +321,6 @@
       return;
     }
     var r = [];
-    if (a.tipus !== 'aktualis' && !inkognito()) { var ek = K.eletkor(a); if (ek >= 0 && ek < 150) r.push(ek + ' é'); }
     if (k.e) r.push(k.e.hz.kos0 ? 'Kos 0° házak' : R.HAZRENDSZER[beall.hsys] + (beall.sid ? ', sziderikus' : ''));
     if (lepettE(k)) r.push('léptetve: ' + eltolasStr(k.eltolas));
     if (k.e && k.e.figyelmeztetes.length) r.push(k.e.figyelmeztetes.join(' '));
