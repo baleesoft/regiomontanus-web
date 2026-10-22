@@ -391,13 +391,37 @@
   }
   function fajlMegnyit(f) {
     if (!f) return;
-    f.arrayBuffer().then(function (buf) {
+    bufferMegnyit(f.arrayBuffer());
+  }
+  function bufferMegnyit(igeret) {
+    igeret.then(function (buf) {
       var k = RegioSzk.parse(buf);
       if (k.bc) throw new Error('Időszámításunk előtti dátum még nem támogatott.');
       beallit({ nev: k.name, y: k.year, mo: k.month, d: k.day, h: k.hour, mi: k.minute, s: k.second,
         lat: k.lat, lon: k.lon, mod: 'manual', kezi: +k.offsetHours.toFixed(6), fajl: k });
       szamol();
     }).catch(function (e) { setStatus('status', 'bad', 'A fájl nem nyitható meg: ' + e.message); });
+  }
+
+  /*
+   * Opcionális teszt-képletek: ha a tárhelyen van proba/tesztkepletek.json (a privát telepítőcsomagból),
+   * minden eleméhez egy gomb kerül a teszt-gombok mellé: [{ "cim": "...", "fajl": "tesztek/x.szk" }, ...]
+   */
+  function tesztGombok() {
+    fetch('tesztkepletek.json', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : []; }).then(function (l) {
+      var hova = $('tesztGombok');
+      (Array.isArray(l) ? l : []).forEach(function (t) {
+        var g = document.createElement('button');
+        g.type = 'button'; g.className = 'sec'; g.textContent = 'Teszt: ' + t.cim;
+        g.addEventListener('click', function () {
+          bufferMegnyit(fetch(t.fajl, { cache: 'no-store' }).then(function (r) {
+            if (!r.ok) throw new Error(t.fajl + ': HTTP ' + r.status);
+            return r.arrayBuffer();
+          }));
+        });
+        hova.appendChild(g);
+      });
+    }).catch(function () { /* nincs teszt-lista: nem hiba */ });
   }
 
   $('frm').addEventListener('submit', function (e) { e.preventDefault(); szamol(); });
@@ -438,6 +462,7 @@
     fetch('referencia.json').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
   ]).then(function (res) {
     se = res[0]; ref = res[1];
+    tesztGombok();
     if (ref) {
       var p = ref.ut.split(':'), d = ref.date.split('.');
       ref.jd = se.julday(+d[2], +d[1], +d[0], +p[0] + p[1] / 60 + p[2] / 3600);
