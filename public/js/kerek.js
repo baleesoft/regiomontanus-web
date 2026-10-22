@@ -397,16 +397,18 @@
         l2 = cs[a.b[1]]; nev2 = a.b[1] + '. házcsúcs';
       } else return;
       if (typeof l2 !== 'number') return;
+      // a két vég azonosítója a kiemeléshez (fokusz): P<id>, A0/A1 (ASC/MC), H<n>
+      var v2 = a.b[0] === 'P' ? 'P' + a.b[1] : a.b[0] + a.b[1];
       // „Vonalak a planéta eredeti helyzetéhez”: a valódi hosszúságnál, nem a széttolt jelnél (bAtOrigPlace)
       var p = pont(o.fszEredeti ? origHely[id1] : hely[id1], R_FSZ_VEG), q = pont(l2, R_FSZ_VEG);
       var vonalE = el('line', { x1: p[0].toFixed(2), y1: p[1].toFixed(2), x2: q[0].toFixed(2), y2: q[1].toFixed(2),
         stroke: fszSzin(a.aspect), 'stroke-dasharray': fszVonal(a.aspect),
-        'stroke-linecap': fszVonal(a.aspect) === '1 3' ? 'round' : null, 'class': 'fszvonal', 'data-fsz': a.aspect }, gFsz);
+        'stroke-linecap': fszVonal(a.aspect) === '1 3' ? 'round' : null, 'class': 'fszvonal', 'data-fsz': a.aspect, 'data-v1': 'P' + id1, 'data-v2': v2 }, gFsz);
       var leiras = nevE(id1) + ' – ' + nev2 + ': ' + FSZNEV[a.aspect] + ' (' + fokStr(a.orb).replace(/\d+"$/, '') + ')';
       cim(vonalE, leiras);
       if (o.aspectSymbols.indexOf(a.aspect) >= 0) {
         var mx = (p[0] + q[0]) / 2, my = (p[1] + q[1]) / 2;
-        cim(szoveg(FSZ[a.aspect] + VS, { x: mx, y: my, 'font-size': pxFsz, 'font-family': SYM,
+        cim(szoveg(FSZ[a.aspect] + VS, { x: mx, y: my, 'font-size': pxFsz, 'font-family': SYM, 'class': 'fszjel', 'data-v1': 'P' + id1, 'data-v2': v2,
           'text-anchor': 'middle', 'dominant-baseline': 'central', fill: fszSzin(a.aspect), stroke: 'none' }, gFsz), leiras);
       }
     });
@@ -649,8 +651,35 @@
     return svg;
   }
 
+  /**
+   * Kiemelés (fókusz): a kiválasztott planéta, a vele fényszögben álló elemek és a fényszögvonalak erősek, a többi elhalványul.
+   * svg: egy rajzolt kerék, id: planéta-azonosító (null: kikapcsol). Visszaad: true, ha a planéta a keréken van.
+   */
+  function fokusz(svg, id) {
+    if (!svg) return false;
+    Array.prototype.forEach.call(svg.querySelectorAll('.fk-be, .fk-fo'), function (x) { x.classList.remove('fk-be', 'fk-fo'); });
+    var fo = id === null || id === undefined ? null : svg.querySelector('g.planeta:not(.kulso)[data-id="' + id + '"], g.csillag[data-id="' + id + '"]');
+    svg.classList.toggle('fokusz', !!fo);
+    if (!fo) return false;
+    fo.classList.add('fk-fo');
+    var cel = 'P' + id;
+    Array.prototype.forEach.call(svg.querySelectorAll('.fszvonal, .fszjel'), function (x) {
+      var v1 = x.getAttribute('data-v1'), v2 = x.getAttribute('data-v2'), masik = v1 === cel ? v2 : v2 === cel ? v1 : null;
+      if (!masik) return;
+      x.classList.add('fk-be');
+      if (masik.charAt(0) === 'P') {
+        var g = svg.querySelector('g.planeta:not(.kulso)[data-id="' + masik.slice(1) + '"], g.csillag[data-id="' + masik.slice(1) + '"]');
+        if (g) g.classList.add('fk-be');
+      } else {
+        var h = masik === 'A0' ? 1 : masik === 'A1' ? 10 : +masik.slice(1);
+        Array.prototype.forEach.call(svg.querySelectorAll('line.hazcsucs[data-haz="' + h + '"]'), function (l) { l.classList.add('fk-be'); });
+      }
+    });
+    return true;
+  }
+
   /** Összevetés egymáson: a belső képlet a megszokott módon, a külső kör a zodiákus-sávon kívül */
   function rajzolDupla(hova, belso, kulso, beall) { return rajzol(hova, belso, beall, kulso); }
 
-  global.RegioKerek = { rajzol: rajzol, rajzolDupla: rajzolDupla, ALAP: ALAP };
+  global.RegioKerek = { rajzol: rajzol, rajzolDupla: rajzolDupla, fokusz: fokusz, ALAP: ALAP };
 })(typeof window !== 'undefined' ? window : globalThis);

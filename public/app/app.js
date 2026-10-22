@@ -209,6 +209,32 @@
       colors: ff || { fire: sz.fire, earth: sz.earth, air: sz.air, water: sz.water, aspectBg: sz.aspectBg, aspect: '#000000' } };
   }
   function kerekRajzol(hova, k) {
+    var svg = kerekRajzolAlap(hova, k);
+    // a planétára kattintással kiemelt fényszögkapcsolatok újrarajzolás után is megmaradnak (nyomtatásban nem)
+    if (svg && !nyomtatFelul && k.fokusz !== undefined && k.fokusz !== null) {
+      var kk = hova.querySelectorAll('.kk'), cel = kk.length ? (kk[k.fokuszK ? 1 : 0] || kk[0]).querySelector('svg') : svg;
+      if (!cel || !RegioKerek.fokusz(cel, k.fokusz)) k.fokusz = null;
+    }
+    return svg;
+  }
+  /** Fókusz (kiemelés): a kattintott planéta, a vele fényszögben álló elemek és a fényszögvonalak; a többi halvány.
+   *  Ugyanarra kattintva, vagy a kerék üres részére kattintva kikapcsol. */
+  function fokuszKatt(k, svg, t) {
+    var g = t.closest('g.planeta:not(.kulso), g.csillag'), kulso = !!svg.closest('[data-kulso]');
+    var id = g ? +g.getAttribute('data-id') : null, volt = k.fokusz !== undefined && k.fokusz !== null;
+    if (id !== null && volt && k.fokusz === id && !!k.fokuszK === kulso) id = null;
+    if (id === null && !volt) return;
+    Array.prototype.forEach.call(svg.closest('.kerek').querySelectorAll('svg'), function (s) { RegioKerek.fokusz(s, null); });
+    k.fokusz = id; k.fokuszK = kulso;
+    if (id !== null && !RegioKerek.fokusz(svg, id)) k.fokusz = null;
+  }
+  function fokuszTorol() {
+    var volt = false;
+    kepletek.forEach(function (k) { if (k.fokusz !== undefined && k.fokusz !== null) { k.fokusz = null; volt = true; } });
+    Array.prototype.forEach.call(document.querySelectorAll('#asztal .kerek svg.fokusz'), function (s) { RegioKerek.fokusz(s, null); });
+    return volt;
+  }
+  function kerekRajzolAlap(hova, k) {
     if (k.fajta) return osszKerekRajzol(hova, k);
     if (k.e) {
       var kd = T.kerekAdat(k.e);
@@ -2053,6 +2079,7 @@
     if (e.key === 'Escape') {
       if (nyitottMenu !== null) { menuZar(); return; }
       if (!$('lista').hidden) { listaValt(false); $('listaGomb').focus(); return; }
+      if (!beviteliMezo(e.target) && fokuszTorol()) return;
       if (nezet === 'reszlet') { nezet = 'mozaik'; render(); }
     }
   });
@@ -2116,6 +2143,8 @@
     var lu = e.target.closest('[data-legutobbi]'); if (lu) { legutobbiNyit(+lu.getAttribute('data-legutobbi')); return; }
     var cso = e.target.closest('[data-csat]');
     if (cso) { var kc = akt(); if (kc) { kc.csatKijelolt = +cso.getAttribute('data-csat'); render(); var u = document.querySelector('[data-csat="' + kc.csatKijelolt + '"]'); if (u) u.focus(); } return; }
+    var ksv = e.target.closest('.kerek svg');
+    if (ksv) { var kf = cs ? kepletek[+cs.getAttribute('data-i')] : akt(); if (kf) fokuszKatt(kf, ksv, e.target); }
     if (cs && +cs.getAttribute('data-i') !== aktiv) aktival(+cs.getAttribute('data-i'));
   });
   $('asztal').addEventListener('dblclick', function (e) {
