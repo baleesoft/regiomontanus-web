@@ -25,8 +25,10 @@ python3 -m ziglang cc -target wasm32-wasi -O2 -DNO_SWE_GLP -mexec-model=reactor 
   "$SRC"/{swecl,swedate,swehel,swehouse,swejpl,swemmoon,swemplan,sweph,swephlib}.c \
   "${LDFLAGS[@]}" -lm
 
-for f in sepl_18.se1 semo_18.se1 seas_18.se1 sefstars.txt; do
-  cp "$SRC/ephe/$f" "$ROOT/public/swe/ephe/"
+# Adatfájlok: 600 éves blokkok 600–2999 között (a böngésző évszám szerint, igény szerint tölti be)
+for b in 06 12 18 24; do
+  for p in sepl semo seas; do cp "$SRC/ephe/${p}_${b}.se1" "$ROOT/public/swe/ephe/"; done
 done
+cp "$SRC/ephe/sefstars.txt" "$ROOT/public/swe/ephe/"
 
 ls -la "$ROOT/public/swe/swe.wasm"

@@ -3,11 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Regiomontanus – efemerida próba</title>
+<title>Regiomontanus – próba</title>
 <style>
   :root {
     --bg: #ece9e2; --panel: #fbfaf7; --ink: #1f1d1a; --muted: #6b665d; --line: #cfc9bd;
-    --accent: #2a4a7f; --ok: #2f7d32; --warn: #b26a00; --bad: #b3261e; --head: #e3ded3;
+    --accent: #2a4a7f; --ok: #2f7d32; --warn: #b26a00; --bad: #b3261e; --head: #e3ded3; --sum: #fffde8;
+    --sel: #dbe6f7;
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink);
@@ -16,30 +17,36 @@
            justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; }
   header h1 { font-size: 16px; margin: 0; font-weight: 600; }
   header span { font-size: 12px; opacity: .85; }
-  main { max-width: 1100px; margin: 0 auto; padding: 16px; display: grid; gap: 16px;
-         grid-template-columns: 340px 1fr; align-items: start; }
-  @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+  main { max-width: 1200px; margin: 0 auto; padding: 16px; display: grid; gap: 16px;
+         grid-template-columns: 330px minmax(0, 1fr); align-items: start; }
+  @media (max-width: 900px) { main { grid-template-columns: minmax(0, 1fr); } }
   fieldset { border: 1px solid var(--line); background: var(--panel); margin: 0 0 12px; padding: 8px 12px 12px; }
   legend { padding: 0 4px; color: var(--accent); font-weight: 600; }
   label { display: block; font-size: 12px; color: var(--muted); margin: 6px 0 2px; }
-  input, select { font: inherit; padding: 4px 6px; border: 1px solid var(--line); background: #fff; width: 100%; }
+  input, select { font: inherit; padding: 4px 6px; border: 1px solid var(--line); background: #fff; width: 100%; color: var(--ink); }
+  input:disabled { background: #f1eee8; color: var(--muted); }
   .row { display: flex; gap: 6px; }
   .row > div { flex: 1; min-width: 0; }
-  button { font: inherit; padding: 6px 14px; border: 1px solid #1d3560; background: var(--accent);
+  button { font: inherit; padding: 6px 12px; border: 1px solid #1d3560; background: var(--accent);
            color: #fff; cursor: pointer; }
   button.sec { background: #fff; color: var(--accent); border-color: var(--line); }
-  .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  .hint { font-size: 12px; color: var(--muted); }
   .card { background: var(--panel); border: 1px solid var(--line); margin-bottom: 16px; }
   .card h2 { margin: 0; padding: 6px 10px; font-size: 13px; background: var(--head);
-             border-bottom: 1px solid var(--line); }
+             border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 8px; }
+  .card h2 small { font-weight: normal; color: var(--muted); }
   .card .body { padding: 8px 10px; overflow-x: auto; }
   table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
   th, td { padding: 3px 8px; text-align: left; border-bottom: 1px solid #eee8dc; white-space: nowrap; }
   th { font-weight: 600; color: var(--muted); font-size: 12px; }
   td.num { text-align: right; }
-  .glyph { font-size: 17px; width: 24px; text-align: center; font-family: "Segoe UI Symbol", "DejaVu Sans", "Noto Sans Symbols", sans-serif; }
+  .glyph { font-size: 17px; width: 24px; text-align: center;
+           font-family: "Segoe UI Symbol", "DejaVu Sans", "Noto Sans Symbols", "Noto Sans Symbols 2", sans-serif; }
   .r { color: var(--bad); font-weight: 700; }
-  .status { padding: 8px 10px; border-left: 4px solid var(--line); background: var(--panel); margin-bottom: 16px; }
+  .flag { font-weight: 700; }
+  .em { color: var(--accent); }
+  .status { padding: 8px 10px; border-left: 4px solid var(--line); background: var(--panel); margin-bottom: 8px; }
   .status.ok { border-color: var(--ok); }
   .status.warn { border-color: var(--warn); }
   .status.bad { border-color: var(--bad); }
@@ -47,17 +54,48 @@
   .kv div:nth-child(odd) { color: var(--muted); }
   .diff-ok { color: var(--ok); }
   .diff-bad { color: var(--bad); font-weight: 700; }
-  footer { max-width: 1100px; margin: 0 auto; padding: 0 16px 24px; color: var(--muted); font-size: 12px; }
+
+  /* fényszögtábla – mint a Windows-os „Fényszög-információk” */
+  .asp-wrap { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+  table.asp { width: auto; border-collapse: collapse; }
+  table.asp td { width: 30px; height: 28px; padding: 0; text-align: center; border: 1px solid #d9d3c6;
+                 font-family: "Segoe UI Symbol", "DejaVu Sans", "Noto Sans Symbols", "Noto Sans Symbols 2", sans-serif; }
+  table.asp td.diag { background: var(--head); font-size: 16px; font-weight: 600; }
+  table.asp td.ax { font: 600 11px Tahoma, sans-serif; }
+  table.asp td.empty { border: none; }
+  table.asp td.has { cursor: pointer; font-size: 15px; }
+  table.asp td.has:hover, table.asp td.sel { background: var(--sel); }
+  .asp-info { min-width: 260px; flex: 1; border: 1px solid var(--line); padding: 8px 10px; background: #fff; }
+  .asp-info .kv div:nth-child(even) { font-weight: 600; }
+
+  table.es { width: auto; }
+  table.es th, table.es td { border: 1px solid #cfc9bd; padding: 4px 14px; text-align: center; }
+  table.es th:first-child, table.es td:first-child { text-align: left; font-weight: 600; background: var(--head); }
+  table.es thead th { background: var(--head); color: var(--ink); }
+  table.es td.sum { background: var(--sum); font-weight: 600; }
+  .es-res { margin-top: 10px; display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; }
+  .es-res div:nth-child(odd) { font-weight: 600; }
+
+  #drop { position: fixed; inset: 0; background: rgba(42, 74, 127, .15); border: 3px dashed var(--accent);
+          display: none; align-items: center; justify-content: center; font-size: 20px; color: var(--accent); z-index: 9; }
+  #drop.on { display: flex; }
+  footer { max-width: 1200px; margin: 0 auto; padding: 0 16px 24px; color: var(--muted); font-size: 12px; }
 </style>
 </head>
 <body>
 <header>
-  <h1>Regiomontanus – Swiss Ephemeris próba a böngészőben</h1>
+  <h1>Regiomontanus – webes próba</h1>
   <span id="ver">betöltés…</span>
 </header>
 
 <main>
   <form id="frm" autocomplete="off">
+    <div class="btns">
+      <button type="button" id="megnyit">Képlet megnyitása (.szk)…</button>
+      <input type="file" id="fajl" accept=".szk" hidden>
+    </div>
+    <div class="hint" style="margin-bottom:10px">A Windows-os program .szk fájljait ide is húzhatod.</div>
+
     <fieldset>
       <legend>Személyes adatok</legend>
       <label for="nev">Név</label>
@@ -102,7 +140,7 @@
       </select>
       <div class="row">
         <div><label for="tz">IANA zóna</label><input id="tz" value="Europe/Budapest"></div>
-        <div><label for="kezi">Kézi eltolás (óra)</label><input id="kezi" type="number" step="0.25" value="1" disabled></div>
+        <div><label for="kezi">Kézi eltolás (óra)</label><input id="kezi" type="number" step="any" value="1" disabled></div>
       </div>
     </fieldset>
 
@@ -128,247 +166,49 @@
           </select>
         </div>
       </div>
+      <label for="csomo">Holdcsomó a fényszögtáblában</label>
+      <select id="csomo">
+        <option value="11">Valódi</option>
+        <option value="10">Közepes</option>
+      </select>
     </fieldset>
 
     <div class="btns">
       <button type="submit">Számítás</button>
       <button type="button" class="sec" id="most">Aktuális időpont</button>
-      <button type="button" class="sec" id="alap">Teszt-képlet</button>
+    </div>
+    <div class="btns">
+      <button type="button" class="sec" id="teszt1848">Teszt: 1848.03.15</button>
+      <button type="button" class="sec" id="teszt1436">Teszt: Regiomontanus</button>
     </div>
   </form>
 
   <section>
     <div id="status" class="status">A Swiss Ephemeris és az adatfájlok betöltése folyamatban…</div>
+    <div id="status2" class="status" hidden></div>
+
     <div class="card"><h2>Alapadatok</h2><div class="body"><div class="kv" id="info"></div></div></div>
-    <div class="card"><h2>Planéták</h2><div class="body"><table id="planetak"></table></div></div>
+    <div class="card"><h2>Planéták <small>F = ferális, i = izolált, R = retrográd, S = stacioner, ● = énjelölő</small></h2>
+      <div class="body"><table id="planetak"></table></div></div>
+    <div class="card"><h2>Fényszögek <small>kattints egy jelre a részletekért</small></h2>
+      <div class="body"><div class="asp-wrap"><table class="asp" id="fenyszogek"></table>
+        <div class="asp-info"><div class="kv" id="aspinfo"><div>Válassz egy fényszöget a táblában.</div><div></div></div></div></div></div></div>
+    <div class="card"><h2>Énállapotok a születési képletben</h2><div class="body"><table id="enallapotok"></table></div></div>
+    <div class="card"><h2>Életstratégia, járatlan út</h2><div class="body" id="eletstrat"></div></div>
     <div class="card"><h2>Házcsúcsok és tengelyek</h2><div class="body"><table id="hazak"></table></div></div>
     <div class="card"><h2>Állócsillagok</h2><div class="body"><table id="csillagok"></table></div></div>
   </section>
 </main>
 
+<div id="drop">Engedd el a .szk fájlt a megnyitáshoz</div>
+
 <footer>
   Swiss Ephemeris 2.10.03 © Astrodienst AG, AGPL-3.0 – WebAssembly-fordítás a hivatalos forrásból.
-  Ez egy technikai próba: a számítás teljes egészében a böngészőben fut, a szerver csak fájlokat szolgál ki.
+  A pozíciók a böngészőben számolódnak; a képlet-elemzés (fényszögek, házurak, énállapotok, életstratégia) a szerveren.
 </footer>
 
 <script src="../swe/sweph.js"></script>
-<script>
-(function () {
-  'use strict';
-  var JEGYEK = ['Kos', 'Bika', 'Ikrek', 'Rák', 'Oroszlán', 'Szűz', 'Mérleg', 'Skorpió', 'Nyilas', 'Bak', 'Vízöntő', 'Halak'];
-  var JEGYGLIF = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'];
-  var VS = '︎'; // szöveges (nem emoji) megjelenítés
-  var PLANETAK = [
-    [0, 'Nap', '☉'], [1, 'Hold', '☽'], [2, 'Merkúr', '☿'], [3, 'Vénusz', '♀'], [4, 'Mars', '♂'],
-    [5, 'Jupiter', '♃'], [6, 'Szaturnusz', '♄'], [7, 'Uránusz', '♅'], [8, 'Neptunusz', '♆'], [9, 'Plútó', '♇'],
-    [10, 'Holdcsomó (közepes)', '☊'], [11, 'Holdcsomó (valódi)', '☊'], [12, 'Lilith (közepes)', '⚸'],
-    [13, 'Priapus (oszk. apogeum)', '⚸'], [15, 'Chiron', '⚷'], [16, 'Pholus', ''], [17, 'Ceres', '⚳'],
-    [18, 'Pallasz', '⚴'], [19, 'Juno', '⚵'], [20, 'Vesta', '⚶']
-  ];
-  var CSILLAGOK = ['Aldebaran', 'Regulus', 'Spica', 'Antares'];
-  var HAZNEV = { P: 'Placidus', R: 'Regiomontanus', C: 'Campanus', K: 'Koch', O: 'Porphyrius', A: 'Egyenlő' };
-
-  var $ = function (id) { return document.getElementById(id); };
-  var se = null, ref = null;
-
-  function fokStr(lon) {
-    var x = ((lon % 360) + 360) % 360;
-    var j = Math.floor(x / 30), d = x - j * 30;
-    var tot = Math.round(d * 3600);
-    if (tot >= 30 * 3600) { tot -= 30 * 3600; j = (j + 1) % 12; }
-    var fo = Math.floor(tot / 3600), pe = Math.floor((tot % 3600) / 60), mp = tot % 60;
-    return { j: j, txt: fo + '°' + ('0' + pe).slice(-2) + '′' + ('0' + mp).slice(-2) + '″' };
-  }
-  function pad(n) { return ('0' + n).slice(-2); }
-  function oraStr(h) {
-    var s = h < 0 ? '−' : '+'; var t = Math.round(Math.abs(h) * 3600);
-    return 'UTC' + s + pad(Math.floor(t / 3600)) + ':' + pad(Math.floor((t % 3600) / 60)) + (t % 60 ? ':' + pad(t % 60) : '');
-  }
-  function szogKul(a, b) { return Math.abs(((a - b + 540) % 360) - 180); }
-  function between(x, a, b) { // a Delphi IsBetweenDeg szerint, mindkét végén zárt, 360°-on átfordulva
-    return a <= b ? (x >= a && x <= b) : (x >= a || x <= b);
-  }
-
-  // IANA zóna eltolása (percben) egy adott UTC időpontban – a böngésző tzdata-ját használja
-  function zonaEltolas(utcMs, tz) {
-    var f = new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: 'numeric',
-      day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' });
-    var p = {}; f.formatToParts(new Date(utcMs)).forEach(function (x) { p[x.type] = x.value; });
-    var d = new Date(0); // setUTCFullYear: 100 előtti évekre is helyes
-    d.setUTCFullYear(+p.year, +p.month - 1, +p.day); d.setUTCHours(+p.hour, +p.minute, +p.second, 0);
-    return (d.getTime() - Math.floor(utcMs / 1000) * 1000) / 60000;
-  }
-  function helyiBolUtc(y, mo, d, h, mi, s, tz) {
-    var dt = new Date(0); dt.setUTCFullYear(y, mo - 1, d); dt.setUTCHours(h, mi, s, 0);
-    var local = dt.getTime();
-    var off1 = zonaEltolas(local, tz);
-    var t = local - off1 * 60000;
-    var off2 = zonaEltolas(t, tz);
-    if (off2 !== off1) t = local - off2 * 60000;
-    var jan = zonaEltolas(Date.UTC(y, 0, 15), tz), jul = zonaEltolas(Date.UTC(y, 6, 15), tz);
-    return { utcMs: t, offsetMin: off2, dst: off2 > Math.min(jan, jul) };
-  }
-
-  function szamol() {
-    if (!se) return;
-    var SE = SwissEph.SE;
-    var y = +$('ev').value, mo = +$('ho').value, d = +$('nap').value;
-    var h = +$('ora').value, mi = +$('perc').value, s = +$('mp').value;
-    var lat = +$('szel').value, lon = +$('hossz').value;
-    var mod = $('zonamod').value, hsys = $('hsys').value, sid = $('zod').value === 'S';
-    var offsetH, zonaInfo;
-
-    try {
-      if (mod === 'iana') {
-        var r = helyiBolUtc(y, mo, d, h, mi, s, $('tz').value.trim());
-        offsetH = r.offsetMin / 60;
-        zonaInfo = $('tz').value + ' → ' + oraStr(offsetH) + (r.dst ? ' (nyári időszámítás)' : '');
-      } else if (mod === 'lmt') {
-        offsetH = lon / 15;
-        zonaInfo = 'LMT a hosszúságból → ' + oraStr(offsetH);
-      } else {
-        offsetH = +$('kezi').value;
-        zonaInfo = 'Kézi → ' + oraStr(offsetH);
-      }
-    } catch (e) {
-      setStatus('bad', 'Ismeretlen időzóna: „' + $('tz').value + '”. Példa: Europe/Budapest.');
-      return;
-    }
-
-    var t0 = performance.now();
-    var helyiOra = h + mi / 60 + s / 3600;
-    var utOra = helyiOra - offsetH;
-    var jd = se.julday(y, mo, d, utOra);           // a julday kezeli a napon túli órát is
-    var ut = se.revjul(jd);
-    var flag = SE.FLG_SWIEPH | SE.FLG_SPEED | (sid ? SE.FLG_SIDEREAL : 0);
-
-    var hz = se.housesEx(jd, sid ? SE.FLG_SIDEREAL : 0, lat, lon, hsys);
-    var moshier = false, rows = [], maxDiff = 0, refOk = ref && Math.abs(jd - ref.jd) < 1e-7 && !sid &&
-      Math.abs(lat - ref.lat) < 1e-6 && Math.abs(lon - ref.lon) < 1e-6;
-
-    PLANETAK.forEach(function (p) {
-      var x = se.calcUt(jd, p[0], flag);
-      if (x.flag < 0) { rows.push('<tr><td></td><td>' + p[1] + '</td><td colspan="6" class="diff-bad">' + x.error + '</td></tr>'); return; }
-      if (x.flag & SE.FLG_MOSEPH) moshier = true;
-      var f = fokStr(x.lon), haz = 0;
-      for (var i = 1; i <= 12; i++) if (between(x.lon, hz.cusps[i], hz.cusps[i % 12 + 1])) { haz = i; break; }
-      var diffCell = '';
-      if (refOk && ref.planets[p[0]]) {
-        var dd = szogKul(x.lon, ref.planets[p[0]].lon) * 3600; maxDiff = Math.max(maxDiff, dd);
-        diffCell = '<span class="' + (dd < 1 ? 'diff-ok' : 'diff-bad') + '">' + dd.toFixed(4) + '″</span>';
-      }
-      rows.push('<tr><td class="glyph">' + (p[2] ? p[2] + VS : '') + '</td><td>' + p[1] + '</td>' +
-        '<td class="glyph">' + JEGYGLIF[f.j] + VS + '</td><td>' + JEGYEK[f.j] + '</td>' +
-        '<td class="num">' + f.txt + '</td><td class="num">' + haz + '</td>' +
-        '<td>' + (x.speedLon < 0 ? '<span class="r">R</span>' : '') + '</td>' +
-        '<td class="num">' + x.speedLon.toFixed(4) + '</td><td class="num">' + diffCell + '</td></tr>');
-    });
-    $('planetak').innerHTML = '<tr><th></th><th>Planéta</th><th></th><th>Jegy</th><th>Pozíció</th><th>Ház</th><th></th>' +
-      '<th>Seb. (°/nap)</th><th>Eltérés a swetest-től</th></tr>' + rows.join('');
-
-    // Házak
-    var hrows = [];
-    for (var i = 1; i <= 12; i++) {
-      var f = fokStr(hz.cusps[i]), dc = '';
-      if (refOk && ref.houses[hsys]) {
-        var dd = szogKul(hz.cusps[i], ref.houses[hsys].cusps[i - 1]) * 3600; maxDiff = Math.max(maxDiff, dd);
-        dc = '<span class="' + (dd < 1 ? 'diff-ok' : 'diff-bad') + '">' + dd.toFixed(4) + '″</span>';
-      }
-      hrows.push('<tr><td>' + i + '. ház</td><td class="glyph">' + JEGYGLIF[f.j] + VS + '</td><td>' + JEGYEK[f.j] +
-        '</td><td class="num">' + f.txt + '</td><td class="num">' + dc + '</td></tr>');
-    }
-    [['ASC', hz.asc], ['MC', hz.mc], ['Vertex', hz.vertex], ['Ekv. ASC (Keleti pont)', hz.equAsc],
-     ['Co-ASC (Koch)', hz.coAscKoch], ['Poláris ASC', hz.polarAsc]].forEach(function (a) {
-      var f = fokStr(a[1]);
-      hrows.push('<tr><td>' + a[0] + '</td><td class="glyph">' + JEGYGLIF[f.j] + VS + '</td><td>' + JEGYEK[f.j] +
-        '</td><td class="num">' + f.txt + '</td><td></td></tr>');
-    });
-    $('hazak').innerHTML = '<tr><th>' + HAZNEV[hsys] + '</th><th></th><th>Jegy</th><th>Pozíció</th><th>Eltérés</th></tr>' + hrows.join('');
-
-    // Állócsillagok
-    var srows = [];
-    CSILLAGOK.forEach(function (n) {
-      var x = se.fixstar2Ut(n, jd, SE.FLG_SWIEPH | (sid ? SE.FLG_SIDEREAL : 0));
-      if (x.flag < 0) { srows.push('<tr><td>' + n + '</td><td colspan="4" class="diff-bad">' + x.error + '</td></tr>'); return; }
-      var f = fokStr(x.lon), dc = '';
-      if (refOk && ref.stars[n] !== undefined) {
-        var dd = szogKul(x.lon, ref.stars[n]) * 3600; maxDiff = Math.max(maxDiff, dd);
-        dc = '<span class="' + (dd < 1 ? 'diff-ok' : 'diff-bad') + '">' + dd.toFixed(4) + '″</span>';
-      }
-      srows.push('<tr><td>' + x.name.replace(',', ' (') + ')</td><td class="glyph">' + JEGYGLIF[f.j] + VS + '</td><td>' +
-        JEGYEK[f.j] + '</td><td class="num">' + f.txt + '</td><td class="num">' + dc + '</td></tr>');
-    });
-    $('csillagok').innerHTML = '<tr><th>Csillag</th><th></th><th>Jegy</th><th>Pozíció</th><th>Eltérés</th></tr>' + srows.join('');
-
-    var ms = performance.now() - t0;
-    var dt = se.deltat(jd) * 86400;
-    var st = se.sidtime(jd) + lon / 15; st = ((st % 24) + 24) % 24;
-    var utOraEgesz = ut.hour, uh = Math.floor(utOraEgesz), um = Math.floor((utOraEgesz - uh) * 60),
-        us = Math.round(((utOraEgesz - uh) * 60 - um) * 60);
-    if (us === 60) { us = 0; um++; } if (um === 60) { um = 0; uh++; }
-    $('info').innerHTML = [
-      'Név', $('nev').value,
-      'Helyi idő', y + '.' + pad(mo) + '.' + pad(d) + '. ' + pad(h) + ':' + pad(mi) + ':' + pad(s),
-      'Időzóna', zonaInfo,
-      'Világidő (UT)', ut.year + '.' + pad(ut.month) + '.' + pad(ut.day) + '. ' + pad(uh) + ':' + pad(um) + ':' + pad(us),
-      'Julián dátum (UT)', jd.toFixed(6),
-      'ΔT', dt.toFixed(2) + ' mp',
-      'Helyi csillagidő', (function (x) { var hh = Math.floor(x), m = Math.floor((x - hh) * 60), ss = Math.round(((x - hh) * 60 - m) * 60); return pad(hh) + ':' + pad(m) + ':' + pad(ss % 60); })(st),
-      'Földrajzi hely', Math.abs(lat).toFixed(4) + '° ' + (lat >= 0 ? 'É' : 'D') + ', ' + Math.abs(lon).toFixed(4) + '° ' + (lon >= 0 ? 'K' : 'Ny'),
-      'Számítási idő', ms.toFixed(1) + ' ms (' + PLANETAK.length + ' test, házak, ' + CSILLAGOK.length + ' csillag)'
-    ].map(function (v) { return '<div>' + v + '</div>'; }).join('');
-
-    if (moshier) setStatus('warn', 'Figyelem: egy vagy több testet Moshier-módban számolt (hiányzó vagy nem elérhető .se1 fájl).');
-    else if (refOk) setStatus(maxDiff < 1 ? 'ok' : 'bad', (maxDiff < 1 ? 'OK – ' : 'ELTÉRÉS – ') +
-      'a böngészős számítás a natív swetest-től legfeljebb ' + maxDiff.toFixed(4) + '″-cel tér el (teszt-képlet, ' + HAZNEV[hsys] + ').');
-    else setStatus('ok', 'Számítás kész Swiss Ephemeris (.se1) adatfájlokkal. Referencia-összevetés csak a teszt-képletnél van.');
-  }
-
-  function setStatus(cls, msg) { var el = $('status'); el.className = 'status ' + cls; el.textContent = msg; }
-
-  function alapKeplet() {
-    $('nev').value = '1848.03.15'; $('ev').value = 1848; $('ho').value = 3; $('nap').value = 15;
-    $('ora').value = 12; $('perc').value = 0; $('mp').value = 0;
-    $('telep').value = '47.5|19.0666667|Europe/Budapest'; $('szel').value = 47.5; $('hossz').value = 19.0666667;
-    $('tz').value = 'Europe/Budapest'; $('zonamod').value = 'iana'; zonaMod(); $('zod').value = 'T';
-  }
-  function zonaMod() {
-    var m = $('zonamod').value;
-    $('tz').disabled = m !== 'iana'; $('kezi').disabled = m !== 'manual';
-  }
-
-  $('frm').addEventListener('submit', function (e) { e.preventDefault(); szamol(); });
-  $('zonamod').addEventListener('change', function () { zonaMod(); szamol(); });
-  ['hsys', 'zod'].forEach(function (id) { $(id).addEventListener('change', szamol); });
-  $('telep').addEventListener('change', function () {
-    var v = $('telep').value; if (v === 'custom') return;
-    var p = v.split('|'); $('szel').value = p[0]; $('hossz').value = p[1]; $('tz').value = p[2];
-    $('zonamod').value = 'iana'; zonaMod(); szamol();
-  });
-  $('most').addEventListener('click', function () {
-    var n = new Date();
-    $('ev').value = n.getFullYear(); $('ho').value = n.getMonth() + 1; $('nap').value = n.getDate();
-    $('ora').value = n.getHours(); $('perc').value = n.getMinutes(); $('mp').value = n.getSeconds();
-    $('nev').value = 'Aktuális égi állás'; szamol();
-  });
-  $('alap').addEventListener('click', function () { alapKeplet(); szamol(); });
-
-  var t0 = performance.now();
-  Promise.all([
-    SwissEph.load({ base: '../swe', log: function (l) { console.log('[swisseph]', l); } }),
-    fetch('referencia.json').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
-  ]).then(function (res) {
-    se = res[0]; ref = res[1];
-    if (ref) { var p = ref.ut.split(':'); var d = ref.date.split('.');
-      ref.jd = se.julday(+d[2], +d[1], +d[0], +p[0] + p[1] / 60 + p[2] / 3600); }
-    $('ver').textContent = 'Swiss Ephemeris ' + se.version() + ' (WebAssembly) – betöltve ' +
-      Math.round(performance.now() - t0) + ' ms alatt';
-    alapKeplet(); szamol();
-  }).catch(function (e) {
-    setStatus('bad', 'Betöltési hiba: ' + e.message + ' – ellenőrizd, hogy a swe.wasm és az ephe/ mappa feltöltődött-e.');
-    $('ver').textContent = 'hiba';
-  });
-})();
-</script>
+<script src="../js/szk.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

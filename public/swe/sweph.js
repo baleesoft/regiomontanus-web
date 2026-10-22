@@ -149,9 +149,41 @@
       r.instance.exports._initialize();
       var se = new SwissEph(r.instance);
       se.setEphePath(EPHE_DIR);
+      se._files = files;          // a WASI-réteg ugyanezt az objektumot látja: utólag is bővíthető
+      se._base = base;
+      se._getBin = getBin;
       se.loadedFiles = names.slice();
       return se;
     });
+  };
+
+  /** A 600 éves adatfájl-blokk utótagja egy évre: 1436 -> '_12', 2026 -> '_18'. */
+  SwissEph.epheBlock = function (year) {
+    if (year < 0) return null;
+    var b = Math.floor(year / 600) * 6;
+    return '_' + (b < 10 ? '0' + b : b);
+  };
+
+  /**
+   * Betölti az adott év(ek)hez szükséges .se1 fájlokat (bolygók, Hold, kisbolygók), ha még nincsenek meg.
+   * Promise<{ loaded: [...], missing: [...] }>. Hiányzó fájlnál a bolygók Moshier-módban számolódnak.
+   */
+  SwissEph.prototype.ensureEphe = function (years) {
+    var self = this, need = [];
+    (Array.isArray(years) ? years : [years]).forEach(function (y) {
+      var s = SwissEph.epheBlock(y);
+      if (!s) return;
+      ['sepl', 'semo', 'seas'].forEach(function (p) {
+        var n = p + s + '.se1';
+        if (!self._files[n] && need.indexOf(n) < 0) need.push(n);
+      });
+    });
+    var res = { loaded: [], missing: [] };
+    return Promise.all(need.map(function (n) {
+      return self._getBin(self._base + '/ephe/' + n).then(function (b) {
+        self._files[n] = new Uint8Array(b); self.loadedFiles.push(n); res.loaded.push(n);
+      }, function () { res.missing.push(n); });
+    })).then(function () { return res; });
   };
 
   SwissEph.prototype._f64 = function () { return new Float64Array(this.x.memory.buffer); };

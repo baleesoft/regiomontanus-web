@@ -7,15 +7,18 @@ A [Regiomontanus](https://regiomontanus.hu) asztrológiai program böngészős v
 
 A bolygók, házak és állócsillagok számítása a böngészőben fut: a Swiss Ephemeris 2.10.03 hivatalos
 C-forrásából WebAssemblyre fordított modul olvassa a `.se1` adatfájlokat. A szervernek így nem kell
-natív kódot futtatnia, a tárhely elég, ha statikus fájlokat szolgál ki.
+natív kódot futtatnia. A képlet-elemzést (fényszögek, házurak, énállapotok, életstratégia) egy
+szerveroldali végpont (`api/szamol.php`) végzi, amely nem része ennek a repónak; nélküle a próbaoldal
+a pozíciókat megmutatja, az elemzést nem.
 
 ```
 public/                ← ez a tartalom kerül fel FTP-vel a tárhelyre
   swe/
     sweph.js           betöltő + csak olvasható WASI-réteg (függőség nélkül)
     swe.wasm           Swiss Ephemeris 2.10.03 (WebAssembly)
-    ephe/              sepl_18, semo_18, seas_18 (.se1, 1800–2399) és sefstars.txt
-  proba/               technikai próba: számítás + összevetés a natív swetest-tel
+    ephe/              .se1 adatfájlok 600–2999 (600 éves blokkok, igény szerint töltődnek) + sefstars.txt
+  js/szk.js            a Windows-os program .szk képletfájljainak beolvasása
+  proba/               próbaoldal: pozíciók + képlet-elemzés (api/szamol.php) + .szk megnyitás
 tools/
   build-wasm.sh        a swe.wasm reprodukálható fordítása a hivatalos forrásból
   genref.py            referenciaértékek a natív swetest-ből
