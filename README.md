@@ -43,7 +43,8 @@ public/                ← ez a tartalom kerül fel FTP-vel a tárhelyre
   js/tablak.js         a Táblázatok menü táblái
   js/tarolo.js         beállítások, legutóbbi képletek, munkamenet (localStorage)
   fonts/               asztrológiai jelek: Noto Sans Symbols / Symbols 2 részhalmaz (SIL OFL 1.1, OFL.txt);
-                       Amatic SC (SIL OFL 1.1, változatlan fájlok, AmaticSC-OFL.txt) a Születési értesítőhöz
+                       Amatic SC, Bebas Neue, Source Sans 3 (SIL OFL 1.1) a Kiegészítések kártyáihoz;
+                       a kártyák dizájnképei nem részei a repónak (a tárhelyen: kieg/)
   proba/               próbaoldal: pozíciók + képlet-elemzés (api/szamol.php) + .szk megnyitás
 tools/
   build-wasm.sh        a swe.wasm reprodukálható fordítása a hivatalos forrásból

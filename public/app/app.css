@@ -391,16 +391,33 @@ dialog .halv { color: #6b665d; font-size: 12px; }
 .ker-also .tolt { flex: 1 1 auto; }
 @media (max-width: 700px) { .ker-fent { grid-template-columns: 1fr; } .ker-sor { grid-template-columns: 30px 1fr 130px; } .ker-sor .c3, .ker-sor .c4 { display: none; } }
 
-/* ---------- Kiegészítések: Jegyek és játszmák, Születési értesítő ---------- */
+/* ---------- Kiegészítések: Jegyek és játszmák, Születési értesítő (app/kartyak.js) ---------- */
 @font-face { font-family: 'Amatic SC'; src: url(../fonts/AmaticSC-Regular.ttf) format('truetype'); font-weight: 400; font-display: swap; }
 @font-face { font-family: 'Amatic SC'; src: url(../fonts/AmaticSC-Bold.ttf) format('truetype'); font-weight: 700; font-display: swap; }
-.kartya-dlg { padding: 0; background: #2b1d14; border: 0; box-shadow: 0 12px 40px rgba(0,0,0,.5); max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); overflow: auto; }
-.kartya-dlg .kfej { display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 12px; background: #3b2a20; color: #f5c54f; }
-.kartya-dlg .kfej .tolt { flex: 1 1 auto; }
-.kartya-dlg .kfej .halv { color: #e8d9c0; }
-.kartya-dlg canvas { display: block; max-width: 100%; height: auto; margin: 0 auto; }
-.kartya-dlg.jj canvas { width: 550px; }
-.kartya-dlg.sze canvas { width: min(960px, calc(100vw - 16px)); touch-action: none; }
-.kartya-dlg .kinfo { color: #e8d9c0; padding: 6px 12px; margin: 0; }
-.sze-urlap { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 6px 12px; background: #3b2a20; color: #f3e7d3; font-size: 13px; }
-.sze-urlap .halv { color: #cdbda4; }
+@font-face { font-family: 'Bebas Neue'; src: url(../fonts/bebas-neue-latin-400-normal.woff2) format('woff2'); font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Bebas Neue'; src: url(../fonts/bebas-neue-latin-ext-400-normal.woff2) format('woff2'); font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Source Sans 3'; src: url(../fonts/source-sans-3-latin-600-normal.woff2) format('woff2'); font-weight: 600; font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Source Sans 3'; src: url(../fonts/source-sans-3-latin-ext-600-normal.woff2) format('woff2'); font-weight: 600; font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+.kartya-dlg { padding: 0; border: 0; background: transparent; overflow: visible; max-width: none; max-height: none; position: fixed;
+  filter: drop-shadow(0 6px 18px rgba(0,0,0,.45)); user-select: none; -webkit-user-select: none; }
+.kartya-dlg::backdrop { background: rgba(30, 28, 25, .25); }
+.kk-lap { position: relative; overflow: hidden; }
+.kk-pnl, .kk-lbl { position: absolute; box-sizing: border-box; }
+.kk-lbl { white-space: pre-wrap; overflow: hidden; line-height: 1.22; margin: 0; }
+.jj-lap .kk-lbl { font-weight: 600; letter-spacing: -0.025em; }
+.jj-cim { line-height: 1; color: #f5c54f; font: 29px Georgia, serif; }
+.kk-gomb { position: absolute; padding: 0; margin: 0; border: 0; background: none; cursor: pointer; line-height: 0; color: #fff; font: 600 14px sans-serif; }
+.kk-gomb:focus-visible { outline: 2px solid #f5c54f; outline-offset: 1px; }
+.kk-lap img { pointer-events: none; }
+.kk-lap a img { pointer-events: auto; }
+.sze-konyv { position: absolute; left: 0; top: 0; font: 12px Arial, Helvetica, sans-serif; text-decoration: none; }
+.sze-konyv span { position: absolute; white-space: nowrap; }
+.sze-adatgomb { border: 0; background: none; cursor: pointer; text-align: center; padding: 0; }
+.sze-adatpanel input[type=number] { position: absolute; font: 19px Arial, sans-serif; color: #000; background: #fff; box-sizing: border-box; padding: 2px 4px; border: 1px solid #8a8a8a; }
+.sze-adatpanel label, .sze-adatpanel span { position: absolute; white-space: nowrap; cursor: default; }
+.sze-adatpanel input[type=radio] { width: 16px; height: 16px; vertical-align: -2px; }
+.kartya-nevjegy { position: absolute; z-index: 2; box-shadow: 0 6px 18px rgba(0,0,0,.45); }
