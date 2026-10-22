@@ -9,6 +9,15 @@
   var $ = function (id) { return document.getElementById(id); };
 
   var se = null, beall = S.beallitasok();
+  /*
+   * Ideiglenesen kikapcsolt funkciók – amíg nincs adatbázis a háttérben (Nemes Balázs döntése, 2026-10-22):
+   * jegyzetek (szerkesztő, „!” jelek, .mgj) és csatolás (fénykép, dokumentum, URL/e-mail – az oldalsáv).
+   * A .szk-ban meglévő adatok (Megjegyzes, PictureData, CsatDocNN) beolvasáskor megmaradnak és mentéskor változatlanul visszaíródnak.
+   * Visszakapcsolás: Regio.FUNKCIO.jegyzet / .csatolmany = true (a tesztek is így használják).
+   */
+  R.FUNKCIO = R.FUNKCIO || { jegyzet: false, csatolmany: false };
+  function fk(n) { return !!R.FUNKCIO[n]; }
+  function oldalsavVan(k) { return fk('csatolmany') && !k.fajta && beall.oldalsav !== false; }
   var kepletek = [], aktiv = -1, nezet = 'mozaik', ful = 'planetak', lepNyitva = false, kovId = 1;
   var tesztek = [], betoltve = false;
   var MEZOK = ['Év', 'Hó', 'Nap', 'Óra', 'Perc'];
@@ -155,7 +164,7 @@
     if (k.fajta) return osszKerekRajzol(hova, k);
     if (k.e) {
       var kd = T.kerekAdat(k.e);
-      kd.jegyzetJelek = nyomtatFelul ? null : k.jegyzetKulcsok || (k.jegyzetKulcsok = R.Jegyzet.jelek(k));
+      kd.jegyzetJelek = nyomtatFelul || !fk('jegyzet') ? null : k.jegyzetKulcsok || (k.jegyzetKulcsok = R.Jegyzet.jelek(k));
       var svg = RegioKerek.rajzol(hova, kd, kerekBeall(k));
       svg.setAttribute('aria-label', 'Képletkerék: ' + cim(k));
       return svg;
@@ -347,14 +356,14 @@
         '<span class="ln"><b>' + R.esc(cim(x)) + '</b><small>' + R.esc(tipusNev(x)) + '</small></span></button>';
     }).join('') + '</nav>' +
       '<main class="reszlet" aria-label="Részletes nézet" style="--kerek-arany:' + (aranyKorlat(beall.reszletArany) * 100).toFixed(1) + '%"><section class="fo-kerek"><div class="fej"><b>' + R.esc(cim(k)) + '</b> ' +
-      tipusCimke(k) + '<span class="tolt"></span>' + (!k.fajta ? '<button type="button" class="gomb" data-tett="oldalsav" aria-pressed="' + (beall.oldalsav !== false) +
+      tipusCimke(k) + '<span class="tolt"></span>' + (!k.fajta && fk('csatolmany') ? '<button type="button" class="gomb" data-tett="oldalsav" aria-pressed="' + (beall.oldalsav !== false) +
         '" title="Oldalsáv elrejtése/mutatása (fénykép, csatolmányok, jegyzet)">Oldalsáv</button>' : '') +
       (!k.fajta && k.adat.tipus !== 'aktualis' ? '<button type="button" class="gomb" data-tett="szemely" aria-pressed="' +
         !!k.szemely + '" title="Csak az énállapotok (énjelölő planéták és együttállóik) a keréken">Személyiségrajz</button>' : '') + (k.fajta ? '<div class="csoport" role="group" aria-label="Megjelenítés">' +
         '<button type="button" data-tett="egymason" aria-pressed="' + (k.mod !== 'egymasmellett') + '">Egymáson</button>' +
         '<button type="button" data-tett="egymasmellett" aria-pressed="' + (k.mod === 'egymasmellett') + '">Egymás mellett</button></div>' : '') +
       '<button type="button" class="gomb fo" data-tett="vissza">Vissza a mozaikhoz (Esc)</button></div>' +
-      '<div class="torzs"><div class="kerek"></div>' + (!k.fajta && beall.oldalsav !== false ? oldalsavHtml(k) : '') + '</div></section>' +
+      '<div class="torzs"><div class="kerek"></div>' + (oldalsavVan(k) ? oldalsavHtml(k) : '') + '</div></section>' +
       '<div class="elvalaszto" role="separator" tabindex="0" aria-orientation="vertical" aria-controls="tablaTart" ' +
       'aria-label="A kerék és a táblák szélességének állítása" aria-valuemin="30" aria-valuemax="80" aria-valuenow="' +
       Math.round(aranyKorlat(beall.reszletArany) * 100) + '" title="Húzd oldalra (vagy ←/→); dupla kattintás: alapméret"></div>' +
@@ -364,7 +373,7 @@
       }).join('') + '</div><div class="tabla-tart" role="tabpanel" id="tablaTart"></div></aside></main>';
     kerekRajzol(hova.querySelector('.fo-kerek .kerek'), k);
     renderTabla($('tablaTart'), k);
-    if (!k.fajta && beall.oldalsav !== false) kepFeloldas(k);
+    if (oldalsavVan(k)) kepFeloldas(k);
   }
 
   /* ---------- oldalsáv: fénykép, csatolmányok, jegyzet (D BSK.dfm 164–556) ---------- */
@@ -388,7 +397,7 @@
           '<span class="ct ' + t + '" aria-hidden="true"></span>' + R.esc(csatNev(v)) + '</li>';
       }).join('') + '</ul>' +
       '<div class="csat-gombok">' +
-      '<button type="button" class="kisgomb jegyzetgomb' + (R.Jegyzet.vanJegyzet(k) ? ' van' : '') + '" data-tett="jegyzet" title="Jegyzet az aktuális születési képlethez" aria-label="Jegyzet az aktuális születési képlethez"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h10l4 4v12H5zM8 12h8M8 16h6"/></svg></button>' +
+      (!fk('jegyzet') ? '' : '<button type="button" class="kisgomb jegyzetgomb' + (R.Jegyzet.vanJegyzet(k) ? ' van' : '') + '" data-tett="jegyzet" title="Jegyzet az aktuális születési képlethez" aria-label="Jegyzet az aktuális születési képlethez"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h10l4 4v12H5zM8 12h8M8 16h6"/></svg></button>') +
       '<button type="button" class="kisgomb" data-tett="csatDok" title="Dokumentum csatolása" aria-label="Dokumentum csatolása"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 12l6-6a3 3 0 0 1 4 4l-8 8a5 5 0 0 1-7-7l7-7"/></svg></button>' +
       '<button type="button" class="kisgomb" data-tett="csatUrl" title="URL (http://www.esetneve.hu) és e-mail (esetneve@email.hu) csatolása" aria-label="URL vagy e-mail csatolása"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 .01 0M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></button>' +
       '<button type="button" class="kisgomb" data-tett="csatTorol" title="Csatolás törlése" aria-label="Csatolás törlése"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
@@ -710,9 +719,9 @@
     kereses: function () { R.Kereses.nyit(); }, gyorsKeres: function () { R.Kereses.gyors(false); },
     mappaNyit: function () { R.Kereses.gyors(true); },
     kepValaszt: kepValaszt, kepTorol: kepTorol, csatDok: csatDok, csatUrl: csatUrl, csatTorol: csatTorol,
-    jegyzet: function () { R.Jegyzet.nyit(akt(), 'A', 999); },
-    mgjBe: function () { var k = akt(); if (k && k.fajta) { uzen('Összevetés képletekhez nem lehet megjegyzést adni!'); return; } $('mgjInput').click(); },
-    mgjKi: function () { var k = akt(); if (k && !k.fajta) R.Jegyzet.mgjExport(k, k.fajlnev); },
+    jegyzet: function () { if (fk('jegyzet')) R.Jegyzet.nyit(akt(), 'A', 999); },
+    mgjBe: function () { if (!fk('jegyzet')) return; var k = akt(); if (k && k.fajta) { uzen('Összevetés képletekhez nem lehet megjegyzést adni!'); return; } $('mgjInput').click(); },
+    mgjKi: function () { if (!fk('jegyzet')) return; var k = akt(); if (k && !k.fajta) R.Jegyzet.mgjExport(k, k.fajlnev); },
     vissza: function () { nezet = 'mozaik'; render(); }, nagyit: function () { if (vanAkt()) { nezet = 'reszlet'; render(); } }
   };
   ['P', 'R', 'C', 'K', 'O', 'A'].forEach(function (h) {
@@ -750,8 +759,9 @@
       { c: 'Legutóbbi képletek', al: legutobbiMenu }, { c: 'Teszt-képletek', al: tesztMenu, lathato: function () { return tesztek.length > 0; } }, '-',
       { c: 'Mentés', b: 'Ctrl+S', t: 'ment' }, { c: 'Mentés másként', t: 'mentMaskent' }, { c: 'Bezár', b: 'Alt+W', t: 'bezar' },
       { c: 'Mind bezár', t: 'mindBezar' }, '-',
-      { c: 'Jegyzet az aktuális képlethez', t: 'jegyzet' }, { c: 'Jegyzetek betöltése (.mgj)…', t: 'mgjBe' },
-      { c: 'Jegyzetek mentése a Windows-os programnak (.mgj)', t: 'mgjKi' }, '-',
+      { c: 'Jegyzet az aktuális képlethez', t: 'jegyzet', lathato: function () { return fk('jegyzet'); } },
+      { c: 'Jegyzetek betöltése (.mgj)…', t: 'mgjBe', lathato: function () { return fk('jegyzet'); } },
+      { c: 'Jegyzetek mentése a Windows-os programnak (.mgj)', t: 'mgjKi', lathato: function () { return fk('jegyzet'); } }, '-',
       { c: 'Horoszkóp mentése képként', t: 'kep' }, { c: 'Nyomtatás', b: 'Ctrl+P', t: 'nyomtat' }] },
     { c: 'Táblázatok', l: [
       { c: 'Planéták', b: 'Ctrl+B', t: 'planetak' }, { c: 'Házak', b: 'Ctrl+H', t: 'hazak' }, { c: 'Fényszögek', b: 'Ctrl+F', t: 'fenyszogek' },
@@ -860,7 +870,10 @@
     ul.className = 'menu'; ul.setAttribute('role', 'menu');
     l.forEach(function (x) {
       var li = document.createElement('li');
-      if (x === '-') { li.className = 'sep'; li.setAttribute('role', 'separator'); ul.appendChild(li); return; }
+      if (x === '-') {
+        // rejtett menüpontok után ne legyen dupla (vagy kezdő) elválasztó
+        if (!ul.lastChild || ul.lastChild.className === 'sep') return;
+        li.className = 'sep'; li.setAttribute('role', 'separator'); ul.appendChild(li); return; }
       if (x.lathato && !x.lathato()) return;
       var b = document.createElement('button');
       b.type = 'button'; b.setAttribute('role', x.radio ? 'menuitemradio' : x.pipa ? 'menuitemcheckbox' : 'menuitem');
@@ -1231,7 +1244,9 @@
   }
   function megnyit() {
     if (window.showOpenFilePicker) {
-      window.showOpenFilePicker({ multiple: true, types: [{ description: 'Regiomontanus képlet (és jegyzetfájl)', accept: { 'application/octet-stream': ['.szk', '.mgj'] } }] })
+      window.showOpenFilePicker({ multiple: true, types: [fk('jegyzet')
+        ? { description: 'Regiomontanus képlet (és jegyzetfájl)', accept: { 'application/octet-stream': ['.szk', '.mgj'] } }
+        : { description: 'Regiomontanus képlet', accept: { 'application/octet-stream': ['.szk'] } }] })
         .then(function (hl) {
           var mgj = [];
           return hl.reduce(function (p, h) {
@@ -1243,18 +1258,23 @@
         }).catch(function (e) { if (e && e.name !== 'AbortError') uzen('Megnyitási hiba: ' + e.message); });
       return;
     }
+    $('fajlInput').accept = fk('jegyzet') ? '.szk,.mgj' : '.szk';
     $('fajlInput').click();
   }
   function fajlokMegnyit(lista) {
     var l = Array.prototype.slice.call(lista), szk = l.filter(function (f) { return /\.szk$/i.test(f.name); }),
       mgj = l.filter(function (f) { return /\.mgj$/i.test(f.name); });
-    l.forEach(function (f) { if (szk.indexOf(f) < 0 && mgj.indexOf(f) < 0) uzen(f.name + ': csak .szk képletfájl (és .mgj jegyzetfájl) nyitható meg.'); });
+    l.forEach(function (f) { if (szk.indexOf(f) < 0 && mgj.indexOf(f) < 0) uzen(f.name + (fk('jegyzet') ? ': csak .szk képletfájl (és .mgj jegyzetfájl) nyitható meg.' : ': csak .szk képletfájl nyitható meg.')); });
     return szk.reduce(function (p, f) {
       return p.then(function () { return f.arrayBuffer().then(function (b) { fajlbolMegnyit(f.name, b, null); }); });
     }, Promise.resolve()).then(function () { return mgjParosit(mgj); });
   }
   /** A .mgj a vele azonos nevű megnyitott képlethez kerül (Windows: hors\docs\<szk-név>.mgj), különben az aktívhoz. */
   function mgjParosit(mgj) {
+    if (!fk('jegyzet')) {
+      mgj.forEach(function (f) { uzen(f.name + ': a jegyzetek egyelőre nem érhetők el a webes változatban.'); });
+      return Promise.resolve();
+    }
     return mgj.reduce(function (p, f) {
       return p.then(function () {
         var alap = f.name.replace(/\.mgj$/i, '').toLowerCase(), cel = null;
@@ -1686,6 +1706,7 @@
   /* jobb kattintás a kerék egy elemén: jegyzet az elemhez (D BSK 616–629); a fényképen: megnyitás nagyban */
   $('asztal').addEventListener('contextmenu', function (e) {
     if (e.target.closest('.oldalsav .foto')) { e.preventDefault(); kepMegnyit(); return; }
+    if (!fk('jegyzet')) return;
     var el = e.target.closest('[data-olv],[data-megj]'); if (!el) return;
     var m = /^(pl|haz|jegy):(-?\d+)$/.exec(el.getAttribute('data-olv') || ''), t, id;
     if (m) { t = { pl: 'P', haz: 'H', jegy: 'J' }[m[1]]; id = +m[2]; }

@@ -27,7 +27,7 @@ public/                ← ez a tartalom kerül fel FTP-vel a tárhelyre
     adatlap.js         „Születési képlet adatai” párbeszédablak
     telepules.js       településkereső mező (api/telepules.php)
     progr.js           a Progressziók menü ablakai (progressziós Hold, primer direkció, szolár, revolúciók)
-    jegyzet.js         „Jegyzetek a horoszkóp elemeihez” (jobb kattintás a keréken; RTF, .mgj import/export)
+    jegyzet.js         „Jegyzetek a horoszkóp elemeihez” (jobb kattintás a keréken; RTF, .mgj import/export) – adatbázisig kikapcsolva (Regio.FUNKCIO)
     mappa.js           a Windows-os Regiomontanus mappájának elérése (hors\, képek, csatolmányok; File System Access)
     kereses.js         „Keresés a képletek közt” és „Megnyitás névre kereséssel”
     kartyak.js         Kiegészítések: „Jegyek és játszmák”, „Születési értesítő” kártya
