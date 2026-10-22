@@ -43,7 +43,8 @@ public/                ← ez a tartalom kerül fel FTP-vel a tárhelyre
                        lehetőségei: jegyek és analóg planéták, tengelyek (Vertex, Keletpont, Koascendens, Sarki ASC),
                        házhatárok/házszámok, planéták, fokjelölők, énjelölő kör/háromszög, planétaméret, planéta fokszáma,
                        fényszögfajták és -jelek, fényszögelt elemek, fényszögvonalak a planétákig / az eredeti helyhez
-  js/idotech.js        időbeli technikák: tranzit, progressziós Hold, primer direkció, szolár, revolúció-kereső
+  js/idotech.js        időbeli technikák: tranzit, progressziós Hold, primer (1° = 1 év) direkció, szolár, revolúció-kereső
+  js/primer.js         valódi primer direkciók: Placidus-félív, zodiákális / mundán, Ptolemaiosz / Naibod / valódi napív kulcs
   js/tablak.js         a Táblázatok menü táblái
   js/allocsillagok.js  a Windows-os program 737 állócsillaga (név, nómenklatúra, csillagkép latinul és magyarul)
   js/tarolo.js         beállítások, legutóbbi képletek, munkamenet (localStorage)

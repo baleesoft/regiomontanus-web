@@ -290,12 +290,12 @@
       d.setUTCMonth(d.getUTCMonth() + Math.round(nap * 12));
       return 'Progressziós Hold - ' + d.getUTCFullYear() + '. évre';
     }
-    return { tranzit: 'Tranzit - Összevetés', pd: 'Primer direkció - Összevetés', sol: 'Szolár-képlet - Összevetés' }[k.fajta] || 'Összevetés';
+    return { tranzit: 'Tranzit - Összevetés', pd: 'Primer (1° = 1 év) direkció - Összevetés', sol: 'Szolár-képlet - Összevetés' }[k.fajta] || 'Összevetés';
   }
   /** A külső kör időpontjának leírása (a Windows-os státuszsor 2. mezője) */
   function kulsoMikor(k) {
     var ks = k.kulso, a = ks.adat;
-    if (k.fajta === 'pd') return 'Primer direkció a(z) ' + (k.adat.ev + (ks.konverz ? -ks.pd : ks.pd)) + '. évre (' + Math.abs(ks.pd) + '°)';
+    if (k.fajta === 'pd') return 'Primer (1° = 1 év) direkció a(z) ' + (k.adat.ev + (ks.konverz ? -ks.pd : ks.pd)) + '. évre (' + Math.abs(ks.pd) + '°)';
     if (k.fajta === 'sol') return 'Szolár-képlet a(z) ' + ks.sol.ev + '. évre' + (a ? ' – ' + idoStr(a) + (K.helyNev(a) ? ' ' + K.helyNev(a) : '') : '');
     if (k.fajta === 'ph') {
       var nap = ks.ph.napok + ks.ph.orak / 24, ev = Math.trunc(Math.abs(nap)), ho = Math.round((Math.abs(nap) - ev) * 12);
@@ -788,7 +788,7 @@
     segitseg: link('https://www.regiomontanus.hu/'), facebook: link('https://www.facebook.com/regiomontanus.astrology'),
     iskola: link('https://humanisztikus.hu/'),
     olvaso: function () { olvasoValt(); }, olvasoBe: function () { if (!olvasoBe) olvasoValt(true); },
-    szin: szinasztria, tranzit: tranzit, ph: progrHold, pd: primerDirekcio, sol: szolar, rev: revolucio, kulsoKulon: kulsoKulon,
+    szin: szinasztria, tranzit: tranzit, ph: progrHold, pd: primerDirekcio, pdValodi: valodiPrimer, sol: szolar, rev: revolucio, kulsoKulon: kulsoKulon,
     egymason: function () { megjelenitesMod('egymason'); }, egymasmellett: function () { megjelenitesMod('egymasmellett'); },
     pdDirekt: function () { beall.pdKonverz = false; beallMent(); }, pdKonverz: function () { beall.pdKonverz = true; beallMent(); },
     progrLepteto: function () { TETT.lepteto(); },
@@ -810,7 +810,7 @@
   TETT.zodS = function () { if (!beall.sid) { beall.sid = true; beallMent(); mindSzamol(); render(); } };
 
   var KELL_AKT = { adatok: 1, ment: 1, mentMaskent: 1, bezar: 1, kep: 1, nyomtat: 1, planetak: 1, hazak: 1, fenyszogek: 1,
-    eletstrat: 1, enallapotok: 1, egyeb: 1, alloTabla: 1, kos0: 1, jegyzet: 1, mgjBe: 1, mgjKi: 1, kepValaszt: 1, kepTorol: 1, jj: 1, sze: 1, csatDok: 1, csatUrl: 1, csatTorol: 1, nagyit: 1, tranzit: 1, ph: 1, pd: 1, sol: 1, rev: 1, kulsoKulon: 1, szemely: 1, enallPersp: 1, persp0: 1, persp1: 1, persp2: 1, persp3: 1, persp4: 1, persp5: 1, persp6: 1,
+    eletstrat: 1, enallapotok: 1, egyeb: 1, alloTabla: 1, kos0: 1, jegyzet: 1, mgjBe: 1, mgjKi: 1, kepValaszt: 1, kepTorol: 1, jj: 1, sze: 1, csatDok: 1, csatUrl: 1, csatTorol: 1, nagyit: 1, tranzit: 1, ph: 1, pd: 1, pdValodi: 1, sol: 1, rev: 1, kulsoKulon: 1, szemely: 1, enallPersp: 1, persp0: 1, persp1: 1, persp2: 1, persp3: 1, persp4: 1, persp5: 1, persp6: 1,
     persp7: 1, persp8: 1, persp9: 1, persp10: 1 };
   function engedelyezett(t) {
     if (t === 'kulsoKulon' && !(akt() && akt().fajta && akt().fajta !== 'pd')) return false;
@@ -853,7 +853,7 @@
       } }, { c: 'Kos 0° képlet', t: 'kos0' }, '-',
       { c: 'Horoszkópolvasó aktiválása', b: 'Ctrl+Q', t: 'olvasoBe', pipa: function () { return olvasoBe; } }, '-', { c: 'Aktuális égi állások', t: 'aktualis' }, '-', { c: 'Keresés', t: 'kereses' }] },
     { c: 'Progressziók', l: [
-      { c: 'Primer direkciók', t: 'pd' }, { c: 'Progressziós Hold', t: 'ph' }, { c: 'Tranzitok', t: 'tranzit' }, '-',
+      { c: 'Primer (1° = 1 év) direkciók', t: 'pd' }, { c: 'Primer direkciók (valódi)...', t: 'pdValodi' }, { c: 'Progressziós Hold', t: 'ph' }, { c: 'Tranzitok', t: 'tranzit' }, '-',
       { c: 'Szolár-képlet', t: 'sol' }, '-', { c: 'Revolúciók...', t: 'rev' }] },
     { c: 'Összevetés', l: [{ c: 'Összevetés (Szinasztria)', t: 'szin' },
       { c: 'Képletek megjelenítése...', al: function () {
@@ -870,7 +870,7 @@
         return [{ c: 'Sziderikus', t: 'zodS', radio: true, pipa: function () { return beall.sid; } },
           { c: 'Tropikus', t: 'zodT', radio: true, pipa: function () { return !beall.sid; } }];
       } },
-      { c: 'Primer direkció iránya', al: function () {
+      { c: 'Primer (1° = 1 év) direkció iránya', al: function () {
         return [{ c: 'Direkt', t: 'pdDirekt', radio: true, pipa: function () { return !beall.pdKonverz; } },
           { c: 'Konverz', t: 'pdKonverz', radio: true, pipa: function () { return !!beall.pdKonverz; } }];
       } }, '-', { c: 'Születési képletek importálása', f: 5 }, '-',
@@ -905,7 +905,7 @@
     ['Planéta az Ascendensen – énállapotok perspektívája', 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 .01 0', 'enallPersp'],
     ['Kos 0° képlet', 'M12 21V10a5 5 0 0 0-9-3M12 10a5 5 0 0 1 9-3', 'kos0'], 0,
     ['Összevetés (szinasztria)', 'M9 6a6 6 0 1 0 .01 0M15 6a6 6 0 1 0 .01 0', 'szin'], 0,
-    ['Primer direkciók', 'M4 12h14M13 6l6 6-6 6', 'pd'],
+    ['Primer (1° = 1 év) direkciók', 'M4 12h14M13 6l6 6-6 6', 'pd'],
     ['Progressziós Hold', 'M15 3a9 9 0 1 0 6 15A7 7 0 0 1 15 3z', 'ph'],
     ['Tranzitok', 'M12 3a9 9 0 1 0 .01 0M3 12h18', 'tranzit'], 0,
     ['Szolár-képlet', 'M12 7a5 5 0 1 0 .01 0M12 11.5v1', 'sol'], 0,
@@ -1128,6 +1128,16 @@
       osszevetesHozzaad(belsoAdat(k), 'pd', null, { pd: x.n, konverz: !!beall.pdKonverz });
     });
   }
+  /** Valódi primer direkciók (Placidus-félív): eseménylista a radixra (js/primer.js, app/progr.js) */
+  function valodiPrimer() {
+    var k = radixAkt(); if (!k) return;
+    if (k.fajta) { uzen('A primer direkciók egy születési képletre számolhatók – válaszd ki a radixot.'); return; }
+    if (R.Keplet.kos0e(k.adat) || k.e.hz.persp !== undefined) { uzen('Ismeretlen születési időnél, Kos 0° és perspektíva-képletnél a primer direkció nem értelmezhető.'); return; }
+    var e = k.e, flag = sweFlag();
+    // a Nap rektaszcenziója a születés után t nappal (a valódi napív kulcshoz; 1 nap = 1 év)
+    var napRa = function (t) { var x = se.calcUt(e.jd + t, 0, flag); return R.Primer.egyenlitoi(x.lon, x.lat || 0, e.eps).ra; };
+    R.Progr.valodiPrimer({ e: e, adat: k.adat, cim: K.cim(k.adat) }, beall.primer, napRa, beallMent);
+  }
   function szolar() {
     var k = radixAkt(); if (!k) return;
     R.helyZonaval(k.adat).then(function (hely) {
@@ -1191,7 +1201,7 @@
   /** A külső kör megnyitása önálló képletként (a Windows-os program ezt is megnyitja) */
   function kulsoKulon() {
     var k = akt(); if (!k || !k.fajta) return;
-    if (k.fajta === 'pd') { uzen('A primer direkció elforgatott képlet, önállóan nem nyitható meg.'); return; }
+    if (k.fajta === 'pd') { uzen('A primer (1° = 1 év) direkció elforgatott képlet, önállóan nem nyitható meg.'); return; }
     if (!k.kulso.adat) return;
     var a = K.masol(k.kulso.adat); a.nev = kulsoNev(k); a.tipus = 'radix';
     hozzaad(a, null);
@@ -1391,7 +1401,7 @@
   function ment(k, maskent) {
     if (k.fajta) {
       // összevetésnél a külső kör képlete menthető (a belső a saját fájljában van)
-      if (k.fajta === 'pd' || !k.kulso.adat) { uzen('A primer direkció elforgatott képlet, nem menthető .szk-ba.'); return Promise.resolve(false); }
+      if (k.fajta === 'pd' || !k.kulso.adat) { uzen('A primer (1° = 1 év) direkció elforgatott képlet, nem menthető .szk-ba.'); return Promise.resolve(false); }
       var ka = K.masol(k.kulso.adat); ka.nev = kulsoNev(k);
       var kk = { adat: ka, eredeti: ka, eltolas: [0, 0, 0, 0, 0], fajlnev: k.kulso.fajlnev || '', handle: k.kulso.handle || null };
       return ment(kk, maskent).then(function (ok) { if (ok) { k.kulso.fajlnev = kk.fajlnev; k.kulso.handle = kk.handle; } return ok; });

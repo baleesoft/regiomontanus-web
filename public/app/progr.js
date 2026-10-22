@@ -93,10 +93,10 @@
 
   /* ---------- Primer direkció ---------- */
   P.pd = function (szul, konverz) {
-    return ablak('Progr.beáll. - Primer direkció',
-      '<fieldset><legend>Primer direkció éve</legend><div class="mezok"><label>Év: <input class="sz" data-fokusz data-ev type="number" min="1" max="2999" value="' +
+    return ablak('Progr.beáll. - Primer (1° = 1 év) direkció',
+      '<fieldset><legend>Primer (1° = 1 év) direkció éve</legend><div class="mezok"><label>Év: <input class="sz" data-fokusz data-ev type="number" min="1" max="2999" value="' +
       new Date().getFullYear() + '"></label></div><p class="t-hint" style="margin-top:8px">1° = 1 év; minden elem (planéták, házak, tengelyek) ennyivel fordul el. Irány: ' +
-      (konverz ? 'konverz' : 'direkt') + ' (Beállítások › Primer direkció iránya).</p></fieldset>',
+      (konverz ? 'konverz' : 'direkt') + ' (Beállítások › Primer (1° = 1 év) direkció iránya). A valódi (Placidus-féle) primer direkció: Progressziók › Primer direkciók (valódi).</p></fieldset>',
       function (d) {
         return function () {
           var ev = szam(d, '[data-ev]', 1, 2999, 'Év');
@@ -260,5 +260,117 @@
           return { talalatok: ki, osszevetes: q('[data-ossz]').checked, hely: d.hely };
         };
       }, 'Képlet(ek) megnyitása');
+  };
+
+  /* ---------- Valódi primer direkciók (Placidus-félív; számítás: js/primer.js) ---------- */
+  var PD_FSZ = [1, 2, 3, 6, 7, 4, 5, 8, 9, 10, 11, 12];
+  /**
+   * Nem modális eredményablak: beállítások + eseménylista. be: { e, adat, cim }, o: beállítások (beall.primer, helyben módosul),
+   * napRa(t): a Nap rektaszcenziója a születés után t nappal (a valódi napív kulcshoz), ment(): a beállítások mentése.
+   */
+  P.valodiPrimer = function (be, o, napRa, ment) {
+    var R2 = R.Primer, e = be.e, a = be.adat;
+    var elemek = {};
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].forEach(function (id) {
+      if (e.poz[id]) elemek[id] = { lon: e.poz[id].lon, lat: e.poz[id].lat || 0, nev: R.nev(id), jel: R.glif(id) };
+    });
+    var bemenet = { armc: e.hz.armc, eps: e.eps, phi: a.lat, elemek: elemek };
+    var napivFv = null;
+    function pipak(nev, lista, kijelolt) {
+      return lista.map(function (x) {
+        return '<label class="pipa"><input type="checkbox" data-pd="' + nev + '" value="' + x[0] + '"' + (kijelolt.indexOf(x[0]) >= 0 ? ' checked' : '') + '> ' + x[1] + '</label>';
+      }).join('');
+    }
+    function valaszt(nev, lista, akt) {
+      return '<select data-pdv="' + nev + '">' + Object.keys(lista).map(function (k) {
+        return '<option value="' + k + '"' + (k === akt ? ' selected' : '') + '>' + R.esc(lista[k]) + '</option>';
+      }).join('') + '</select>';
+    }
+    var plLista = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(function (id) { return [id, '<span class="pd-jel">' + R.glif(id) + '</span> ' + R.esc(R.nev(id))]; });
+    var csomo = e.poz[11] ? 11 : 10;
+    var promLista = plLista.concat([[csomo, '<span class="pd-jel">' + R.glif(csomo) + '</span> Holdcsomó']]);
+    var szigLista = [['AC', '<b>AC</b> Ascendens'], ['MC', '<b>MC</b> Medium Coeli']].concat(plLista);
+    var fszLista = PD_FSZ.map(function (f) { return [f, '<span class="pd-jel">' + R.FENYSZOG[f][3] + R.VS + '</span> ' + R.FENYSZOG[f][0]]; });
+    var d = el('<dialog class="pd-dlg" aria-label="Primer direkciók"><div class="dfej"><span>Primer direkciók – ' + R.esc(be.cim) + '</span></div>' +
+      '<div class="dtorzs pd-torzs"><div class="pd-beall">' +
+      '<fieldset><legend>Módszer</legend><div class="mezok">' +
+      '<label>Számítás' + valaszt('mod', R2.MODOK, o.mod) + '</label>' +
+      '<label>Kulcs' + valaszt('kulcs', R2.KULCSOK, o.kulcs) + '</label>' +
+      '<label>Irány' + valaszt('irany', { direkt: 'direkt', konverz: 'konverz', mindketto: 'direkt és konverz' }, o.irany) + '</label>' +
+      '<label class="pipa" data-szelsor><input type="checkbox" data-pdb="szel"' + (o.szel ? ' checked' : '') + '> a promisszor ekliptikai szélességével</label>' +
+      '<label>Kortól<input type="number" class="sz2" data-pdn="korMin" min="0" max="120" value="' + o.korMin + '"></label>' +
+      '<label>Korig<input type="number" class="sz2" data-pdn="korMax" min="1" max="120" value="' + o.korMax + '"></label>' +
+      '</div></fieldset>' +
+      '<fieldset><legend>Szignifikátorok</legend><div class="pd-pipak">' + pipak('szig', szigLista, o.szig) + '</div></fieldset>' +
+      '<fieldset><legend>Promisszorok</legend><div class="pd-pipak">' + pipak('prom', promLista, o.prom) + '</div></fieldset>' +
+      '<fieldset><legend>Fényszögek</legend><div class="pd-pipak">' + pipak('fsz', fszLista, o.fsz) + '</div></fieldset>' +
+      '</div><div class="pd-eredm"><p class="t-hint" data-pdinfo></p><div class="pd-tablatart"><table class="t pd-tabla"><thead><tr>' +
+      '<th>Kor</th><th>Időpont</th><th>Irány</th><th>Promisszor</th><th>Fényszög</th><th>Szignifikátor</th><th>Ív</th></tr></thead><tbody></tbody></table></div></div></div>' +
+      '<div class="dlab"><button type="button" class="gomb" data-pdg="masol">Másolás</button><button type="button" class="gomb" data-pdg="csv">Mentés (CSV)</button>' +
+      '<span class="tolt"></span><button type="button" class="gomb fo" data-pdg="zar">Bezárás</button></div></dialog>');
+    document.body.appendChild(d);
+    var sorok = [];
+    var szulMs = Date.UTC(e.ut.year, e.ut.month - 1, e.ut.day) + e.ut.hour * 3600000;
+    var mostKor = (Date.now() - szulMs) / (365.2422 * 86400000);
+    function olvas() {
+      ['mod', 'kulcs', 'irany'].forEach(function (k) { o[k] = d.querySelector('[data-pdv="' + k + '"]').value; });
+      o.szel = d.querySelector('[data-pdb="szel"]').checked;
+      ['korMin', 'korMax'].forEach(function (k) { var v = +d.querySelector('[data-pdn="' + k + '"]').value; if (isFinite(v)) o[k] = Math.max(0, Math.min(120, v)); });
+      if (o.korMax <= o.korMin) o.korMax = o.korMin + 1;
+      ['szig', 'prom', 'fsz'].forEach(function (k) {
+        o[k] = Array.prototype.filter.call(d.querySelectorAll('[data-pd="' + k + '"]'), function (c) { return c.checked; })
+          .map(function (c) { return /^\d+$/.test(c.value) ? +c.value : c.value; });
+      });
+      d.querySelector('[data-szelsor]').hidden = o.mod !== 'zod';
+    }
+    function korStr(k) { var ev = Math.floor(k), ho = Math.floor((k - ev) * 12); return ev + ' év ' + ho + ' hó'; }
+    function datum(k) { var t = new Date(szulMs + k * 365.2422 * 86400000); return t.getUTCFullYear() + '.' + R.pad(t.getUTCMonth() + 1) + '.' + R.pad(t.getUTCDate()); }
+    function szamol() {
+      olvas(); ment();
+      if (o.kulcs === 'napiv' && !napivFv) napivFv = R2.napivKulcs(napRa, 125);
+      var opt = { mod: o.mod, szel: o.szel, kulcs: o.kulcs, irany: o.irany, szig: o.szig, prom: o.prom, fsz: o.fsz, korMin: o.korMin, korMax: o.korMax, napiv: napivFv };
+      var r = R2.szamol(bemenet, opt);
+      sorok = r.sorok;
+      d.querySelector('[data-pdinfo]').textContent = sorok.length + ' direkció ' + o.korMin + '–' + o.korMax + ' éves kor között. ' +
+        'Születési hely: ' + R.fokStr(Math.abs(a.lat), false) + (a.lat >= 0 ? ' É' : ' D') + ', ARMC ' + R.fokStr(e.hz.armc, false) + '.' +
+        (r.kimaradt.length ? ' Cirkumpoláris, ezért kimaradt: ' + r.kimaradt.join(', ') + '.' : '');
+      var tb = d.querySelector('.pd-tabla tbody');
+      tb.innerHTML = sorok.map(function (x) {
+        var f = R.FENYSZOG[x.fsz], most = Math.abs(x.kor - mostKor) <= 1;
+        return '<tr' + (most ? ' class="pd-most" title="az aktuális életkor körül"' : '') + '><td>' + korStr(x.kor) + '</td><td>' + datum(x.kor) + '</td><td>' + (x.konverz ? 'K' : 'D') +
+          '</td><td><span class="pd-jel">' + (x.prom.jel || '') + '</span> ' + R.esc(x.prom.nev) + '</td><td><span class="pd-jel">' + f[3] + R.VS + '</span> ' + f[0] +
+          (x.oldal ? ' (' + x.oldal + ')' : '') + '</td><td>' + (x.szig.id === 'AC' || x.szig.id === 'MC' ? '<b>' + x.szig.jel + '</b>' : '<span class="pd-jel">' + x.szig.jel + '</span>') +
+          ' ' + R.esc(x.szig.nev) + '</td><td>' + R.fokStr(x.iv, false) + '</td></tr>';
+      }).join('') || '<tr><td colspan="7" class="t-hint">Nincs direkció a megadott feltételekkel.</td></tr>';
+      var elso = tb.querySelector('tr.pd-most'); if (elso && szamol.elsoFut) { elso.scrollIntoView({ block: 'center' }); }
+      szamol.elsoFut = false;
+    }
+    function szoveg(sep) {
+      var fej = ['Kor (év)', 'Időpont', 'Irány', 'Promisszor', 'Fényszög', 'Szignifikátor', 'Ív (fok)'];
+      return [fej.join(sep)].concat(sorok.map(function (x) {
+        var f = R.FENYSZOG[x.fsz];
+        return [x.kor.toFixed(2).replace('.', ','), datum(x.kor), x.konverz ? 'konverz' : 'direkt', x.prom.nev, f[0] + (x.oldal ? ' (' + x.oldal + ')' : ''),
+          x.szig.nev, x.iv.toFixed(4).replace('.', ',')].join(sep);
+      })).join('\r\n');
+    }
+    d.addEventListener('change', szamol);
+    d.addEventListener('cancel', function (ev) { ev.preventDefault(); d.close(); d.remove(); });
+    d.addEventListener('click', function (ev) {
+      var g = ev.target.closest('[data-pdg]'); if (!g) return;
+      var t = g.getAttribute('data-pdg');
+      if (t === 'zar') { d.close(); d.remove(); }
+      else if (t === 'masol') {
+        var sz = szoveg('\t');
+        if (navigator.clipboard) navigator.clipboard.writeText(sz).then(function () { g.textContent = 'Másolva'; setTimeout(function () { g.textContent = 'Másolás'; }, 1500); });
+      } else if (t === 'csv') {
+        var b = new Blob(['﻿' + szoveg(';')], { type: 'text/csv;charset=utf-8' }), u = URL.createObjectURL(b), l = document.createElement('a');
+        l.href = u; l.download = 'Primer direkciók - ' + (a.nev || 'képlet').replace(/[\\/:*?"<>|]/g, '_') + '.csv'; document.body.appendChild(l); l.click(); l.remove();
+        setTimeout(function () { URL.revokeObjectURL(u); }, 2000);
+      }
+    });
+    szamol.elsoFut = true;
+    d.showModal();
+    szamol();
+    return d;
   };
 })(typeof window !== 'undefined' ? window : globalThis);

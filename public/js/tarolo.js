@@ -36,6 +36,9 @@
       // Fényszögek: fajták, jelek, vonalak; fényszögelt elemek (házak/tengelyek, planéták, kisbolygók, holdcsomók)
       fszTipus: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], fszJel: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       fszPlanetaig: false, fszEredeti: false, fszHaz: [], fszPl: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], fszKisb: [], fszCsomo: [] },
+    // valódi primer direkciók (Progressziók › Primer direkciók (valódi)): módszer, kulcs, irány, elemek, korhatár
+    primer: { mod: 'zod', kulcs: 'ptolemaiosz', irany: 'direkt', szel: false, korMin: 0, korMax: 90,
+      szig: ['AC', 'MC', 0, 1], prom: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], fsz: [1, 2, 3, 6, 7] },
     // több képlet egymás mellett: 'fuggoleges' (átlósan eltolva, 60%) | 'vizszintes' (egymás mellett, 50%)
     osszElhely: 'fuggoleges',
     alapHely: { telepules: 'Budapest', telepulesKijelzes: '', orszag: 'Hungary', orszagKod: 'H', lat: 47.5, lon: 19.0666667, tz: 'Europe/Budapest' },

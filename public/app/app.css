@@ -572,3 +572,18 @@ table.t-grid tr.t-pontsor th.t-fej { background: #efe9dc; }
   .t-poz, .t-orb { font-size: 8.5px; }
   .t-fszj { font-size: 14px; } .t-fejjel { font-size: 15px; }
 }
+
+/* ---------- Valódi primer direkciók ---------- */
+.pd-dlg { width: min(1150px, calc(100vw - 24px)); }
+.pd-pipak label.pipa { white-space: nowrap; }
+.pd-torzs { display: grid; grid-template-columns: 380px minmax(0, 1fr); gap: 12px; align-items: start; }
+.pd-beall fieldset { margin-bottom: 8px; }
+.pd-beall select { padding: 3px 4px; border: 1px solid var(--line); background: #fff; max-width: 300px; }
+.pd-pipak { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px 8px; }
+.pd-jel { font-family: var(--sym); font-size: 15px; }
+.pd-tablatart { max-height: calc(100vh - 230px); overflow: auto; border: 1px solid var(--line); }
+.pd-tabla { width: 100%; }
+.pd-tabla thead th { position: sticky; top: 0; z-index: 1; background: var(--head); box-shadow: 0 1px 0 var(--line); }
+.pd-tabla td { white-space: nowrap; }
+.pd-tabla tr.pd-most td { background: #fff4c8; }
+@media (max-width: 820px) { .pd-torzs { grid-template-columns: minmax(0, 1fr); } .pd-tablatart { max-height: none; } }

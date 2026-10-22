@@ -12,7 +12,7 @@
 
   /* Előtagok a képletnevekben – mint a Windows-os fülek feliratában */
   I.ELOTAG = { tranzit: 'Tr>', ph: 'PH>', pd: 'Pd>', sol: 'Sol>', rev: 'Rev>', szin: '' };
-  I.NEV = { tranzit: 'Tranzit', ph: 'Progressziós Hold', pd: 'Primer direkció', sol: 'Szolár-képlet', rev: 'Revolúció', szin: 'Összevetés' };
+  I.NEV = { tranzit: 'Tranzit', ph: 'Progressziós Hold', pd: 'Primer (1° = 1 év) direkció', sol: 'Szolár-képlet', rev: 'Revolúció', szin: 'Összevetés' };
 
   function fokNorm(x) { x %= 360; return x < 0 ? x + 360 : x; }
   /** swe_difdeg2n: a - b, −180..+180 */
