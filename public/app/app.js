@@ -793,7 +793,7 @@
       { c: 'Segítség a program használatához', t: 'segitseg' }, { c: 'Tippek és trükkök', f: 5 }, '-',
       { c: 'Regiomontanus a Facebookon', t: 'facebook' }, { c: 'Humanisztikus Asztrológia Iskola', t: 'iskola' }, '-',
       { c: 'Névjegy', t: 'nevjegy' }] },
-    { c: 'Kiegészítések', l: [{ c: 'Jegyek és játszmák', t: 'jj' }, { c: 'Születési értesítő', t: 'sze' }] }
+    { c: 'Kiegészítések', l: [{ c: 'Jegyek és játszmák', f: 5 }, { c: 'Születési értesítő', f: 5 }] }
   ];
 
   /* Eszköztár – a Windows-os ikonsor sorrendjében. [cím, ikon, tett | fázis, lenyomva?] */
@@ -826,8 +826,9 @@
     ['Progresszióléptető', 'M4 18l6-6-6-6M12 18l6-6-6-6', 'progrLepteto', function () { return lepNyitva && !!(akt() && akt().fajta); }], 0,
     ['Segítség a program használatához', 'M12 3a9 9 0 1 0 .01 0M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 1-1 1.7M12 17h.01', 'segitseg'], 0,
     ['Humanisztikus Asztrológia Iskola', 'M2 9l10-5 10 5-10 5zM6 11v5c3 2 9 2 12 0v-5', 'iskola'], 0,
-    ['Jegyek és játszmák', 'M4 7h10v14H4zM10 3h10v14', 'jj'],
-    ['Születési értesítő', 'M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 11c0 5.5-7 10-7 10z', 'sze'], 0,
+    // a két kártya (app/kartyak.js) egyelőre nem érhető el: a Windows-os kinézethez a Rákos Péter-féle képek kellenek
+    ['Jegyek és játszmák', 'M4 7h10v14H4zM10 3h10v14', 5],
+    ['Születési értesítő', 'M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 11c0 5.5-7 10-7 10z', 5], 0,
     ['Horoszkópolvasó – be/ki (Ctrl+Q)', 'M4 5h16v11H9l-5 4z', 'olvaso', function () { return olvasoBe; }], 0,
     ['Keresés a képletek közt', 'M10 4a6 6 0 1 0 .01 0M15 15l6 6', 'kereses'],
     ['Megnyitás névre kereséssel', 'M4 6h10M4 12h7M4 18h7M17 11a3 3 0 1 0 .01 0M19.5 15.5L22 18', 'gyorsKeres']
