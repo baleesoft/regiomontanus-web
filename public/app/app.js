@@ -54,6 +54,15 @@
     szamol(k); render();
     return k;
   }
+  /** A szerver felé minden hívással: orbisok (egyszerű / részletes) és az aszteroidák kapcsolója */
+  K.apiBeall = function () {
+    var o = beall.orb, d = o.mod === 'reszletes', orbs = {}, k, i;
+    for (k = 1; k <= 12; k++) {
+      if (d) orbs[k] = o.D[k].slice(0, 14);
+      else { orbs[k] = []; for (i = 0; i < 14; i++) orbs[k].push(o.S[k]); }
+    }
+    return { orbMode: d ? 'detailed' : 'simple', orbs: orbs, showAsteroids: !!beall.kerek.asteroids };
+  };
   /** alap: a képlet saját (belső) számítása – csak ehhez kellenek az állócsillagok (a Windows-osban is a radixon látszanak) */
   function szamolOpt(alap) {
     return { hsys: beall.hsys, sid: beall.sid, allo: alap ? beall.allo : null, kisb: { be: !!beall.kerek.asteroids, ids: beall.kisb } };
@@ -734,7 +743,7 @@
       if (!beall.allo.megj) { uzen('Az állócsillagok fényszög-táblázata csak akkor érhető el, ha a megjelenítésük is be van kapcsolva!'); return; }
       tablaMutat('allo');
     },
-    alloBeall: alloDlg,
+    alloBeall: alloDlg, orbisok: orbDlg,
     inkognito: function () {
       beall.nyomtatas = beall.nyomtatas || {}; beall.nyomtatas.inkognito = !beall.nyomtatas.inkognito; beallMent(); render();
       uzen(inkognito() ? 'Személyes adatok elrejtve (születési idő, hely, életkor) – a képernyőn és a nyomtatásban.' : 'Személyes adatok megjelenítve.');
@@ -773,7 +782,7 @@
     if (t === 'kulsoKulon' && !(akt() && akt().fajta && akt().fajta !== 'pd')) return false;
     return engedelyezettAlap(t);
   }
-  function engedelyezettAlap(t) { return !!TETT[t] && (!KELL_AKT[t] || vanAkt()) && (betoltve || ['nevjegy', 'segitseg', 'facebook', 'iskola', 'megjelenites', 'egyebek', 'gyari', 'alloBeall', 'allo', 'inkognito'].indexOf(t) >= 0 || t.indexOf('hsys') === 0 || t.indexOf('zod') === 0); }
+  function engedelyezettAlap(t) { return !!TETT[t] && (!KELL_AKT[t] || vanAkt()) && (betoltve || ['nevjegy', 'segitseg', 'facebook', 'iskola', 'megjelenites', 'egyebek', 'gyari', 'alloBeall', 'allo', 'inkognito', 'orbisok'].indexOf(t) >= 0 || t.indexOf('hsys') === 0 || t.indexOf('zod') === 0); }
   function vegrehajt(t) { if (engedelyezett(t)) TETT[t](); }
 
   function legutobbiMenu() {
@@ -819,7 +828,7 @@
           { c: '... egymás mellett', t: 'egymasmellett', radio: true, pipa: function () { return m === 'egymasmellett'; } }];
       } }, '-', { c: 'A külső kör önálló képletként', t: 'kulsoKulon' }] },
     { c: 'Beállítások', l: [
-      { c: 'Megjelenítés', t: 'megjelenites' }, { c: 'Állócsillagok', t: 'alloBeall' }, { c: 'Egyebek', t: 'egyebek' }, { c: 'Fényszög orbisok', f: 5 }, { c: 'Színek és szimbólumok', f: 5 },
+      { c: 'Megjelenítés', t: 'megjelenites' }, { c: 'Állócsillagok', t: 'alloBeall' }, { c: 'Egyebek', t: 'egyebek' }, { c: 'Fényszög orbisok', t: 'orbisok' }, { c: 'Színek és szimbólumok', f: 5 },
       { c: 'Házrendszer', al: function () {
         return ['P', 'R', 'C', 'K', 'O', 'A'].map(function (h) { return { c: R.HAZRENDSZER[h], t: 'hsys' + h, radio: true, pipa: function () { return beall.hsys === h; } }; });
       } },
@@ -1525,7 +1534,58 @@
   var egyebHely = null, egyebKereso = null;
   /* ---------- Beállítások › Állócsillagok ---------- */
   var alloLista = null;   // név szerint rendezett [{ id, nev, nomen, latin, hun }]
-  function alloKulcs() { var a = beall.allo; return JSON.stringify([a.megj, a.ids, a.orb, a.fsz, beall.kerek.asteroids, beall.kisb]); }
+  function alloKulcs() { var a = beall.allo; return JSON.stringify([a.megj, a.ids, a.orb, a.fsz, beall.kerek.asteroids, beall.kisb, beall.orb]); }
+
+  /* ---------- Beállítások › Fényszög orbisok (fOrbisSettings) ---------- */
+  var ORB_SOROK = ['Nap', 'Hold', 'Merkúr', 'Vénusz', 'Mars', 'Jupiter', 'Szaturnusz', 'Uránusz', 'Neptunusz', 'Plútó', 'Asc', 'MC', 'Holdcsomó', 'Házsarkak'];
+  function orbDlg() {
+    var d = $('dlgOrb'), o = JSON.parse(JSON.stringify(beall.orb)), akt = 1, i, k;
+    var szam = function (v) { var x = parseFloat(String(v).replace(',', '.')); return isFinite(x) && x >= 0 ? Math.min(x, 30) : 0; };
+    var mezo = function (id, v, cimke) {
+      return '<label class="orb-sor"><span>' + cimke + '</span><input type="number" min="0" max="30" step="0.5" inputmode="decimal" id="' + id + '" value="' + v + '"></label>';
+    };
+    // Egyszerű: fényszögenként egy érték (két oszlopban, mint a Windows-os ablakban)
+    $('oEgyszeru').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(function (k) {
+      return mezo('oS' + k, o.S[k], R.FENYSZOG[k][0] + ' (' + R.FENYSZOG[k][1] + '°)');
+    }).join('');
+    // Részletes: a kiválasztott fényszög 14 értéke
+    $('oFsz').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(function (k) {
+      return '<label class="pipa"><input type="radio" name="oFsz" value="' + k + '"' + (k === 1 ? ' checked' : '') + '> ' + R.FENYSZOG[k][0] + ' (' + R.FENYSZOG[k][1] + '°)</label>';
+    }).join('');
+    function reszletesBe() { for (i = 0; i < 14; i++) $('oD' + i).value = o.D[akt][i]; }
+    function reszletesKi() { for (i = 0; i < 14; i++) o.D[akt][i] = szam($('oD' + i).value); }
+    $('oErtekek').innerHTML = ORB_SOROK.map(function (n, i) { return mezo('oD' + i, 0, n); }).join('');
+    reszletesBe();
+    Array.prototype.forEach.call($('oFsz').querySelectorAll('input'), function (r) {
+      r.onchange = function () { reszletesKi(); akt = +r.value; reszletesBe(); };
+    });
+    function ful(nev) {
+      Array.prototype.forEach.call(d.querySelectorAll('[data-orbful]'), function (b) { b.setAttribute('aria-selected', String(b.getAttribute('data-orbful') === nev)); });
+      Array.prototype.forEach.call(d.querySelectorAll('[data-orblap]'), function (l) { l.hidden = l.getAttribute('data-orblap') !== nev; });
+    }
+    Array.prototype.forEach.call(d.querySelectorAll('[data-orbful]'), function (b) { b.onclick = function () { ful(b.getAttribute('data-orbful')); }; });
+    // a mód választása a hozzá tartozó fület is megmutatja (rgpAspectTypeClick)
+    Array.prototype.forEach.call(d.querySelectorAll('input[name="oMod"]'), function (r) {
+      r.checked = r.value === o.mod; r.onchange = function () { ful(r.value); };
+    });
+    ful(o.mod);
+    $('oAlap').onclick = function () {
+      var g = S.ALAP.orb;
+      for (k = 1; k <= 12; k++) { $('oS' + k).value = g.S[k]; o.D[k] = g.D[k].slice(); }
+      reszletesBe();
+    };
+    d.returnValue = ''; d.showModal();
+    d.onclose = function () {
+      if (d.returnValue !== 'ok') return;
+      reszletesKi();
+      for (k = 1; k <= 12; k++) o.S[k] = szam($('oS' + k).value);
+      var m = d.querySelector('input[name="oMod"]:checked'); o.mod = m ? m.value : 'egyszeru';
+      var elotte = JSON.stringify(beall.orb);
+      beall.orb = o; beallMent();
+      if (JSON.stringify(o) !== elotte) mindSzamol();
+      render();
+    };
+  }
   function alloDlg() {
     var d = $('dlgAllo'), A = R.Allo, tb = d.querySelector('#aLista tbody'), lista = $('aLista');
     if (!alloLista) {

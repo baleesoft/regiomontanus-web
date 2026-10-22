@@ -157,6 +157,36 @@
   </form>
 </dialog>
 
+<!-- Beállítások – Fényszög orbisok (fOrbisSettings) -->
+<dialog id="dlgOrb" class="orb-dlg" aria-labelledby="dlgOrbCim">
+  <form method="dialog">
+    <div class="dfej"><span id="dlgOrbCim">Orbis értékek beállítása</span></div>
+    <div class="dtorzs">
+      <div class="orb-fulek" role="tablist">
+        <button type="button" role="tab" data-orbful="egyszeru" aria-selected="true">Egyszerű</button>
+        <button type="button" role="tab" data-orbful="reszletes" aria-selected="false">Részletes</button>
+      </div>
+      <div class="orb-lap" data-orblap="egyszeru"><div class="orb-egyszeru" id="oEgyszeru"></div></div>
+      <div class="orb-lap" data-orblap="reszletes" hidden>
+        <div class="orb-reszletes">
+          <fieldset><legend>Fényszög</legend><div id="oFsz" class="orb-fsz" role="radiogroup" aria-label="Fényszög"></div></fieldset>
+          <fieldset><legend>Orbis (°)</legend><div id="oErtekek" class="orb-ertekek"></div></fieldset>
+        </div>
+      </div>
+      <p class="orb-sugo">A fényszögek orbisát úgy használja fel a program a számításaihoz, hogy megnézi például az adott planétától
+        jobbra és balra a megadott orbis értékén belül milyen más planéta található. Együttállás esetén, aminek az orbisa 15°,
+        megnézzük, hogy a Naptól 15°-ra mi található jobbra, majd azt is, hogy mi található 15°-ra balra – a teljes vizsgált
+        orbis tehát 30°.</p>
+      <fieldset class="orb-mod"><legend>Melyik beállítást használjuk?</legend>
+        <label class="pipa"><input type="radio" name="oMod" value="egyszeru"> Egyszerű</label>
+        <label class="pipa"><input type="radio" name="oMod" value="reszletes"> Részletes</label>
+      </fieldset>
+    </div>
+    <div class="dlab"><button type="button" class="gomb" id="oAlap">Alapértékek</button><span class="tolt"></span>
+      <button type="submit" class="gomb fo" value="ok">Rendben</button><button type="submit" class="gomb" value="">Mégsem</button></div>
+  </form>
+</dialog>
+
 <!-- Beállítások – Állócsillagok (fBeallitasok_Megjelenites: tsSheetFixedStars + chkbFenyszogekFixedStars) -->
 <dialog id="dlgAllo" class="allo-dlg" aria-labelledby="dlgAlloCim">
   <form method="dialog">

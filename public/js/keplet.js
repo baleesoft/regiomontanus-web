@@ -150,6 +150,7 @@
       // „Aszteroidák megjelenítése” (chkbKellAsteroidak): kikapcsolva a kisbolygók nem vesznek részt a fényszög-számításban
       if (opt.kisb) { kuld.settings = kuld.settings || {}; kuld.settings.showAsteroids = !!opt.kisb.be; }
       if (!opt.csakPoz) { try { eredmeny.egyeb = egyebAdatok(se, jd, a, z, hz, poz); } catch (e) { eredmeny.egyeb = null; } }
+      kuld.settings = alapBeall(kuld.settings);
       eredmeny.csillagok = csillagok;
       eredmeny.kuld = kuld;
       if (opt.csakPoz) return eredmeny;     // keresés: a pozíciók elegendők (az elemzés kötegelve, api/kereses.php)
@@ -165,8 +166,20 @@
   };
 
   K.API_OSSZ = '../api/osszevet.php';
+  /**
+   * A program beállításaiból a szerver felé menő közös rész (orbisok, aszteroidák) – az alkalmazás állítja be:
+   * K.apiBeall = function () { return { orbMode, orbs, showAsteroids }; }
+   */
+  K.apiBeall = null;
+  function alapBeall(felul) {
+    var b = typeof K.apiBeall === 'function' ? (K.apiBeall() || {}) : {}, u = {}, k;
+    for (k in b) u[k] = b[k];
+    for (k in (felul || {})) u[k] = felul[k];
+    return u;
+  }
   function kuldes(e) {
     return {
+      settings: alapBeall(),
       planets: Object.keys(e.poz).map(function (id) { var x = e.poz[id]; return { id: +id, lon: x.lon, lat: x.lat, speed: x.speedLon }; }),
       cusps: e.hz.cusps.slice(1, 13),
       ascmc: [e.hz.asc, e.hz.mc, e.hz.armc, e.hz.vertex, e.hz.equAsc, e.hz.coAscKoch, e.hz.coAscMunkasey, e.hz.polarAsc]
@@ -177,12 +190,12 @@
    * Promise<{ aspects: [{a:[típus,id] (belső), b:[típus,id] (külső), aspect, exact, orb, maxOrb}], kulsoHaz: {id: ház} }>
    */
   K.osszevet = function (eBelso, eKulso, api) {
-    return apiHivas(api || K.API_OSSZ, { belso: kuldes(eBelso), kulso: kuldes(eKulso) });
+    return apiHivas(api || K.API_OSSZ, { belso: kuldes(eBelso), kulso: kuldes(eKulso), settings: alapBeall() });
   };
 
   K.API_KER = '../api/kereses.php';
   /** Kötegelt keresés: feltetel { mod, planeta, jegyek, hazak }, kepletek [{ id, planets, cusps, ascmc }] (≤ 25) */
-  K.kereses = function (feltetel, kepletek, api) { return apiHivas(api || K.API_KER, { feltetel: feltetel, kepletek: kepletek }); };
+  K.kereses = function (feltetel, kepletek, api) { return apiHivas(api || K.API_KER, { feltetel: feltetel, kepletek: kepletek, settings: alapBeall() }); };
 
   K.API_JJ = '../api/jj.php';
   /** A „Jegyek és játszmák” kártya adatai (Promise<{ enallapotok, trikofeliratok, szuloiProgramok, idoNelkul }>) */

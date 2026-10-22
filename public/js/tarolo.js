@@ -28,6 +28,15 @@
     alapHely: { telepules: 'Budapest', telepulesKijelzes: '', orszag: 'Hungary', orszagKod: 'H', lat: 47.5, lon: 19.0666667, tz: 'Europe/Budapest' },
     elrendezes: 4, aktualisFrissit: true, lepes: 1, reszletArany: 0.58,
     osszevetesMod: 'egymason', pdKonverz: false, phCsakHold: true, phTengely: false,
+    // Fényszög orbisok (chkbOrbSettingsSimple / Detailed, chkbOrbSettingsSwitch) – az alapértelmezések visszaállítása szerint;
+    // részletesnél 14 érték: Nap..Plútó, ASC, MC, holdcsomó, házcsúcsok (az utóbbi négy gyárilag 0)
+    orb: { mod: 'egyszeru',
+      S: { 1: 15, 2: 7.5, 3: 4, 4: 2, 5: 2, 6: 5, 7: 2.5, 8: 1, 9: 1, 10: 3, 11: 2.5, 12: 3 },
+      D: { 1: [15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 0, 0, 0, 0], 2: [7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 0, 0, 0, 0],
+        3: [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0], 4: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0], 5: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0],
+        6: [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 0, 0, 0, 0], 7: [2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 0, 0, 0, 0],
+        8: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0], 9: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0], 10: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0],
+        11: [2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 0, 0, 0, 0], 12: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0] } },
     // Kisbolygók/aszteroidák (chkbKisBolygok) – a telepítéskori settings.ini szerint csak a Chiron; a megjelenítés: kerek.asteroids
     kisb: [15],
     // Állócsillagok (chkbFixedStars, chkbFenyszogekFixedStars) – a Windows-os program telepítéskori settings.ini-je szerint
