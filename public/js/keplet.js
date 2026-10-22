@@ -64,6 +64,20 @@
     return u;
   }
 
+  /**
+   * Planéta-perspektíva (DoCalculatePlanetaPerspektiva): a planéta az ASC-n, egyenlő házak tőle,
+   * MC = +270°; a többi tengely marad, az eredeti ASC/MC megőrizve (a keréken AC/MC jelként látszik).
+   */
+  function perspektiva(hz, lon, id) {
+    var u = {}; for (var k in hz) u[k] = hz[k];
+    u.cusps = [0]; for (var i = 1; i <= 12; i++) u.cusps.push(((lon + (i - 1) * 30) % 360 + 360) % 360);
+    u.origAsc = hz.asc; u.origMc = hz.mc;
+    u.asc = lon; u.mc = (lon + 270) % 360; u.persp = id;
+    return u;
+  }
+  K.PERSP_NEV = function (id) { return id === 10 ? 'Drakonikus perspektíva' : R.nev(id); };
+  K.perspCim = function (a, id) { return 'p< ' + K.PERSP_NEV(id) + ' ' + a.nev; };
+
   function apiHivas(url, kuld) {
     return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(kuld) })
       .then(function (r) {
@@ -99,6 +113,7 @@
         if (x.flag & SE.FLG_MOSEPH) moshier = true;
         poz[id] = x;
       });
+      if (a.tipus === 'persp' && !K.kos0e(a) && poz[a.perspId]) hz = perspektiva(hz, poz[a.perspId].lon, a.perspId);
       if (moshier) fig.push('Egyes testek Moshier-módban számolódtak (hiányzó adatfájl: ' + eph.missing.join(', ') + ').');
       if (hianyzo.length) fig.push('Erre az időpontra nincs adat: ' + hianyzo.join(', ') + '.');
       var eps = se.calc(jd + se.deltat(jd), -1, 0).lon; // SE_ECL_NUT: valódi ferdeség
@@ -137,13 +152,17 @@
     return apiHivas(api || K.API_OSSZ, { belso: kuldes(eBelso), kulso: kuldes(eKulso) });
   };
 
+  K.API_OLV = '../api/olvaso.php';
+  /** A horoszkópolvasó szövegei egy képlethez (Promise<{ signs, houses, planets, houseLords, selfMarkers }>) */
+  K.olvaso = function (e, api) { return apiHivas(api || K.API_OLV, kuldes(e)); };
+
   /** A képlet megjelenített neve (Kos 0° előtaggal, ahogy a Windows-os program teszi) */
   K.cim = function (a) {
     if (K.kos0e(a) && a.nev.indexOf('Kos 0°<') !== 0) return 'Kos 0°< ' + a.nev;
     return a.nev;
   };
   K.tipusNev = function (a) {
-    return a.tipus === 'aktualis' ? 'Akt. égi állás' : K.kos0e(a) ? 'Kos 0°' : 'Radix';
+    return a.tipus === 'aktualis' ? 'Akt. égi állás' : K.kos0e(a) ? 'Kos 0°' : a.tipus === 'persp' ? 'Planétaperspektíva' : 'Radix';
   };
   /** Életkor években (a Windows-os státuszsor „NN é” mezője) */
   K.eletkor = function (a, most) {

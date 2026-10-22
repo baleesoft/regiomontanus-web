@@ -55,7 +55,8 @@
       sor.push('<tr><td>' + a[0] + '</td><td class="t-gl">' + R.jegyGlif(j.j) + '</td><td>' + R.JEGYEK[j.j] +
         '</td><td class="t-num">' + R.fokStr(j.fok) + '</td></tr>');
     });
-    var cim = hz.kos0 ? 'Kos 0° – egyenlő házak a Kostól' : R.HAZRENDSZER[e.hsys] || e.hsys;
+    var cim = hz.kos0 ? 'Kos 0° – egyenlő házak a Kostól' : hz.persp !== undefined ? 'Egyenlő – ' + R.Keplet.PERSP_NEV(hz.persp) + ' az ASC-n'
+      : R.HAZRENDSZER[e.hsys] || e.hsys;
     return '<table class="t"><thead><tr><th>' + cim + '</th><th></th><th>Jegy</th><th>Pozíció</th></tr></thead><tbody>' +
       sor.join('') + '</tbody></table>';
   };
@@ -177,7 +178,8 @@
       'Ekliptika ferdesége', R.fokStr(e.eps),
       'Földrajzi hely', R.esc([R.Keplet.helyNev(a), a.orszag].filter(Boolean).join(', ')) + ' – ' +
         R.fokStr(Math.abs(a.lat), false) + ' ' + (a.lat >= 0 ? 'É' : 'D') + ', ' + R.fokStr(Math.abs(a.lon), false) + ' ' + (a.lon >= 0 ? 'K' : 'Ny'),
-      'Házrendszer', (e.hz.kos0 ? 'Kos 0° képlet (egyenlő házak a Kostól)' : R.HAZRENDSZER[e.hsys]) + (e.sid ? ', sziderikus' : ', tropikus'),
+      'Házrendszer', (e.hz.kos0 ? 'Kos 0° képlet (egyenlő házak a Kostól)' : e.hz.persp !== undefined ?
+        'Egyenlő (planétaperspektíva: ' + R.Keplet.PERSP_NEV(e.hz.persp) + ' az ASC-n; eredeti ASC: ' + R.fokStr(e.hz.origAsc, false) + ')' : R.HAZRENDSZER[e.hsys]) + (e.sid ? ', sziderikus' : ', tropikus'),
       'Számítás', 'Swiss Ephemeris (WebAssembly)'
     ].map(cella).join('') + '</div>' +
       (e.figyelmeztetes.length ? '<p class="t-hint">' + e.figyelmeztetes.map(R.esc).join('<br>') + '</p>' : '');
@@ -255,6 +257,7 @@
   T.kerekAdat = function (e) {
     var el = e.elemzes;
     return { asc: e.hz.asc, mc: e.hz.mc, cusps: e.hz.cusps,
+      tengelyJelek: e.hz.persp !== undefined ? [['AC', e.hz.origAsc, 'Eredeti Ascendens'], ['MC', e.hz.origMc, 'Eredeti Medium Coeli']] : null,
       planets: el ? el.planets : Object.keys(e.poz).map(function (id) {
         var x = e.poz[id]; return { id: +id, lon: x.lon, lat: x.lat, speed: x.speedLon, house: 0, lordOf: [], closedLordOf: [] };
       }),

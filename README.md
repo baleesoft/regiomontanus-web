@@ -9,8 +9,9 @@ A bolygók, házak és állócsillagok számítása a böngészőben fut: a Swis
 C-forrásából WebAssemblyre fordított modul olvassa a `.se1` adatfájlokat. A szervernek így nem kell
 natív kódot futtatnia. A képlet-elemzést (fényszögek, házurak, énállapotok, életstratégia) egy
 szerveroldali végpont (`api/szamol.php`), két képlet összevetését (keresztkapcsolati fényszögek) az
-`api/osszevet.php` végzi, a településkeresést az `api/telepules.php`; ezek nem részei
-ennek a repónak. Nélkülük a program a pozíciókat és a kereket megmutatja, az elemzést nem, a településkereső
+`api/osszevet.php` végzi, a településkeresést az `api/telepules.php`, a horoszkópolvasó szövegeit
+az `api/olvaso.php` adja; ezek nem részei ennek a repónak (az olvasó szövegei az iskola tananyaga, ezért
+csak a szerveren vannak). Nélkülük a program a pozíciókat és a kereket megmutatja, az elemzést nem, a településkereső
 pedig egy rövid beépített listából keres.
 
 ```
@@ -26,9 +27,10 @@ public/                ← ez a tartalom kerül fel FTP-vel a tárhelyre
     telepules.js       településkereső mező (api/telepules.php)
     progr.js           a Progressziók menü ablakai (progressziós Hold, primer direkció, szolár, revolúciók)
   js/kozos.js          közös nevek, jelek, formázás, időzóna (böngésző IANA-adatbázisa)
-  js/keplet.js         képletadat, zóna/LMT, Kos 0°, léptetés, számítás (WASM + api/szamol.php)
+  js/keplet.js         képletadat, zóna/LMT, Kos 0°, léptetés, planétaperspektíva, számítás (WASM + api/szamol.php)
   js/szk.js            a Windows-os program .szk képletfájljainak olvasása és írása (UTF-16LE, v3.1)
-  js/kerek.js          a képletkerék SVG-ben, a Windows-os program geometriája szerint (összevetésnél bi-kerék)
+  js/kerek.js          a képletkerék SVG-ben, a Windows-os program geometriája szerint (összevetésnél bi-kerék,
+                       személyiségrajz-szűrő, data-olv jelölések a horoszkópolvasónak)
   js/idotech.js        időbeli technikák: tranzit, progressziós Hold, primer direkció, szolár, revolúció-kereső
   js/tablak.js         a Táblázatok menü táblái
   js/tarolo.js         beállítások, legutóbbi képletek, munkamenet (localStorage)
@@ -44,7 +46,8 @@ tools/
 
 A Windows-os gyorsbillentyűk közül a böngésző fenntartja a Ctrl+N, Ctrl+W, Ctrl+Tab és Ctrl+F4 kombinációt,
 ezért: új képlet **Alt+N**, bezárás **Alt+W**, váltás a megnyitott képletek közt **Alt+1…9**.
-Változatlan: Ctrl+O, Ctrl+S, Ctrl+P, Ctrl+A, Ctrl+B/H/F/J/E (táblák), Ctrl+L (léptető), Esc (vissza a mozaikhoz).
+Változatlan: Ctrl+O, Ctrl+S, Ctrl+P, Ctrl+A, Ctrl+B/H/F/J/E (táblák), Ctrl+L (léptető), Ctrl+Q (horoszkópolvasó),
+Esc (vissza a mozaikhoz).
 
 ## A swe.wasm újrafordítása
 

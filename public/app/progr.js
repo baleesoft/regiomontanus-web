@@ -143,6 +143,25 @@
       });
   };
 
+  /* ---------- Képletek összevetése (szinasztria) – fOsszevetesSettings ---------- */
+  /** lista: [{ i, cim }] – a választható (egyszerű) képletek; Promise<{ a, b } | null> (a lista indexei) */
+  P.szin = function (lista, elso) {
+    var opt = lista.map(function (x, n) { return '<option value="' + n + '">' + R.esc(x.cim) + '</option>'; }).join('');
+    return ablak('Képletek összevetése...',
+      '<fieldset><legend>Összevetés / szinasztria</legend><div class="mezok">' +
+      '<label class="szeles">1. képlet <select data-a data-fokusz>' + opt + '</select></label>' +
+      '<label class="szeles">2. képlet <select data-b>' + opt + '</select></label></div>' +
+      '<p class="t-hint" style="margin-top:8px">Két összevetés készül: az 1. képlet belül a 2. kívül, és fordítva.</p></fieldset>',
+      function (d) {
+        var a = d.querySelector('[data-a]'), b = d.querySelector('[data-b]');
+        a.value = String(Math.max(0, elso || 0)); b.value = String(a.value === '0' ? 1 : 0);
+        return function () {
+          if (a.value === b.value) throw new Error('Kérem, hogy két különböző születési képletet válasszon ki az összevetéshez / szinasztriához!');
+          return { a: lista[+a.value].i, b: lista[+b.value].i };
+        };
+      });
+  };
+
   /* ---------- Revolúciók ---------- */
   var REV_PL = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 17, 18, 19, 20];
   P.rev = function (se, szul, e, flag, hely) {

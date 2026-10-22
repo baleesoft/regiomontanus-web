@@ -65,6 +65,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   border-radius: 3px; cursor: pointer; white-space: nowrap; }
 .gomb:hover:not(:disabled) { border-color: #9db6d8; background: #f4f8fd; }
 .gomb:disabled { color: #a7a196; cursor: default; }
+.gomb[aria-pressed="true"] { background: var(--sel); border-color: var(--accent); }
 .gomb.fo { background: var(--accent); border-color: var(--accent-d); color: #fff; }
 .gomb.fo:hover:not(:disabled) { background: var(--accent-d); }
 .gomb svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2.4; }
@@ -172,6 +173,19 @@ body.huzas, body.huzas * { cursor: col-resize !important; user-select: none !imp
 .ketkerek .kk svg { width: 100%; height: 100% !important; }
 .ketkerek figcaption { font-size: 12px; color: var(--ink2); padding-top: 4px; text-align: center; }
 @media (max-width: 760px) { .ketkerek { grid-template-columns: minmax(0, 1fr); } .ketkerek .kk svg { height: auto !important; } }
+
+/* horoszkópolvasó */
+.olv-tip { position: fixed; z-index: 70; max-width: 560px; padding: 6px 9px; background: #ffffe1; color: #1f1d1a; border: 1px solid #8f897d;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .2); font-size: 12px; line-height: 1.35; pointer-events: none; white-space: normal; }
+.olv-ablak { position: fixed; z-index: 65; width: 340px; max-width: calc(100vw - 16px); max-height: calc(100vh - 40px); display: flex; flex-direction: column;
+  background: #ffffe1; border: 1px solid #8f897d; box-shadow: 0 8px 24px rgba(0, 0, 0, .25); }
+.olv-fej { display: flex; align-items: center; gap: 6px; padding: 4px 4px 4px 10px; background: var(--accent); color: #fff; cursor: move; touch-action: none; }
+.olv-fej b { flex: 1 1 auto; font-weight: 600; }
+.olv-fej .kisgomb { width: 24px; height: 24px; }
+.olv-fej .kisgomb svg { width: 16px; height: 16px; fill: none; stroke: #4a463f; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+#asztal svg { -webkit-user-select: none; user-select: none; }
+.olv-torzs { padding: 10px 12px; overflow: auto; font-size: 13px; line-height: 1.45; }
+body.olvaso-be #asztal [data-olv] { cursor: help; }
 
 /* táblák (tablak.js) */
 h3.t-cim { font-size: 12px; margin: 10px 0 4px; color: var(--accent); }
