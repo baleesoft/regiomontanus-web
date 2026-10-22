@@ -362,9 +362,12 @@
           } else ra = ujRA;
           sz = jegy(poz[m.id].lon); nev = PNEV[m.id];
         } else if (m.type === 'H') {
-          ra = Math.round(m.lon); sz = jegy(m.lon); nev = 'Ascendens';
+          // az ASC (házcsúcs) jelölője kijjebb kerül (D: iGap + TextWidth('I')), hogy az ugyanott álló
+          // planéta-énjelölő is látszódjon (pl. planétaperspektívában a planéta = ASC)
+          ra = Math.round(m.lon); sz = jegy(m.lon); rr += pxJelolo * 0.8;
+          if (+m.house !== 1) { ra += 10; nev = m.house + '. ház'; } else nev = 'Ascendens';  // házközép (D)
         } else {
-          ra = Math.round(m.lon); sz = m.sign; nev = JNEV[m.sign] + ' (az 1. házba bezárt jegy)'; rr += pxKicsi * 0.5;
+          ra = Math.round(m.lon); sz = m.sign; nev = JNEV[m.sign] + ' (az 1. házba bezárt jegy)'; rr += pxJelolo * 0.8;
         }
         var c = pont(ra, rr), cel = pont(ra, R_PLANETA), dx = cel[0] - c[0], dy = cel[1] - c[1], l = Math.hypot(dx, dy);
         var ux = dx / l, uy = dy / l, s = pxJelolo * 0.62;
