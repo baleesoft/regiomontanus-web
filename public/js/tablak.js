@@ -12,13 +12,18 @@
     return e.elemzes ? '' : '<p class="t-hint">A képlet-elemzés (házurak, fényszögek, énjelölők) most nem érhető el.</p>';
   }
 
+  /** „Chiron és a kisbolygók” bekapcsolva? (b = a program beállításai; ha nincs megadva: igen, a régi viselkedés) */
+  T.kisbLathato = function (b) { return !b || !b.kerek || !!b.kerek.asteroids; };
   /** Csomópont: a beállítás szerinti (közepes 10 / valódi 11) */
   T.csomo = function (b) { return b && b.csomo === 10 ? 10 : 11; };
 
   /* ---------- Planéták (Ctrl+B) ---------- */
   T.planetak = function (e, b) {
     var cs = T.csomo(b);
-    var ids = R.SZAMOLT.filter(function (id) { return e.poz[id] && (id < 10 || id === cs || id >= 12); });
+    // kisbolygók csak bekapcsolt „Aszteroidák megjelenítése” mellett (GetShownPlanetSet(true)); a jel nélküliek (Eris, üstökösök) a végén
+    var kisb = T.kisbLathato(b);
+    var ids = R.SZAMOLT.filter(function (id) { return e.poz[id] && (id < 10 || id === cs || (kisb && id >= 12)); });
+    if (kisb) R.KISBOLYGOK.forEach(function (k) { if (ids.indexOf(k[0]) < 0 && e.poz[k[0]]) ids.push(k[0]); });
     var sor = ids.map(function (id) {
       var x = e.poz[id], j = R.jegyben(x.lon), p = e.elemPl[id], urak = '', jel = [];
       if (p) {
@@ -101,7 +106,7 @@
   T.fenyszogek = function (hova, e, b) {
     if (!e.elemzes) { hova.innerHTML = nincsElemzes(e); return; }
     var el = e.elemzes, cs = T.csomo(b);
-    var ids = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, cs, 12, 15, 16, 17, 18, 19, 20]
+    var ids = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, cs].concat(T.kisbLathato(b) ? [12, 15, 16, 17, 18, 19, 20] : [])
       .filter(function (id) { return e.elemPl[id]; }).sort(function (x, y) { return x - y; });
     ids.push(998, 999);
     var idx = {}; ids.forEach(function (id, i) { idx[id] = i; });

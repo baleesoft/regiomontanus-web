@@ -28,6 +28,8 @@
     alapHely: { telepules: 'Budapest', telepulesKijelzes: '', orszag: 'Hungary', orszagKod: 'H', lat: 47.5, lon: 19.0666667, tz: 'Europe/Budapest' },
     elrendezes: 4, aktualisFrissit: true, lepes: 1, reszletArany: 0.58,
     osszevetesMod: 'egymason', pdKonverz: false, phCsakHold: true, phTengely: false,
+    // Kisbolygók/aszteroidák (chkbKisBolygok) – a telepítéskori settings.ini szerint csak a Chiron; a megjelenítés: kerek.asteroids
+    kisb: [15],
     // Állócsillagok (chkbFixedStars, chkbFenyszogekFixedStars) – a Windows-os program telepítéskori settings.ini-je szerint
     allo: { megj: false, mind: true, orb: 2.5, fsz: [1, 2],
       ids: [10000311, 10000148, 10000577, 10000602, 10000094, 10000671, 10000256, 10000616, 10000014, 10000077, 10000669,

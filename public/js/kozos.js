@@ -19,7 +19,27 @@
     13: ['Priapus', '⚸'], 15: ['Chiron', '⚷'], 16: ['Pholus', ''], 17: ['Ceres', '⚳'], 18: ['Pallas Athene', '⚴'],
     19: ['Juno', '⚵'], 20: ['Vesta', '⚶'], 24: ['Lesz.holdcs.(közepes)', '☋'], 25: ['Lesz.holdcs.(valódi)', '☋']
   };
+  // Eris, üstökösök, Nagy Magellán-felhő (CalcPlanetsPosition: swe_calc, efemerisz-idővel; saját adatfájl kell hozzájuk)
+  R.PLANETA[146199] = ['Eris', ''];
+  R.PLANETA[1009043] = ['Neowise (C/2020 F3)', ''];
+  R.PLANETA[1009044] = ['Halley üstökös', ''];
+  R.PLANETA[1009032] = ['67P/Csurjumov–Geraszimenko üstökös', ''];
+  R.PLANETA[1009045] = ['\u2019Oumuamua üstökös', ''];
+  R.PLANETA[1009046] = ['Hale–Bopp-üstökös', ''];
+  R.PLANETA[14055] = ['Nagy Magellán-felhő', ''];
   R.SZAMOLT = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 20];
+  /**
+   * Kisbolygók/aszteroidák (chkbKisBolygok, a Windows-os sorrendben): [id, név a beállításban, rövid felirat a keréken
+   * (ha nincs jele – TPlanetConstInfoProvider.cPlanetLetter), adatfájl(ok) a swe/ephe alatt (ha a számításhoz kell)]
+   */
+  R.KISBOLYGOK = [
+    [15, 'Chiron'], [16, 'Pholus'], [17, 'Ceres'], [18, 'Pallas Athene'], [19, 'Juno'], [20, 'Vesta'],
+    [146199, 'Eris', 'Eris', ['s136199.se1']], [12, 'Lilith'],
+    [1009043, 'Neowise (C/2020 F3)', 'Neow', ['ast999/s999043s.se1']], [1009044, 'Halley üstökös', 'Hall', ['ast999/s999044.se1']],
+    [1009032, '67P/Csurjumov–Geraszimenko', 'Csur', ['ast999/s999032s.se1']], [1009045, '\u2019Oumuamua üstökös', 'Oumu', ['ast999/s999045.se1']],
+    [1009046, 'Hale–Bopp-üstökös', 'Hale', ['ast999/s999046.se1']], [14055, 'Nagy Magellán-felhő', 'NMag-f', ['ast4/se04055.se1']]
+  ];
+  R.kisbolygo = function (id) { for (var i = 0; i < R.KISBOLYGOK.length; i++) if (R.KISBOLYGOK[i][0] === id) return R.KISBOLYGOK[i]; return null; };
   R.TENGELY = { 998: ['Ascendens', 'AC'], 999: ['Medium Coeli', 'MC'] };
   R.FENYSZOG = {
     1: ['Együttállás', 0, 15, '☌'], 2: ['Szembenállás', 180, 7.5, '☍'], 3: ['Negyedfény', 90, 4, '□'],

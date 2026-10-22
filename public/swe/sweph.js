@@ -186,6 +186,20 @@
     })).then(function () { return res; });
   };
 
+  /** Tetszőleges adatfájlok (pl. 'ast999/s999044.se1') betöltése az ephe/ alól, ha még nincsenek meg. Promise<{ loaded, missing }> */
+  SwissEph.prototype.ensureFiles = function (names) {
+    var self = this, res = { loaded: [], missing: [] };
+    self._hianyzik = self._hianyzik || {};   // a nem elérhető fájlokat nem kérjük újra
+    var need = (names || []).filter(function (n, i, l) { return !self._files[n] && l.indexOf(n) === i; });
+    res.missing = need.filter(function (n) { return self._hianyzik[n]; });
+    need = need.filter(function (n) { return !self._hianyzik[n]; });
+    return Promise.all(need.map(function (n) {
+      return self._getBin(self._base + '/ephe/' + n).then(function (b) {
+        self._files[n] = new Uint8Array(b); self.loadedFiles.push(n); res.loaded.push(n);
+      }, function () { self._hianyzik[n] = true; res.missing.push(n); });
+    })).then(function () { return res; });
+  };
+
   SwissEph.prototype._f64 = function () { return new Float64Array(this.x.memory.buffer); };
   SwissEph.prototype._u8 = function () { return new Uint8Array(this.x.memory.buffer); };
   SwissEph.prototype._readStr = function (ptr) {

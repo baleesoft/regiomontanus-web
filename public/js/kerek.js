@@ -57,7 +57,23 @@
   var CS_ELTOLAS = 10000000;
   function csillag(id) { return id > CS_ELTOLAS; }
   function allo() { return global.Regio && global.Regio.Allo; }
-  function nevE(id) { return csillag(id) ? (allo() ? allo().teljesNev(id) : String(id)) : PNEV[id]; }
+  function nevE(id) {
+    if (csillag(id)) return allo() ? allo().teljesNev(id) : String(id);
+    return PNEV[id] || (global.Regio && global.Regio.nev ? global.Regio.nev(id) : String(id));
+  }
+  /** jel nélküli kisbolygó/üstökös rövid felirata a keréken (Eris, Neow, Hall, Csur, Oumu, Hale, NMag-f) */
+  function szovegJel(id) { var k = global.Regio && global.Regio.kisbolygo && global.Regio.kisbolygo(id); return k && k[2] ? k[2] : null; }
+  var PHOLUS = 16;
+  /** A Pholus jele (nincs Unicode-megfelelője): karika, szár, keresztvonal, alul ív – a RegiomontanusWIN betűkészlet szerint */
+  function pholusJel(cx, cy, px, szulo) {
+    var s = px * 0.36, f = function (v) { return v.toFixed(2); }, sw = Math.max(1, px * 0.075);
+    var g = el('g', { stroke: '#000', 'stroke-width': f(sw), fill: 'none', 'stroke-linecap': 'round' }, szulo);
+    el('circle', { cx: f(cx), cy: f(cy - s * 0.72), r: f(s * 0.3) }, g);
+    el('path', { d: 'M' + f(cx) + ' ' + f(cy - s * 0.42) + 'V' + f(cy + s) + 'M' + f(cx - s * 0.4) + ' ' + f(cy + s * 0.05) + 'H' + f(cx + s * 0.4) +
+      'M' + f(cx - s * 0.65) + ' ' + f(cy + s * 0.45) + 'Q' + f(cx - s * 0.6) + ' ' + f(cy + s * 1.05) + ' ' + f(cx) + ' ' + f(cy + s) +
+      'Q' + f(cx + s * 0.6) + ' ' + f(cy + s * 1.05) + ' ' + f(cx + s * 0.65) + ' ' + f(cy + s * 0.45) }, g);
+    return g;
+  }
 
   /**
    * Személyiségrajz (ptSzemelyisegRajz, D 1736–1782): csak az énjelölő planéták, a velük együtt álló
@@ -171,7 +187,9 @@
 
     /* ---------- planéták elhelyezése (DrawPlanets + ReArrangePlanets) ---------- */
     var cs = k.cusps;
-    var lathato = k.planets.filter(function (p) { return o.planets.indexOf(p.id) >= 0 && (PLANETA[p.id] !== undefined || csillag(p.id)); });
+    var lathato = k.planets.filter(function (p) {
+      return o.planets.indexOf(p.id) >= 0 && (PLANETA[p.id] !== undefined || p.id === PHOLUS || csillag(p.id) || !!szovegJel(p.id));
+    });
     if (o.szemely) lathato = szemelyisegrajz(k, o);
     // Állócsillagok (DrawPlanets, D 1806–1830): ha 21-nél több van, csak a fényszöggel rendelkezők közül az első 21 látszik,
     // hacsak nincs bekapcsolva a „Megjelenítéskor mutasd mindig az összeset!”
@@ -201,9 +219,10 @@
         if (lon >= hk && lon <= fokNorm(hk + 3)) lon = fokNorm(lon + 3);
         else if (lon <= hv && lon >= fokNorm(hv - 3)) lon = fokNorm(lon - 3);
       }
-      if (csillag(p.id)) {
-        var cn = allo() ? allo().rovid(p.id) : '';
-        var ec = { p: p, orig: p.lon, uj: p.lon, ur: '', csillag: cn, w: cn.length * pxCsillag * 0.56 + 4, h: pxCsillag * 1.25 };
+      if (csillag(p.id) || szovegJel(p.id)) {
+        // szöveges felirat: állócsillag neve (10 betű) vagy a jel nélküli kisbolygó/üstökös rövid neve
+        var cn = csillag(p.id) ? (allo() ? allo().rovid(p.id) : '') : szovegJel(p.id);
+        var ec = { p: p, orig: p.lon, uj: p.lon, ur: '', szoveg: cn, csillag: csillag(p.id), w: cn.length * pxCsillag * 0.56 + 4, h: pxCsillag * 1.25 };
         ec.fel = ec.h / 2;
         helyez(ec, lon);
         return ec;
@@ -331,19 +350,20 @@
         return;
       }
       var p = e.p, j = jegy(p.lon), fj = fokNorm(p.lon) - j * 30;
-      if (e.csillag) {
-        var gc = el('g', { 'class': 'csillag', 'data-id': p.id }, gPl);
+      if (e.szoveg) {
+        var gc = el('g', e.csillag ? { 'class': 'csillag', 'data-id': p.id } : { 'class': 'planeta kisb', 'data-id': p.id }, gPl);
         cim(gc, nevE(p.id) + ': ' + JNEV[j] + ' ' + fokStr(fj) + (p.house ? ', ' + p.house + '. ház' : ''));
         el('rect', { x: e.bal, y: e.fent, width: e.w, height: e.h, fill: '#fff' }, gc);
-        szoveg(e.csillag, { x: e.x, y: e.y, 'font-size': pxCsillag, 'text-anchor': 'middle', 'dominant-baseline': 'central', fill: '#000' }, gc);
+        szoveg(e.szoveg, { x: e.x, y: e.y, 'font-size': pxCsillag, 'text-anchor': 'middle', 'dominant-baseline': 'central', fill: '#000' }, gc);
         vezeto(e, gc);
         return;
       }
       var g = el('g', { 'class': 'planeta', 'data-id': p.id, 'data-olv': 'pl:' + p.id }, gPl);
-      cim(g, PNEV[p.id] + ': ' + JNEV[j] + ' ' + fokStr(fj) + (p.house ? ', ' + p.house + '. ház' : '') +
+      cim(g, nevE(p.id) + ': ' + JNEV[j] + ' ' + fokStr(fj) + (p.house ? ', ' + p.house + '. ház' : '') +
         (p.speed < 0 ? ', retrográd' : '') + (p.feral ? ', ferális' : '') + (p.isolated ? ', izolált' : ''));
       el('rect', { x: e.bal, y: e.fent, width: e.w, height: e.h, fill: '#fff' }, g);
-      szoveg(PLANETA[p.id] + VS, { x: e.x, y: e.y, 'font-size': pxPlaneta, 'font-family': SYM, 'text-anchor': 'middle',
+      if (p.id === PHOLUS) pholusJel(e.x, e.y, pxPlaneta, g);
+      else szoveg(PLANETA[p.id] + VS, { x: e.x, y: e.y, 'font-size': pxPlaneta, 'font-family': SYM, 'text-anchor': 'middle',
         'dominant-baseline': 'central', fill: '#000' }, g);
       if (jJel['P_' + p.id]) felkialt(e.bal + e.w + F * 0.15, e.fent + F * 0.3, '#d00000', g);
       if (e.ur) {
@@ -441,7 +461,7 @@
       });
       // planéták + ASC/MC jel; a tengelyjel nem mozdul (D 2603–2609)
       var kElemek = (kulso.planets || []).filter(function (p) {
-        return o.planets.indexOf(p.id) >= 0 && PLANETA[p.id] !== undefined && (!kulso.csakHold || p.id === 1);
+        return o.planets.indexOf(p.id) >= 0 && (PLANETA[p.id] !== undefined || p.id === PHOLUS) && (!kulso.csakHold || p.id === 1);
       }).map(function (p) {
         var ur = o.houseLords && p.lordOf ? urSzoveg(p) : '';
         return { p: p, orig: p.lon, uj: p.lon, w: Math.max(W, ur.length * pxKicsi * 0.56), h: W + (ur ? pxKicsi * 1.15 : 0), fix: false };
@@ -480,9 +500,10 @@
           return;
         }
         var p = e.p;
-        cim(g, 'Külső kör – ' + PNEV[p.id] + ': ' + JNEV[jk] + ' ' + fokStr(fjk) + (p.house ? ', ' + p.house + '. ház (saját képletében)' : '') +
+        cim(g, 'Külső kör – ' + nevE(p.id) + ': ' + JNEV[jk] + ' ' + fokStr(fjk) + (p.house ? ', ' + p.house + '. ház (saját képletében)' : '') +
           (p.speed < 0 ? ', retrográd' : '') + (p.feral ? ', ferális' : '') + (p.isolated ? ', izolált' : '') + (kulso.cimKieg && kulso.cimKieg[p.id] ? '\n' + kulso.cimKieg[p.id] : ''));
-        szoveg(PLANETA[p.id] + VS, { x: e.x, y: e.y, 'font-size': pxPlaneta, 'font-family': SYM, 'text-anchor': 'middle',
+        if (p.id === PHOLUS) pholusJel(e.x, e.y, pxPlaneta, g);
+        else szoveg(PLANETA[p.id] + VS, { x: e.x, y: e.y, 'font-size': pxPlaneta, 'font-family': SYM, 'text-anchor': 'middle',
           'dominant-baseline': 'central', fill: '#000' }, g);
         // vezetővonal: a doboz szélétől a valódi helyig a zodiákus külső körén (D 435–470)
         var z = pont(e.orig, r), dx = z[0] - e.x, dy = z[1] - e.y, tm = Infinity;

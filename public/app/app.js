@@ -55,7 +55,9 @@
     return k;
   }
   /** alap: a képlet saját (belső) számítása – csak ehhez kellenek az állócsillagok (a Windows-osban is a radixon látszanak) */
-  function szamolOpt(alap) { return { hsys: beall.hsys, sid: beall.sid, allo: alap ? beall.allo : null }; }
+  function szamolOpt(alap) {
+    return { hsys: beall.hsys, sid: beall.sid, allo: alap ? beall.allo : null, kisb: { be: !!beall.kerek.asteroids, ids: beall.kisb } };
+  }
   function sweFlag() { return SwissEph.SE.FLG_SWIEPH | SwissEph.SE.FLG_SPEED | (beall.sid ? SwissEph.SE.FLG_SIDEREAL : 0); }
   /** A külső kör számítása (a belső kész eredményéből a primer direkció) + kereszt-fényszögek */
   function kulsoSzamol(k) {
@@ -157,7 +159,7 @@
   function kerekBeall(k) {
     var b = beall.kerek, pl = RegioKerek.ALAP.planets.slice();
     if (b.nodes) pl.push(beall.csomo, beall.csomo === 11 ? 25 : 24);
-    if (b.asteroids) pl.push(15, 17, 18, 19, 20);
+    if (b.asteroids) beall.kisb.forEach(function (id) { pl.push(id); });
     if (beall.allo && beall.allo.megj && k.e && k.e.csillagok) k.e.csillagok.forEach(function (c) { pl.push(c.id); });
     return { planets: pl, csillagMind: !!(beall.allo && beall.allo.mind), houseLords: b.houseLords, feral: b.feral, retrograde: b.retrograde, stationary: b.stationary,
       selfMarkers: b.selfMarkers && !(k.e && k.e.hz.kos0), cuspLabels: b.cuspLabels, szemely: !!k.szemely && !k.fajta,
@@ -714,7 +716,7 @@
       k.szemely = !k.szemely; render();
     },
     enallPersp: enallapotPerspektiva,
-    aszteroidak: function () { beall.kerek.asteroids = !beall.kerek.asteroids; beallMent(); render(); },
+    aszteroidak: function () { beall.kerek.asteroids = !beall.kerek.asteroids; beallMent(); mindSzamol(); render(); },
     allo: function () {
       beall.allo.megj = !beall.allo.megj; beallMent(); mindSzamol(); render();
       if (beall.allo.megj && !beall.allo.ids.length) uzen('Nincs kijelölt állócsillag – Beállítások › Állócsillagok.');
@@ -1482,7 +1484,12 @@
   /* ---------- beállítások ---------- */
   function beallMent() { S.beallitasMent(beall); }
   function megjelenitesDlg() {
-    var d = $('dlgMegj');
+    var d = $('dlgMegj'), kb = $('mKisb');
+    if (!kb.firstChild) kb.innerHTML = R.KISBOLYGOK.map(function (k) {
+      return '<label class="pipa"><input type="checkbox" data-kisb="' + k[0] + '"> ' + R.esc(k[1]) + '</label>';
+    }).join('');
+    Array.prototype.forEach.call(kb.querySelectorAll('input'), function (c) { c.checked = beall.kisb.indexOf(+c.getAttribute('data-kisb')) >= 0; });
+    var kisbElotte = JSON.stringify([beall.kerek.asteroids, beall.kisb]);
     Array.prototype.forEach.call(d.querySelectorAll('input[data-k]'), function (c) { c.checked = !!beall.kerek[c.getAttribute('data-k')]; });
     Array.prototype.forEach.call(d.querySelectorAll('input[name="mCsomo"]'), function (r) { r.checked = +r.value === beall.csomo; });
     Array.prototype.forEach.call(d.querySelectorAll('input[data-b]'), function (c) { c.checked = !!beall[c.getAttribute('data-b')]; });
@@ -1492,13 +1499,18 @@
       Array.prototype.forEach.call(d.querySelectorAll('input[data-k]'), function (c) { beall.kerek[c.getAttribute('data-k')] = c.checked; });
       var r = d.querySelector('input[name="mCsomo"]:checked'); if (r) beall.csomo = +r.value;
       Array.prototype.forEach.call(d.querySelectorAll('input[data-b]'), function (c) { beall[c.getAttribute('data-b')] = c.checked; });
-      beallMent(); render();
+      // a kiválasztott kisbolygók a Windows-os lista sorrendjében
+      beall.kisb = Array.prototype.filter.call(kb.querySelectorAll('input'), function (c) { return c.checked; })
+        .map(function (c) { return +c.getAttribute('data-kisb'); });
+      beallMent();
+      if (JSON.stringify([beall.kerek.asteroids, beall.kisb]) !== kisbElotte) mindSzamol();
+      render();
     };
   }
   var egyebHely = null, egyebKereso = null;
   /* ---------- Beállítások › Állócsillagok ---------- */
   var alloLista = null;   // név szerint rendezett [{ id, nev, nomen, latin, hun }]
-  function alloKulcs() { var a = beall.allo; return JSON.stringify([a.megj, a.ids, a.orb, a.fsz]); }
+  function alloKulcs() { var a = beall.allo; return JSON.stringify([a.megj, a.ids, a.orb, a.fsz, beall.kerek.asteroids, beall.kisb]); }
   function alloDlg() {
     var d = $('dlgAllo'), A = R.Allo, tb = d.querySelector('#aLista tbody'), lista = $('aLista');
     if (!alloLista) {

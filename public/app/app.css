@@ -445,3 +445,5 @@ dialog .halv { color: #6b665d; font-size: 12px; }
 .t-allo td { vertical-align: top; }
 .t-allo .t-allo-fsz { font-size: 12px; white-space: nowrap; }
 .kerek .csillag text { font-family: Arial, Tahoma, sans-serif; }
+
+.kisb-pipak { margin-top: 6px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }

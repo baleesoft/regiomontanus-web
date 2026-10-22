@@ -102,7 +102,12 @@
     var h = a.ismeretlen ? 12 : a.ora, mi = a.ismeretlen ? 0 : a.perc, s = a.ismeretlen ? 0 : (a.mp || 0);
     var jd = se.julday(a.ev, a.ho, a.nap, h + mi / 60 + s / 3600 - z.orak);
     var ut = se.revjul(jd);
-    return se.ensureEphe([ut.year]).then(function (eph) {
+    // a kiválasztott kisbolygók közül azok, amelyek nincsenek az alaplistában (Eris, üstökösök, Magellán) – saját adatfájllal
+    var kisb = opt.kisb && opt.kisb.be ? (opt.kisb.ids || []).filter(function (id) { return R.SZAMOLT.indexOf(id) < 0 && R.kisbolygo(id); }) : [];
+    var kisbFajlok = [];
+    kisb.forEach(function (id) { kisbFajlok = kisbFajlok.concat(R.kisbolygo(id)[3] || []); });
+    return Promise.all([se.ensureEphe([ut.year]), kisb.length ? se.ensureFiles(kisbFajlok) : null]).then(function (r) {
+      var eph = r[0];
       var flag = SE.FLG_SWIEPH | SE.FLG_SPEED | (sid ? SE.FLG_SIDEREAL : 0);
       var hz = se.housesEx(jd, sid ? SE.FLG_SIDEREAL : 0, a.lat, a.lon, hsys);
       if (K.kos0e(a)) hz = kos0(hz);
@@ -112,6 +117,11 @@
         if (x.flag < 0) { hianyzo.push(R.nev(id)); return; }
         if (x.flag & SE.FLG_MOSEPH) moshier = true;
         poz[id] = x;
+      });
+      // Eris, üstökösök, Magellán: swe_calc efemerisz-idővel, mint a Windows-os; ha nincs adat az időpontra, kimarad
+      kisb.forEach(function (id) {
+        var x = se.calc(jd + se.deltat(jd), id, flag);
+        if (x.flag >= 0) poz[id] = x;
       });
       if (a.tipus === 'persp' && !K.kos0e(a) && poz[a.perspId]) hz = perspektiva(hz, poz[a.perspId].lon, a.perspId);
       if (moshier) fig.push('Egyes testek Moshier-módban számolódtak (hiányzó adatfájl: ' + eph.missing.join(', ') + ').');
@@ -137,6 +147,8 @@
         kuld.settings = { showFixedStars: true, fixedStarIds: csillagok.map(function (c) { return c.id; }), fixedStarOrb: +al.orb || 0,
           fixedStarAspects: al.fsz || [], aspectPlanetSet: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] };
       }
+      // „Aszteroidák megjelenítése” (chkbKellAsteroidak): kikapcsolva a kisbolygók nem vesznek részt a fényszög-számításban
+      if (opt.kisb) { kuld.settings = kuld.settings || {}; kuld.settings.showAsteroids = !!opt.kisb.be; }
       eredmeny.csillagok = csillagok;
       eredmeny.kuld = kuld;
       if (opt.csakPoz) return eredmeny;     // keresés: a pozíciók elegendők (az elemzés kötegelve, api/kereses.php)
