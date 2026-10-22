@@ -16,7 +16,8 @@ SRC="$WORK/swisseph"
 EXPORTS=(swe_set_ephe_path swe_version swe_julday swe_revjul swe_utc_to_jd swe_deltat
          swe_calc_ut swe_calc swe_houses_ex swe_houses_ex2 swe_house_pos swe_fixstar2_ut
          swe_sidtime swe_get_ayanamsa_ut swe_set_sid_mode swe_difdeg2n swe_degnorm
-         swe_solcross_ut swe_mooncross_ut swe_get_planet_name swe_close malloc free)
+         swe_solcross_ut swe_mooncross_ut swe_get_planet_name swe_rise_trans swe_pheno_ut swe_time_equ
+         swe_close malloc free)
 LDFLAGS=()
 for f in "${EXPORTS[@]}"; do LDFLAGS+=("-Wl,--export=$f"); done
 
@@ -29,6 +30,7 @@ python3 -m ziglang cc -target wasm32-wasi -O2 -DNO_SWE_GLP -mexec-model=reactor 
 for b in 06 12 18 24; do
   for p in sepl semo seas; do cp "$SRC/ephe/${p}_${b}.se1" "$ROOT/public/swe/ephe/"; done
 done
-cp "$SRC/ephe/sefstars.txt" "$ROOT/public/swe/ephe/"
+# A sefstars.txt NEM innen jön: a Windows-os Regiomontanus 2018-as katalógusa van a repóban (ugyanazok a pozíciók,
+# és benne van mind a 737 csillag – az újabbal a ,32Dra nem található).
 
 ls -la "$ROOT/public/swe/swe.wasm"

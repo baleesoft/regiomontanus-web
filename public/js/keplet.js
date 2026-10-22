@@ -149,6 +149,7 @@
       }
       // „Aszteroidák megjelenítése” (chkbKellAsteroidak): kikapcsolva a kisbolygók nem vesznek részt a fényszög-számításban
       if (opt.kisb) { kuld.settings = kuld.settings || {}; kuld.settings.showAsteroids = !!opt.kisb.be; }
+      if (!opt.csakPoz) { try { eredmeny.egyeb = egyebAdatok(se, jd, a, z, hz, poz); } catch (e) { eredmeny.egyeb = null; } }
       eredmeny.csillagok = csillagok;
       eredmeny.kuld = kuld;
       if (opt.csakPoz) return eredmeny;     // keresés: a pozíciók elegendők (az elemzés kötegelve, api/kereses.php)
@@ -200,6 +201,73 @@
     return a.tipus === 'aktualis' ? 'Akt. égi állás' : K.kos0e(a) ? 'Kos 0°' : a.tipus === 'persp' ? 'Planétaperspektíva' : 'Radix';
   };
   /** Életkor években (a Windows-os státuszsor „NN é” mezője) */
+  /** Pontos életkor: év, hónap, nap (a mai naptári dátumig). null, ha a dátum a jövőben van. */
+  K.eletkorReszletes = function (a, most) {
+    most = most || new Date();
+    var ev = most.getFullYear() - a.ev, ho = most.getMonth() + 1 - a.ho, nap = most.getDate() - a.nap;
+    if (nap < 0) { ho--; nap += new Date(most.getFullYear(), most.getMonth(), 0).getDate(); }
+    if (ho < 0) { ev--; ho += 12; }
+    return ev < 0 ? null : { ev: ev, ho: ho, nap: nap };
+  };
+
+  /**
+   * Az „Egyéb” fül kiegészítő adatai – csak amit a Swiss Ephemeris pontosan ad:
+   * helyi közép- és látszólagos idő, Greenwich-i csillagidő, ARMC, nutáció, ajánamsa (Fagan/Bradley, mint a Windows-os),
+   * Hold fázisa (swe_pheno_ut), Nap–Hold hosszkülönbség, holdkor (az előző újholdtól), napkelte/-nyugta (swe_rise_trans,
+   * a korong felső széle, normál fénytöréssel), a planetáris nap és óra (káldeus sorrend, napkeltétől).
+   */
+  function egyebAdatok(se, jd, a, z, hz, poz) {
+    var SE = SwissEph.SE, x = {}, nap = 1 / 24, i;
+    var fok = function (v) { v %= 360; return v < 0 ? v + 360 : v; };
+    x.lmt = jd + a.lon / 360;                         // helyi középidő (UT + hosszúság/15 óra)
+    var te = se.timeEqu ? se.timeEqu(jd) : null;
+    if (te !== null) x.lat = x.lmt + te;              // helyi látszólagos idő
+    x.gst = ((se.sidtime(jd) % 24) + 24) % 24;        // Greenwich-i (látszólagos) csillagidő, óra
+    x.armc = hz.armc;
+    var nut = se.calc(jd + se.deltat(jd), -1, 0);
+    x.nutacio = nut.dist;                             // nutáció hosszúságban, fok
+    if (se.ayanamsaUt) x.ayanamsa = se.ayanamsaUt(jd);
+    if (poz[0] && poz[1]) {
+      x.napHold = fok(poz[1].lon - poz[0].lon);       // a Hold hosszúsága a Napétól
+      var ph = se.phenoUt ? se.phenoUt(jd, 1, SE.FLG_SWIEPH) : null;
+      if (ph) x.holdFazis = ph.fazis;
+      // holdkor: az előző újhold (Hold − Nap hosszkülönbség = 0) óta, Newton-lépésekkel
+      var t = jd - x.napHold / 12.19;
+      for (i = 0; i < 6; i++) {
+        var h = se.calcUt(t, 1, SE.FLG_SWIEPH | SE.FLG_SPEED), n = se.calcUt(t, 0, SE.FLG_SWIEPH | SE.FLG_SPEED);
+        var d = fok(h.lon - n.lon); if (d > 180) d -= 360;
+        t -= d / (h.speedLon - n.speedLon);
+      }
+      if (t <= jd && jd - t < 30) x.holdkor = jd - t;
+    }
+    if (se.riseTrans && Math.abs(a.lat) < 89.9) {
+      var kel = function (j) { return se.riseTrans(j, 0, 1, a.lon, a.lat, 0); };
+      var nyug = function (j) { return se.riseTrans(j, 0, 2, a.lon, a.lat, 0); };
+      var ejfel = se.julday(a.ev, a.ho, a.nap, 0) - z.orak * nap;   // a születési nap helyi éjfele
+      x.napkelte = kel(ejfel); x.napnyugta = nyug(ejfel);
+      if (x.napkelte !== null && x.napkelte >= ejfel + 1) x.napkelte = null;   // aznap nem kel fel
+      if (x.napnyugta !== null && x.napnyugta >= ejfel + 1) x.napnyugta = null;
+      // planetáris nap és óra: az utolsó napkeltétől (12 nappali + 12 éjszakai „óra”)
+      var r = kel(jd - 1.5), k2;
+      for (i = 0; r !== null && i < 3; i++) { k2 = kel(r + 0.01); if (k2 === null || k2 > jd) break; r = k2; }
+      var sz = r !== null ? nyug(r) : null, kov = r !== null ? kel(r + 0.01) : null;
+      if (r !== null && sz !== null && kov !== null && r <= jd && kov > jd && sz > r && sz < kov) {
+        var ora = jd < sz ? Math.floor((jd - r) / ((sz - r) / 12)) : 12 + Math.floor((jd - sz) / ((kov - sz) / 12));
+        // a planetáris nap a napkelte helyi naptári napja; vasárnap: Nap, hétfő: Hold, …
+        var dt = se.revjul(r + z.orak * nap), het = new Date(Date.UTC(dt.year, dt.month - 1, dt.day)).getUTCDay();
+        var NAPUR = [0, 1, 4, 2, 5, 3, 6], KALDEUS = [6, 5, 4, 0, 3, 2, 1];
+        x.planNap = NAPUR[het];
+        x.planOra = KALDEUS[(KALDEUS.indexOf(x.planNap) + Math.min(23, ora)) % 7];
+      }
+    }
+    // naptári alak (revjul): { year, month, day, hour }
+    x.lmtIdo = se.revjul(x.lmt);
+    if (x.lat !== undefined) x.latIdo = se.revjul(x.lat);
+    if (x.napkelte) x.napkelteIdo = se.revjul(x.napkelte + z.orak * nap);
+    if (x.napnyugta) x.napnyugtaIdo = se.revjul(x.napnyugta + z.orak * nap);
+    return x;
+  }
+
   K.eletkor = function (a, most) {
     most = most || new Date();
     var k = most.getFullYear() - a.ev;

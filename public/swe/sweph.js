@@ -262,6 +262,35 @@
              error: rc < 0 ? this._readStr(this.pSerr) : null };
   };
 
+  /** Ajánamsa (a beállított sziderikus mód szerint; alapértelmezés: Fagan/Bradley, mint a Windows-os programban). */
+  SwissEph.prototype.ayanamsaUt = function (jdUt) { return this.x.swe_get_ayanamsa_ut(jdUt); };
+
+  /** Időegyenlet (látszólagos − közép helyi idő), napokban. */
+  SwissEph.prototype.timeEqu = function (jdUt) {
+    var rc = this.x.swe_time_equ(jdUt, this.pD, this.pSerr);
+    return rc < 0 ? null : this._f64()[this.pD / 8];
+  };
+
+  /** Fázisadatok (swe_pheno_ut): { faziszog, fazis (megvilágított rész 0..1), elongacio, atmero, fenyesseg } */
+  SwissEph.prototype.phenoUt = function (jdUt, ipl, iflag) {
+    if (!this.pAttr) this.pAttr = this.x.malloc(8 * 20);
+    var rc = this.x.swe_pheno_ut(jdUt, ipl, iflag, this.pAttr, this.pSerr);
+    if (rc < 0) return null;
+    var a = this._doubles(this.pAttr, 5);
+    return { faziszog: a[0], fazis: a[1], elongacio: a[2], atmero: a[3], fenyesseg: a[4] };
+  };
+
+  /**
+   * Kelés/nyugvás (swe_rise_trans): rsmi 1 = kelés, 2 = nyugvás; a korong felső széle, normál fénytöréssel
+   * (1013,25 hPa, 10 °C). jdUt után az első esemény (UT julián nap), vagy null (pl. sarki nappal/éjszaka).
+   */
+  SwissEph.prototype.riseTrans = function (jdUt, ipl, rsmi, lon, lat, alt, iflag) {
+    if (!this.pGeo) { this.pGeo = this.x.malloc(8 * 3); this.pTret = this.x.malloc(8 * 10); }
+    var f = this._f64(); f[this.pGeo / 8] = lon; f[this.pGeo / 8 + 1] = lat; f[this.pGeo / 8 + 2] = alt || 0;
+    var rc = this.x.swe_rise_trans(jdUt, ipl, 0, iflag || SE.FLG_SWIEPH, rsmi, this.pGeo, 1013.25, 10, this.pTret, this.pSerr);
+    return rc === 0 ? this._f64()[this.pTret / 8] : null;
+  };
+
   /** A Nap következő áthaladása x2cross fokon jdUt után (szolár-revolúcióhoz). */
   SwissEph.prototype.solcrossUt = function (x2cross, jdUt, iflag) {
     return this.x.swe_solcross_ut(x2cross, jdUt, iflag, this.pSerr);

@@ -222,8 +222,61 @@
       'Házrendszer', (e.hz.kos0 ? 'Kos 0° képlet (egyenlő házak a Kostól)' : e.hz.persp !== undefined ?
         'Egyenlő (planétaperspektíva: ' + R.Keplet.PERSP_NEV(e.hz.persp) + ' az ASC-n; eredeti ASC: ' + R.fokStr(e.hz.origAsc, false) + ')' : R.HAZRENDSZER[e.hsys]) + (e.sid ? ', sziderikus' : ', tropikus'),
       'Számítás', 'Swiss Ephemeris (WebAssembly)'
-    ].map(cella).join('') + '</div>' +
+    ].map(cella).join('') + '</div>' + T.egyebKieg(e) +
       (e.figyelmeztetes.length ? '<p class="t-hint">' + e.figyelmeztetes.map(R.esc).join('<br>') + '</p>' : '');
+  };
+
+  /* az „Egyéb” fül kiegészítő adatai (keplet.js: egyebAdatok) */
+  function idoStr(t, mp) {
+    var h = t.hour, hh = Math.floor(h), m = Math.floor((h - hh) * 60), s = Math.floor(((h - hh) * 60 - m) * 60 + 1e-6);
+    return R.datumStr(t.year, t.month, t.day) + '. ' + R.pad(hh) + ':' + R.pad(m) + (mp === false ? '' : ':' + R.pad(s));
+  }
+  function oraStr(h) {
+    h = ((h % 24) + 24) % 24;
+    var t = Math.floor(h * 3600 + 1e-6);
+    return R.pad(Math.floor(t / 3600)) + ':' + R.pad(Math.floor(t % 3600 / 60)) + ':' + R.pad(t % 60);
+  }
+  /** Hold-fázis ikon: a megvilágított rész (k = 0..1), telő (jobbról világos) / fogyó */
+  function holdIkon(k, telo) {
+    var r = 9, rx = Math.abs(1 - 2 * k) * r, s1 = telo ? 1 : 0;
+    // a világos rész: fél kör a megvilágított oldalon + ellipszis-ív a terminátoron
+    var d = 'M10 1 A' + r + ' ' + r + ' 0 0 ' + s1 + ' 10 19 A' + rx.toFixed(2) + ' ' + r + ' 0 0 ' + (k > 0.5 ? s1 : 1 - s1) + ' 10 1Z';
+    return '<svg class="t-hold" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#2b2b2b"/>' +
+      '<path d="' + d + '" fill="#fff6c8"/><circle cx="10" cy="10" r="9" fill="none" stroke="#555" stroke-width="0.8"/></svg>';
+  }
+  T.egyebKieg = function (e) {
+    var x = e.egyeb, a = e.adat; if (!x) return '';
+    var sor = [], zona = '(' + R.esc(e.zona.kod || '') + (e.zona.orak !== undefined ? ' ' + R.oraStr(e.zona.orak) : '') + ')';
+    function blokk(cim, l) { return l.length ? '<h3 class="t-cim">' + cim + '</h3><div class="t-kv">' + l.map(cella).join('') + '</div>' : ''; }
+    var ek = a.tipus !== 'aktualis' && R.Keplet.eletkorReszletes ? R.Keplet.eletkorReszletes(a) : null;
+    if (ek) sor.push('Életkor', ek.ev + ' éves ' + ek.ho + ' hónapos ' + ek.nap + ' napos');
+    sor.push('Helyi középidő', idoStr(x.lmtIdo));
+    if (x.latIdo) sor.push('Helyi látszólagos idő', idoStr(x.latIdo));
+    sor.push('Greenwich-i csillagidő', oraStr(x.gst));
+    sor.push('ARMC', R.fokStr(x.armc) + ' (' + oraStr(x.armc / 15) + ')');
+    sor.push('Nutáció (hosszúságban)', (x.nutacio * 3600).toFixed(1).replace('.', ',') + '"');
+    sor.push('Koordináta-rendszer', 'Geocentrikus');
+    if (x.ayanamsa !== undefined) sor.push('Ajánamsa (Fagan/Bradley)', R.fokStr(x.ayanamsa) +
+      ' (tropikus Kos 0° = sziderikus Halak ' + R.fokStr(30 - x.ayanamsa) + ')');
+    var hold = [];
+    if (x.napHold !== undefined) {
+      var telo = x.napHold < 180;
+      hold.push('Nap–Hold hosszkülönbség', R.fokStr(x.napHold));
+      if (x.holdFazis !== undefined) hold.push('Hold fázisa', holdIkon(x.holdFazis, telo) + ' ' +
+        (x.holdFazis * 100).toFixed(1).replace('.', ',') + ' % megvilágított, ' + (telo ? 'telő' : 'fogyó') + ' Hold');
+      if (x.holdkor !== undefined) hold.push('Holdkor (az újhold óta)', x.holdkor.toFixed(1).replace('.', ',') + ' nap');
+    }
+    var nk = [];
+    if (x.napkelte !== undefined) {
+      nk.push('Napkelte', x.napkelteIdo ? idoStr(x.napkelteIdo) + ' ' + zona : 'nincs (sarki éjszaka/nappal)');
+      nk.push('Napnyugta', x.napnyugtaIdo ? idoStr(x.napnyugtaIdo) + ' ' + zona : 'nincs (sarki éjszaka/nappal)');
+    }
+    var pl = [];
+    if (x.planNap !== undefined) {
+      pl.push('Nap', R.glif(x.planNap) + ' ' + R.nev(x.planNap));
+      pl.push('Óra', R.glif(x.planOra) + ' ' + R.nev(x.planOra));
+    }
+    return blokk('További adatok', sor) + blokk('Hold', hold) + blokk('Napkelte, napnyugta', nk) + blokk('Planetáris idő', pl);
   };
 
   /* ---------- Összevetés: keresztkapcsolati fényszögtábla (sorok: belső kör, oszlopok: külső kör) ---------- */
