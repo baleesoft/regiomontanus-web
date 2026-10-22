@@ -302,7 +302,8 @@ dialog textarea { width: 100%; min-height: 70px; resize: vertical; }
 .ny-dlg { width: min(980px, calc(100vw - 16px)); }
 .ny-torzs { display: grid; grid-template-columns: 300px 1fr; gap: 12px; align-items: start; }
 .ny-beall label:not(.sor) { display: block; padding: 3px 0; }
-.ny-csak { display: grid; gap: 6px; margin-bottom: 8px; }
+.ny-csak { display: grid; gap: 6px; margin: 12px 0; }
+.ny-tav { margin-top: 10px; }
 .ny-csak .gomb[aria-pressed="true"] { background: var(--sel); border-color: var(--accent); }
 .ny-elo { margin: 0; }
 .ny-elo figcaption { font-weight: 600; margin-bottom: 4px; }

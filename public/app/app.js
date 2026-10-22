@@ -1384,8 +1384,9 @@
       var t = g.getAttribute('data-nyg');
       beall.nyomtatas = o; beallMent();
       if (t === 'megse') { d.close(); return; }
-      d.close();
+      if (t !== 'elonezet') d.close();
       if (t === 'nyomtat') { nyomtatasElokeszit(); setTimeout(function () { window.print(); }, 60); }
+      else if (t === 'elonezet') reszletesElonezet(k, o);
       else kepExport(k, o, d.querySelector('[data-kepfmt]').value);
     };
     kitolt();
@@ -1401,9 +1402,21 @@
     if (!k || !k.e) { n.innerHTML = '<p>Nincs kiszámolt képlet a nyomtatáshoz.</p>'; return; }
     n.appendChild(lapEpit(k, nyomtatOpt()));
   }
+  /** Részletes előnézet („Nyomtatási kép nézet”): a lap új lapon, teljes méretben, nagyítható */
+  function reszletesElonezet(k, o) {
+    var svg = lapEpit(k, o), w = window.open('', '_blank');
+    if (!w) { uzen('A böngésző letiltotta az új ablakot.'); return; }
+    fontDataUri().then(function (css) { return css; }, function () { return ''; }).then(function (css) {
+      w.document.write('<!doctype html><html lang="hu"><head><meta charset="utf-8"><title>Nyomtatási kép – ' + R.esc(cim(k)) + '</title><style>' + css +
+        'body{margin:0;background:#7a7a7a;display:flex;justify-content:center;padding:16px}svg{background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.4);width:min(100%,1488px);height:auto}</style></head><body>' +
+        new XMLSerializer().serializeToString(svg) + '</body></html>');
+      w.document.close();
+    });
+  }
   /** A lapkép PNG/JPG-ként (1488×2105 képpont, mint a Windows-os export; a jelek beágyazott betűkkel). */
   function kepExport(k, o, fmt) {
-    var svg = lapEpit(k, o), sz = 1488, mag = Math.round(sz * 297 / 210);
+    var oe = {}, x; for (x in o) oe[x] = o[x]; oe.kepExport = true;
+    var svg = lapEpit(k, oe), sz = 1488, mag = 2105;
     fontDataUri().then(function (css) {
       var st = document.createElementNS('http://www.w3.org/2000/svg', 'style'); st.textContent = css; svg.insertBefore(st, svg.firstChild);
       svg.setAttribute('width', sz); svg.setAttribute('height', mag);

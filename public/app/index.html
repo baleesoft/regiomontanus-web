@@ -201,30 +201,32 @@
   </form>
 </dialog>
 
-<!-- Nyomtatási / exportálási beállítások (TfrmPrintSettingsPreview) -->
+<!-- Nyomtatási / exportálási beállítások (TfrmPrintSettingsPreview, a Windows-os elrendezésben) -->
 <dialog id="dlgNyomtat" class="ny-dlg" aria-labelledby="dlgNyCim">
   <div class="dfej"><span id="dlgNyCim">Nyomtatási / exportálási beállítások</span></div>
   <div class="dtorzs ny-torzs">
     <fieldset class="ny-beall"><legend>Nyomtatási / exportálási beállítások</legend>
+      <label><input type="checkbox" data-ny="fejlec"> Fejléc-kijelzések</label>
+      <label><input type="checkbox" data-ny="inkognito"> Személyes adatok elrejtése</label>
       <div class="ny-csak"><button type="button" class="gomb" data-csak="tabla" aria-pressed="false" data-csak1>Csak a táblázatok - Radix nélkül</button>
         <button type="button" class="gomb" data-csak="radix" aria-pressed="false">Csak a Radix - táblázatok nélkül</button></div>
-      <label><input type="checkbox" data-ny="fejlec"> Fejléc-kijelzések</label>
       <label><input type="checkbox" data-ny="fenyszog"> Fényszögek táblázata</label>
       <label data-csak1><input type="checkbox" data-ny="eletstrat"> Életstratégia táblázata</label>
       <label data-csak1><input type="checkbox" data-ny="planetak"> Planéták táblázata</label>
       <label data-csak1><input type="checkbox" data-ny="hazak"> Házak táblázata</label>
-      <label><input type="checkbox" data-ny="lablec"> Lábléc-kijelzések</label>
-      <label><input type="checkbox" data-ny="szines"> Nyomtatás színesben</label>
-      <label><input type="checkbox" data-ny="inkognito"> Személyes adatok elrejtése</label>
+      <label class="ny-tav"><input type="checkbox" data-ny="lablec"> Lábléc-kijelzések</label>
+      <label class="ny-tav"><input type="checkbox" data-ny="szines"> Nyomtatás színesben</label>
       <p class="halv ny-tobb" hidden>Összevetésnél a kereszt-fényszögek táblája kerül a lapra.</p>
-      <label class="sor">Kép formátuma: <select data-kepfmt><option value="png">PNG</option><option value="jpg">JPG</option></select></label>
-      <p class="halv">A4 álló lap. Nyomtatáskor a böngésző párbeszédablakában a „Margók: nincs” és a „Háttérgrafika” beállítás ajánlott; PDF is menthető onnan.</p>
+      <label class="sor ny-tav">Kép formátuma: <select data-kepfmt><option value="png">PNG</option><option value="jpg">JPG</option></select></label>
+      <p class="halv">A4 álló lap. Nyomtatáskor a böngésző ablakában a „Margók: nincs” és a „Háttérgrafika” ajánlott; ott PDF is menthető.</p>
     </fieldset>
     <figure class="ny-elo"><figcaption>Nyomtatási / exportálási előnézet</figcaption><div class="ny-elonezet"></div></figure>
   </div>
-  <div class="dlab"><span class="tolt"></span>
+  <div class="dlab">
     <button type="button" class="gomb fo" data-nyg="nyomtat">Nyomtatás</button>
+    <button type="button" class="gomb" data-nyg="elonezet">Részletes előnézet</button>
     <button type="button" class="gomb" data-nyg="kep">Mentés képként</button>
+    <span class="tolt"></span>
     <button type="button" class="gomb" data-nyg="megse">Mégsem</button></div>
 </dialog>
 
