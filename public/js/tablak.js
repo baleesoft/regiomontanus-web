@@ -19,13 +19,22 @@
 
   /* ---------- Planéták (Ctrl+B) ---------- */
   T.planetak = function (e, b) {
-    var cs = T.csomo(b);
     // kisbolygók csak bekapcsolt „Aszteroidák megjelenítése” mellett (GetShownPlanetSet(true)); a jel nélküliek (Eris, üstökösök) a végén
     var kisb = T.kisbLathato(b);
-    var ids = R.SZAMOLT.filter(function (id) { return e.poz[id] && (id < 10 || id === cs || (kisb && id >= 12)); });
+    // holdcsomók: mindig mind a négy – felszálló és leszálló, közepes és valódi (Balázs kérése); a leszálló a felszálló + 180°,
+    // a háza a szemközti ház (a négyszögrendszerek szemközti házcsúcsai 180°-ra vannak)
+    var ids = R.SZAMOLT.filter(function (id) { return e.poz[id] && (id < 10 || (kisb && id >= 12)); });
+    var csomok = [10, 11, 24, 25].filter(function (id) { return e.poz[id < 24 ? id : id - 14]; });
+    ids.splice.apply(ids, [ids.indexOf(9) + 1, 0].concat(csomok));
     if (kisb) R.KISBOLYGOK.forEach(function (k) { if (ids.indexOf(k[0]) < 0 && e.poz[k[0]]) ids.push(k[0]); });
     var sor = ids.map(function (id) {
-      var x = e.poz[id], j = R.jegyben(x.lon), p = e.elemPl[id], urak = '', jel = [];
+      var x = e.poz[id], p = e.elemPl[id], urak = '', jel = [];
+      if (id >= 24 && !x) {
+        var f = e.poz[id - 14], pf = e.elemPl[id - 14];
+        x = { lon: (f.lon + 180) % 360, speedLon: f.speedLon };
+        if (!p && pf && pf.house) p = { house: (pf.house + 5) % 12 + 1, lordOf: [], closedLordOf: [] };
+      }
+      var j = R.jegyben(x.lon);
       if (p) {
         urak = p.lordOf.join(',');
         if (p.closedLordOf.length) urak += (urak ? ' ' : '') + '(' + p.closedLordOf.join(',') + ')';
