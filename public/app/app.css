@@ -295,6 +295,11 @@ dialog textarea { width: 100%; min-height: 70px; resize: vertical; }
   .reszlet .fo-kerek .kerek { flex: none; }
   .elvalaszto { display: none; }
   .reszlet .fo-kerek .kerek > svg, .tablak { height: auto !important; }
+  /* két kerék egymás mellett (összevetés): a keréksáv magassága itt a tartalomból jön – a kerekek se 100%-os magasságúak legyenek,
+     különben 0 magasra zsugorodnak (pl. iPad álló helyzetben, 761–900 px) */
+  .reszlet .ketkerek, .reszlet .ketkerek figure { height: auto; }
+  .reszlet .ketkerek .kk { flex: none; }
+  .reszlet .ketkerek .kk svg { height: auto !important; }
   /* a széles táblák (pl. Állócsillagok) a saját dobozukban görgetnek, nem az egész oldal */
   .tabla-tart { flex: none; overflow-x: auto; overflow-y: hidden; }
 }
