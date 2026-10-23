@@ -1,0 +1,103 @@
+"""
+Az asztroszkóp adatai: a csillagképek kiterjedése ekliptikai hosszúságban (J2000 közepes ekliptika és napéjegyenlőség).
+
+Forrás: a hivatalos IAU-csillagképhatárok (Delporte 1930, B1875) Roman (1987) szerinti táblázata
+(CDS VI/42, közkincs), az astropy `get_constellation` függvényén át. A Kígyó (Ser) két részre bontva:
+feje (B1875 RA < 17h) és farka.
+
+Kimenet: public/js/csillagkepek.js
+  ekl:   az ekliptika menti csillagképek (a Nap útja), [rövidítés, kezdő hosszúság] – a következő elejéig tart
+  kulso: [rövidítés, magyar név, legkisebb |β| (fok), [[λ0, λ1], …]] – a |β| ≤ 60° sávban elfoglalt hosszúság-ívek
+  tejut: [[λ0, λ1], …] – az ekliptika azon szakaszai, ahol a galaktikus szélesség |b| ≤ 10°
+
+Használat: pip install astropy; python3 tools/build-csillagkepek.py
+A kliens a képlet időpontjára a precesszióval (IAU 2006, p_A) tolja el; sziderikus zodiákusnál az ajánamsával vissza.
+"""
+import json, os
+import numpy as np
+import astropy.units as u
+from astropy.coordinates import SkyCoord, GeocentricMeanEcliptic, FK5, Galactic, get_constellation
+
+NEV = {
+    'And': 'Androméda', 'Ant': 'Légszivattyú', 'Aps': 'Paradicsommadár', 'Aql': 'Sas', 'Aqr': 'Vízöntő', 'Ara': 'Oltár',
+    'Ari': 'Kos', 'Aur': 'Szekeres', 'Boo': 'Ökörhajcsár', 'Cae': 'Véső', 'Cam': 'Zsiráf', 'Cnc': 'Rák',
+    'CVn': 'Vadászebek', 'CMa': 'Nagy Kutya', 'CMi': 'Kis Kutya', 'Cap': 'Bak', 'Car': 'Hajógerinc', 'Cas': 'Kassziopeia',
+    'Cen': 'Kentaur', 'Cep': 'Cepheus', 'Cet': 'Cet', 'Cha': 'Kaméleon', 'Cir': 'Körző', 'Col': 'Galamb',
+    'Com': 'Bereniké Haja', 'CrA': 'Déli Korona', 'CrB': 'Északi Korona', 'Crv': 'Holló', 'Crt': 'Serleg',
+    'Cru': 'Dél Keresztje', 'Cyg': 'Hattyú', 'Del': 'Delfin', 'Dor': 'Aranyhal', 'Dra': 'Sárkány', 'Equ': 'Csikó',
+    'Eri': 'Eridanus', 'For': 'Kemence', 'Gem': 'Ikrek', 'Gru': 'Daru', 'Her': 'Herkules', 'Hor': 'Ingaóra',
+    'Hya': 'Északi Vízikígyó', 'Hyi': 'Déli Vízikígyó', 'Ind': 'Indián', 'Lac': 'Gyík', 'Leo': 'Oroszlán',
+    'LMi': 'Kis Oroszlán', 'Lep': 'Nyúl', 'Lib': 'Mérleg', 'Lup': 'Farkas', 'Lyn': 'Hiúz', 'Lyr': 'Lant',
+    'Men': 'Táblahegy', 'Mic': 'Mikroszkóp', 'Mon': 'Egyszarvú', 'Mus': 'Légy', 'Nor': 'Szögmérő', 'Oct': 'Oktáns',
+    'Oph': 'Kígyótartó', 'Ori': 'Orion', 'Pav': 'Páva', 'Peg': 'Pegazus', 'Per': 'Perszeusz', 'Phe': 'Főnix',
+    'Pic': 'Festőállvány', 'Psc': 'Halak', 'PsA': 'Déli Hal', 'Pup': 'Hajófara', 'Pyx': 'Tájoló', 'Ret': 'Háló',
+    'Sge': 'Nyíl', 'Sgr': 'Nyilas', 'Sco': 'Skorpió', 'Scl': 'Szobrász', 'Sct': 'Pajzs', 'SerCap': 'Kígyó feje',
+    'SerCau': 'Kígyó farka', 'Sex': 'Szextáns', 'Tau': 'Bika', 'Tel': 'Távcső', 'Tri': 'Háromszög',
+    'TrA': 'Déli Háromszög', 'Tuc': 'Tukán', 'UMa': 'Nagy Medve', 'UMi': 'Kis Medve', 'Vel': 'Vitorla',
+    'Vir': 'Szűz', 'Vol': 'Repülőhal', 'Vul': 'Róka'}
+MAX_B = 30          # a kliens legfeljebb ±30°-os sávot kínál
+LEPES, BLEPES = 0.1, 0.2
+ECL = GeocentricMeanEcliptic(equinox='J2000')
+
+
+def csk(lon, lat):
+    c = SkyCoord(lon=lon * u.deg, lat=lat * u.deg, frame=ECL)
+    k = np.array(get_constellation(c, short_name=True), dtype=object)
+    ra = c.transform_to(FK5(equinox='B1875')).ra.hour
+    return np.where((k == 'Ser') & (ra < 17), 'SerCap', np.where(k == 'Ser', 'SerCau', k)), c
+
+
+def ivek(fedett, lepes):
+    """körkörös, összevont ívek a lefedett rekeszekből"""
+    n = len(fedett)
+    if fedett.all():
+        return [[0, 360]]
+    s0 = int(np.where(~fedett)[0][0]); ki, cur = [], None
+    for j in range(n):
+        i = (s0 + j) % n
+        if fedett[i]:
+            cur = [i, i] if cur is None else [cur[0], i]
+        elif cur is not None:
+            ki.append(cur); cur = None
+    if cur is not None:
+        ki.append(cur)
+    return [[round(a * lepes, 2), round(((b + 1) * lepes) % 360, 2)] for a, b in ki]
+
+
+# 1. az ekliptika mentén (0,01°)
+lam = np.arange(0, 360, 0.01)
+k, _ = csk(lam, np.zeros_like(lam))
+ekl = [[k[0], 0.0]] + [[k[i], round(float(lam[i]), 2)] for i in range(1, len(k)) if k[i] != k[i - 1]]
+if ekl[-1][0] == ekl[0][0]:
+    ekl = ekl[1:]          # a 0°-on átnyúló Halak egyetlen szakasz
+ekl_nevek = set(x[0] for x in ekl)
+
+# 2. a |β| ≤ 60° sáv rácsa (0,1° × 0,2°)
+L = np.arange(0, 360, LEPES) + LEPES / 2
+B = np.arange(-60, 60 + 1e-9, BLEPES)
+LL, BB = np.meshgrid(L, B)
+k, _ = csk(LL.ravel(), BB.ravel())
+k = k.reshape(LL.shape)
+kulso = []
+for a in sorted(set(k.ravel())):
+    m = k == a
+    bmin = float(np.abs(B[m.any(axis=1)]).min())
+    if bmin > MAX_B:
+        continue
+    kulso.append([a, NEV[a], round(bmin, 1), ivek(m.any(axis=0), LEPES)])
+
+# 3. Tejút: |b| ≤ 10° az ekliptikán
+c = SkyCoord(lon=lam * u.deg, lat=np.zeros_like(lam) * u.deg, frame=ECL)
+tejut = ivek(np.abs(c.transform_to(Galactic()).b.deg) <= 10, 0.01)
+
+ki = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'public', 'js', 'csillagkepek.js')
+with open(ki, 'w', encoding='utf-8') as f:
+    f.write('/*\n * csillagkepek.js – az asztroszkóp adatai (tools/build-csillagkepek.py generálja, kézzel ne szerkeszd).\n'
+            ' * IAU-csillagképhatárok (Delporte 1930; Roman 1987, CDS VI/42), ekliptikai hosszúság, J2000.\n'
+            ' * ekl: [rövidítés, kezdet]; kulso: [rövidítés, név, legkisebb |β|, ívek]; tejut: ívek (|b| ≤ 10°). Licenc: AGPL-3.0.\n */\n')
+    f.write('(function (global) {\n  \'use strict\';\n  var R = global.Regio = global.Regio || {};\n')
+    f.write('  R.CSILLAGKEPEK = {\n    nev: ' + json.dumps(NEV, ensure_ascii=False) + ',\n')
+    f.write('    ekl: ' + json.dumps(ekl) + ',\n')
+    f.write('    kulso: [\n' + ',\n'.join('      ' + json.dumps(x, ensure_ascii=False) for x in kulso) + '\n    ],\n')
+    f.write('    tejut: ' + json.dumps(tejut) + '\n  };\n})(typeof window !== \'undefined\' ? window : globalThis);\n')
+print(len(ekl), 'ekliptikai,', len(kulso), 'külső csillagkép; Tejút:', tejut)

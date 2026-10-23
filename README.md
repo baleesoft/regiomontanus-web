@@ -46,6 +46,7 @@ public/                ← ez a tartalom kerül fel FTP-vel a tárhelyre
   js/idotech.js        időbeli technikák: tranzit, progressziós Hold, primer (1° = 1 év) direkció, szolár, revolúció-kereső
   js/primer.js         valódi primer direkciók: Placidus-félív, zodiákális / mundán, Ptolemaiosz / Naibod / valódi napív kulcs
   js/tablak.js         a Táblázatok menü táblái
+  js/csillagkepek.js   az asztroszkóp adatai: a csillagképek ekliptikai hosszúság-ívei (IAU-határok, J2000; generált)
   js/allocsillagok.js  a Windows-os program 737 állócsillaga (név, nómenklatúra, csillagkép latinul és magyarul)
   js/tarolo.js         beállítások, legutóbbi képletek, munkamenet (localStorage)
   fonts/               asztrológiai jelek: Noto Sans Symbols / Symbols 2 részhalmaz (SIL OFL 1.1, OFL.txt) –
@@ -58,6 +59,7 @@ tools/
   build-wasm.sh        a swe.wasm reprodukálható fordítása a hivatalos forrásból
   genref.py            referenciaértékek a natív swetest-ből
   browsertest.py       a próbaoldal ellenőrzése headless böngészőben
+  build-csillagkepek.py  a js/csillagkepek.js előállítása (astropy; IAU-csillagképhatárok, Roman 1987, CDS VI/42)
 ```
 
 ## Billentyűk
@@ -78,4 +80,5 @@ tools/build-wasm.sh            # alapértelmezés: aloistr/swisseph c69c14a (2.1
 
 AGPL-3.0 (lásd `LICENSE`). A `public/fonts/` betűkészletei a Noto Project munkái, SIL Open Font License 1.1
 (`public/fonts/OFL.txt`). A Swiss Ephemeris © Astrodienst AG, AGPL-3.0 / Swiss Ephemeris Professional
-License kettős licenccel: <https://www.astro.com/swisseph/>.
+License kettős licenccel: <https://www.astro.com/swisseph/>. A csillagképhatárok az IAU hivatalos határai (Delporte 1930;
+Roman 1987, CDS VI/42) – közkincs.

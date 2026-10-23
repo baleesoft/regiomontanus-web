@@ -35,7 +35,9 @@
       eletkorRejt: false, arab: true, csakOssz: true,
       // Fényszögek: fajták, jelek, vonalak; fényszögelt elemek (házak/tengelyek, planéták, kisbolygók, holdcsomók)
       fszTipus: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], fszJel: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-      fszPlanetaig: false, fszEredeti: false, fszHaz: [], fszPl: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], fszKisb: [], fszCsomo: [] },
+      fszPlanetaig: false, fszEredeti: false, fszHaz: [], fszPl: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], fszKisb: [], fszCsomo: [],
+      // asztroszkóp: a csillagképek a kerék körül – 'kep' (válogatás) | 'sav' (minden, ami eléri az ekliptika ±asztroSav°-os sávját)
+      asztro: false, asztroMod: 'kep', asztroSav: 10, asztroTejut: true },
     // valódi primer direkciók (Progressziók › Primer direkciók (valódi)): módszer, kulcs, irány, elemek, korhatár
     primer: { mod: 'zod', kulcs: 'ptolemaiosz', egyeni: 1, irany: 'direkt', szel: false, korMin: 0, korMax: 90,
       szig: ['AC', 'MC', 0, 1], prom: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], fsz: [1, 2, 3, 6, 7] },

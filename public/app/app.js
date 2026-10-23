@@ -206,7 +206,14 @@
       jegyek: b.jegyek, analog: b.analog, hazHatar: b.hazHatar, hazSzam: b.hazSzam, arab: b.arab, tengelyek: b.tengelyek,
       mcIc: beall.hsys === 'A' && !kos0, planetDeg: b.planetDeg, meret: b.meret,
       fokKulso: b.fokKulso, fokBelso: b.fokBelso, fokFsz: b.fokFsz, fokKulon: b.fokKulon,
+      asztroszkop: b.asztro && k.e ? { eltolas: asztroEltolas(k.e), mod: b.asztroMod, sav: b.asztroSav, tejut: b.asztroTejut } : null,
       colors: ff || { fire: sz.fire, earth: sz.earth, air: sz.air, water: sz.water, aspectBg: sz.aspectBg, aspect: '#000000' } };
+  }
+  /** az asztroszkóp (J2000-es csillagkép-határok) eltolása a képlet időpontjára: általános precesszió (IAU 2006, p_A),
+   *  sziderikus zodiákusnál az ajánamsával vissza (a csillagképek a csillagokhoz rögzítettek) */
+  function asztroEltolas(e) {
+    var T = (e.jd - 2451545) / 36525, p = (5028.796195 * T + 1.1054348 * T * T) / 3600;
+    return p - (e.sid && e.egyeb && typeof e.egyeb.ayanamsa === 'number' ? e.egyeb.ayanamsa : 0);
   }
   function kerekRajzol(hova, k) {
     var svg = kerekRajzolAlap(hova, k);
@@ -808,6 +815,7 @@
       k.szemely = !k.szemely; render();
     },
     enallPersp: enallapotPerspektiva,
+    asztro: function () { beall.kerek.asztro = !beall.kerek.asztro; beallMent(); render(); },
     aszteroidak: function () { beall.kerek.asteroids = !beall.kerek.asteroids; beallMent(); mindSzamol(); render(); },
     allo: function () {
       beall.allo.megj = !beall.allo.megj; beallMent(); mindSzamol(); render();
@@ -940,7 +948,8 @@
     ['Énállapotok – be/ki (személyiségrajz)', 'M12 4l8 14H4z', 'szemely', function () { return !!(akt() && akt().szemely); }],
     ['Személyes adatok elrejtése – be/ki', 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c1-4 4-6 8-6s7 2 8 6', 'inkognito', inkognito],
     ['Állócsillagok – be/ki', 'M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.6l-5.3 2.8 1.2-6-4.5-4.1 6-.7z', 'allo', function () { return !!beall.allo.megj; }],
-    ['Chiron és a kisbolygók – be/ki', 'M7 5a2 2 0 1 0 .01 0M16 7a3 3 0 1 0 .01 0M10 15a2.5 2.5 0 1 0 .01 0', 'aszteroidak', function () { return beall.kerek.asteroids; }], 0,
+    ['Chiron és a kisbolygók – be/ki', 'M7 5a2 2 0 1 0 .01 0M16 7a3 3 0 1 0 .01 0M10 15a2.5 2.5 0 1 0 .01 0', 'aszteroidak', function () { return beall.kerek.asteroids; }],
+    ['Asztroszkóp: csillagképek a kerék körül – be/ki', 'M12 9a3 3 0 1 0 .01 0M4.6 8A8.5 8.5 0 0 1 10 3.7M14 3.7A8.5 8.5 0 0 1 19.4 8M20.5 12a8.5 8.5 0 0 1-2.6 6.1M15 20a8.5 8.5 0 0 1-6 0M6.1 18.1A8.5 8.5 0 0 1 3.5 12', 'asztro', function () { return !!beall.kerek.asztro; }], 0,
     ['Aktuális égi állás', 'M12 8a4 4 0 1 0 .01 0M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2', 'aktualis'],
     ['Planéta az Ascendensen – énállapotok perspektívája', 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 .01 0', 'enallPersp'],
     ['Kos 0° képlet', 'M12 21V10a5 5 0 0 0-9-3M12 10a5 5 0 0 1 9-3', 'kos0'], 0,
@@ -1694,6 +1703,8 @@
       Array.prototype.forEach.call(d.querySelectorAll('input[name="mElhely"]'), function (r) { r.checked = r.value === x.osszElhely; });
       Array.prototype.forEach.call(d.querySelectorAll('input[data-b]'), function (c) { c.checked = !!x[c.getAttribute('data-b')]; });
       $('mMeret').value = (+kr.meret || 1).toFixed(1);
+      Array.prototype.forEach.call(d.querySelectorAll('input[name="mAsztroMod"]'), function (r) { r.checked = r.value === (kr.asztroMod || 'kep'); });
+      $('mAsztroSav').value = +kr.asztroSav || 10;
       // Nyomtatás és Exportálás: a nyomtatási ablakkal közös beállítások (beall.nyomtatas)
       var ny = x.nyomtatas || {};
       Array.prototype.forEach.call(d.querySelectorAll('input[data-ny2]'), function (c) {
@@ -1720,6 +1731,8 @@
       r = d.querySelector('input[name="mElhely"]:checked'); if (r) beall.osszElhely = r.value;
       var m = +String($('mMeret').value).replace(',', '.');
       kr.meret = isFinite(m) && m > 0 ? Math.round(Math.min(2, Math.max(0.5, m)) * 10) / 10 : 1;
+      r = d.querySelector('input[name="mAsztroMod"]:checked'); if (r) kr.asztroMod = r.value;
+      m = +String($('mAsztroSav').value).replace(',', '.'); kr.asztroSav = isFinite(m) && m > 0 ? Math.round(Math.min(30, Math.max(1, m))) : 10;
       Array.prototype.forEach.call(d.querySelectorAll('input[data-b]'), function (c) { beall[c.getAttribute('data-b')] = c.checked; });
       beall.nyomtatas = beall.nyomtatas || {};
       Array.prototype.forEach.call(d.querySelectorAll('input[data-ny2]'), function (c) { beall.nyomtatas[c.getAttribute('data-ny2')] = c.checked; });
