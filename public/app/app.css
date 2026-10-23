@@ -208,6 +208,9 @@ body.huzas, body.huzas * { cursor: col-resize !important; user-select: none !imp
 .olv-torzs { padding: 10px 12px; overflow: auto; font-size: 13px; line-height: 1.45; }
 body.olvaso-be #asztal [data-olv] { cursor: help; }
 
+.erinto-tip { position: fixed; z-index: 70; max-width: min(420px, calc(100vw - 16px)); padding: 6px 9px; background: #ffffe1; color: #1f1d1a;
+  border: 1px solid #8f897d; box-shadow: 0 4px 12px rgba(0, 0, 0, .2); font-size: 13px; line-height: 1.35; pointer-events: none; white-space: pre-line; }
+
 /* táblák (tablak.js) */
 h3.t-cim { font-size: 12px; margin: 10px 0 4px; color: var(--accent); }
 h3.t-cim:first-child { margin-top: 0; }

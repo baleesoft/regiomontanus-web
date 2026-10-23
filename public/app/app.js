@@ -288,7 +288,7 @@
     kd.betuk = k.fajta !== 'pd' && k.fajta !== 'pdv';
     kd.egyenlo = beall.hsys === 'A';
     kd.csakHold = csakHold;
-    if (k.fajta === 'ph' && k.phHold) kd.cimKieg = { 1: 'Progressziós Hold értékek: ' + k.phHold.map(function (x) { return x.szoveg; }).join('; ') };
+    if (k.fajta === 'ph' && k.phHold) kd.cimKieg = { 1: 'Progressziós Hold értékek:\n' + k.phHold.map(function (x) { return x.szoveg; }).join('\n') };
     var svg = RegioKerek.rajzolDupla(hova, T.kerekAdat(k.e), kd, o);
     svg.setAttribute('aria-label', 'Összevetés: ' + cim(k));
     return svg;
@@ -1371,6 +1371,34 @@
   function olvHtml(s) {
     return R.esc(s).replace(/@/g, '').replace(/\n/g, '<br>');
   }
+  /* ---------- érintőképernyő: a buborékszövegek (title) koppintásra ----------
+   * Tableten és telefonon nincs egérmutató, így a kerék és a táblák buborékjai (SVG <title>, HTML title) nem jelennének meg:
+   * koppintásra ugyanaz a szöveg egy buborékban látszik, a következő érintésig, görgetésig vagy 10 másodpercig. */
+  var mutatoTipus = 'mouse', erTip = null, erIdozito = null;
+  function erTipZar() { clearTimeout(erIdozito); if (erTip) erTip.hidden = true; }
+  function cimSzoveg(el, hatar) {
+    for (; el && el !== hatar && el.nodeType === 1; el = el.parentNode) {
+      if (el instanceof SVGElement) {
+        var t = el.querySelector(':scope > title');
+        if (t && t.textContent) return t.textContent;
+      } else if (el.getAttribute('title')) return el.getAttribute('title');
+    }
+    return null;
+  }
+  document.addEventListener('pointerdown', function (e) { mutatoTipus = e.pointerType || 'mouse'; erTipZar(); }, true);
+  document.addEventListener('scroll', erTipZar, true);
+  $('asztal').addEventListener('click', function (e) {
+    if (mutatoTipus === 'mouse' || olvasoBe) return;
+    if (e.target.closest('button, a, input, select, textarea, label, .elvalaszto')) return;
+    var t = cimSzoveg(e.target, this); if (!t) return;
+    if (!erTip) { erTip = document.createElement('div'); erTip.className = 'erinto-tip'; erTip.setAttribute('role', 'tooltip'); document.body.appendChild(erTip); }
+    erTip.textContent = t; erTip.hidden = false;
+    var w = erTip.offsetWidth, h = erTip.offsetHeight, x = e.clientX - w / 2, y = e.clientY - h - 18;
+    if (y < 8) y = e.clientY + 22;
+    x = Math.max(8, Math.min(x, innerWidth - w - 8)); y = Math.min(y, innerHeight - h - 8);
+    erTip.style.left = x + 'px'; erTip.style.top = y + 'px';
+    clearTimeout(erIdozito); erIdozito = setTimeout(erTipZar, 10000);
+  });
   function olvTipZar() { clearTimeout(olvIdozito); if (olvTip) olvTip.hidden = true; }
   function olvTipMutat(ev, html) {
     if (!olvTip) { olvTip = document.createElement('div'); olvTip.className = 'olv-tip'; olvTip.setAttribute('role', 'tooltip'); document.body.appendChild(olvTip); }
