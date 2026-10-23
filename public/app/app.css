@@ -596,7 +596,5 @@ table.t-grid tr.t-pontsor th.t-fej { background: #efe9dc; }
 svg.fokusz g.planeta:not(.fk-be):not(.fk-fo), svg.fokusz g.csillag:not(.fk-be):not(.fk-fo), svg.fokusz g.tengelypont { opacity: .2; }
 svg.fokusz line.fszvonal:not(.fk-be), svg.fokusz text.fszjel:not(.fk-be) { opacity: .07; }
 svg.fokusz line.fszvonal.fk-be { stroke-width: 2.4; }
-svg.fokusz g.fk-fo > rect { stroke: #c0161d; stroke-width: 2.5; }
-svg.fokusz g.fk-be > rect { stroke: #c0161d; stroke-width: 1; }
 svg.fokusz line.hazcsucs.fk-be { stroke: #c0161d; stroke-width: 2.4; }
 @media (prefers-reduced-motion: reduce) { .kerek svg g { transition: none; } }
