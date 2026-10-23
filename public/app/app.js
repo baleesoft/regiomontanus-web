@@ -258,9 +258,44 @@
       var fszek = ((e.elemzes && e.elemzes.aspects) || []).filter(function (f) {
         return f.a[0] === 'P' && f.b[0] === 'P' && fszTip.indexOf(f.aspect) >= 0 && ids.indexOf(f.a[1]) >= 0 && ids.indexOf(f.b[1]) >= 0;
       }).map(function (f) { return { a: f.a[1], b: f.b[1], fsz: f.aspect, szin: EGB_FSZ[f.aspect] }; });
+      // léptetett időpont: geocentrikus pozíciók, ASC/MC/ARMC (a képlet helyén, házrendszerével)
+      var szamolJd = function (jd) {
+        var jdEt = jd + se.deltat(jd), fl = sweFlag();
+        var pk = ids.map(function (id) { var x = se.calc(jdEt, id, fl); return pont(id, x.lon, x.lat, x.speedLon); });
+        pk.forEach(function (x) { x.haz = 0; });
+        var n = pk[pk.length - 1]; pk.push(pont(cs === 10 ? 24 : 25, (n.L + 180) % 360, 0, n.retro ? -1 : 1)); pk[pk.length - 1].haz = 0;
+        if (!vanIdo) return { pontok: pk, tengelyek: null, armc: hz.armc };
+        var h = se.housesEx(jd, e.sid ? SwissEph.SE.FLG_SIDEREAL : 0, a.lat, a.lon, beall.hsys);
+        return { pontok: pk, tengelyek: { asc: h.asc, mc: h.mc }, armc: h.armc };
+      };
+      var zo = (e.zona && typeof e.zona.orak === 'number') ? e.zona.orak : 0, zk = e.zona && e.zona.kod ? ' ' + e.zona.kod : '';
+      var datum = function (jd) {
+        var d = se.revjul(jd + zo / 24), h = Math.floor(d.hour + 1e-9), mi = Math.floor((d.hour - h) * 60 + 1e-6);
+        return R.datumStr(d.year, d.month, d.day, h, mi) + zk;
+      };
+      // heliocentrikus helyvektorok (CsE, a képlet zodiákusában) – a Naprendszer-nézethez; a Hold geocentrikusan
+      var helioXyz = function (jdEt, id, fl) {
+        if (id === 0) return [0, 0, 0];
+        var x = se.calc(jdEt, id, fl), l = (x.lon - ayan) * Math.PI / 180, b = x.lat * Math.PI / 180;
+        return [x.dist * Math.cos(b) * Math.cos(l), x.dist * Math.cos(b) * Math.sin(l), x.dist * Math.sin(b)];
+      };
+      var helio = function (jd) {
+        var SE = SwissEph.SE, jdEt = jd + se.deltat(jd), fl = SE.FLG_SWIEPH | SE.FLG_HELCTR, xyz = {};
+        [0, 2, 3, 4, 5, 6, 7, 8, 9, 14].forEach(function (id) { xyz[id] = helioXyz(jdEt, id, fl); });
+        return { xyz: xyz, hold: helioXyz(jdEt, 1, SE.FLG_SWIEPH) };
+      };
+      // egy keringés mintái (a pályák rajzához), a képlet időpontja körül
+      var KERINGES = { 2: 87.969, 3: 224.701, 4: 686.98, 5: 4332.59, 6: 10759.2, 7: 30688.5, 8: 60182, 9: 90560, 14: 365.256 };
+      var palya = function (id) {
+        var SE = SwissEph.SE, fl = SE.FLG_SWIEPH | SE.FLG_HELCTR, n = 180, P = KERINGES[id], jdEt = e.jd + se.deltat(e.jd), l = [];
+        if (!P) return [];
+        for (var i = 0; i < n; i++) l.push(helioXyz(jdEt + (i / n - 0.5) * P, id, fl));
+        return l;
+      };
       // nézőpont: a Nap (heliocentrikus) vagy egy planéta – a heliocentrikus helyvektorok különbsége (fénymenet nélkül)
-      var nezopontFv = function (vid) {
-        var SE = SwissEph.SE, jdEt = e.jd + se.deltat(e.jd), fl = SE.FLG_SWIEPH | SE.FLG_HELCTR;
+      var nezopontFv = function (vid, jd) {
+        jd = jd || e.jd;
+        var SE = SwissEph.SE, jdEt = jd + se.deltat(jd), fl = SE.FLG_SWIEPH | SE.FLG_HELCTR;
         var xyz = function (id) {
           if (id === 0) return [0, 0, 0];
           var x = se.calc(jdEt, id, fl), l = x.lon * Math.PI / 180, b = x.lat * Math.PI / 180;
@@ -278,7 +313,7 @@
         cim: K.cim(a), alcim: tipusNev(k), pontok: pontok,
         tengelyek: vanIdo ? { asc: hz.persp !== undefined ? hz.origAsc : hz.asc, mc: hz.persp !== undefined ? hz.origMc : hz.mc } : null,
         eltolas: asztroEltolas(e), ayan: ayan, eps: e.eps, armc: hz.armc, phi: a.lat, fszek: fszek,
-        nezopontok: nev, nezopontFv: nezopontFv,
+        nezopontok: nev, nezopontFv: nezopontFv, jd0: e.jd, szamol: szamolJd, datum: datum, helio: helio, palya: palya,
         // planéta-perspektívánál a planéta szemszögéből (a Nap-perspektíva heliocentrikus); drakonikusnál a holdcsomó középen
         nezopont: persp !== null && persp >= 0 && persp <= 9 ? persp : -1,
         kozep: persp === 10 ? cs : null,

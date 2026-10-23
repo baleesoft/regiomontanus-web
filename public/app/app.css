@@ -635,3 +635,13 @@ svg.fokusz line.hazcsucs.fk-be { stroke: #c0161d; stroke-width: 2.4; }
   font-size: 12px; line-height: 1.35; white-space: pre-line; pointer-events: none; border-radius: 3px; }
 .egb-lab { display: flex; gap: 12px; padding: 4px 12px; background: #121a30; border-top: 1px solid #243052; font-size: 12px; color: #aab6d3; }
 @media (max-width: 760px) { .egb-ablak { inset: 0; } .egb-sugo { display: none; } .egb-eszk { font-size: 12px; gap: 4px 10px; } }
+.egb-ablak.nr .csak-eg, .egb-ablak:not(.nr) .csak-nr { display: none !important; }
+.egb-ido { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 5px 12px; background: #0f1628; border-bottom: 1px solid #243052; font-size: 13px; }
+.egb-ido[hidden] { display: none; }
+.egb-ido .gomb { background: #1b2542; color: #e6ecf8; border-color: #34436e; min-width: 30px; }
+.egb-ido .gomb[aria-pressed="true"] { background: #234a2c; border-color: #4f9a5f; }
+.egb-ido .gomb:hover:not(:disabled), .egb-eszk .gomb:hover { background: #26335a; color: #fff; }
+.egb-ido .gomb:disabled { opacity: .45; }
+.egb-ido .egb-datum { font-variant-numeric: tabular-nums; padding: 2px 8px; background: #1b2542; border: 1px solid #34436e; border-radius: 3px; }
+.egb-ido select { height: 26px; background: #1b2542; color: #e6ecf8; border: 1px solid #34436e; }
+.egb-ido label { display: inline-flex; align-items: center; gap: 4px; }

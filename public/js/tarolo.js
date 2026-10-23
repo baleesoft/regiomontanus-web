@@ -46,7 +46,8 @@
     // több képlet egymás mellett: 'fuggoleges' (átlósan eltolva, 60%) | 'vizszintes' (egymás mellett, 50%)
     osszElhely: 'fuggoleges',
     // égbolt-nézet (Speciális › Égbolt-nézet): keret ('ekl' | 'hor') és rétegek
-    egbolt: { keret: 'ekl', vonal: true, cskNev: true, hatar: false, nevek: true, tejut: true, egyenlito: false, fsz: false },
+    egbolt: { keret: 'ekl', vonal: true, cskNev: true, hatar: false, nevek: true, tejut: true, egyenlito: false, fsz: false,
+      mod: 'eg', tav: 'gyok', iranyok: true, palyak: true, lepes: 1 },
     alapHely: { telepules: 'Budapest', telepulesKijelzes: '', orszag: 'Hungary', orszagKod: 'H', lat: 47.5, lon: 19.0666667, tz: 'Europe/Budapest' },
     elrendezes: 4, aktualisFrissit: true, lepes: 1, reszletArany: 0.58, jatekIv: 2000,
     osszevetesMod: 'egymason', pdKonverz: false, phCsakHold: true, phTengely: false,

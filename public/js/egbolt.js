@@ -48,10 +48,14 @@
     ab.innerHTML = '<div class="egb-fej"><b>Égbolt-nézet</b><span class="egb-cim"></span><span class="tolt"></span>' +
       '<button type="button" class="kisgomb" data-egb="zar" aria-label="Bezárás" title="Bezárás (Esc)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>' +
       '<div class="egb-eszk">' +
-      '<label>Nézőpont <select data-egb="nezo"></select></label>' +
-      '<label>Keret <select data-egb="keret"><option value="ekl">Ekliptika (zodiákus)</option><option value="hor">Horizont (a képlet helye)</option></select></label>' +
-      '<label>Középre <select data-egb="kozep"><option value="">–</option></select></label>' +
-      '<details class="egb-retegek"' + (global.innerWidth > 760 ? ' open' : '') + '><summary>Rétegek</summary><span class="egb-pipak">' +
+      '<label>Nézet <select data-egb="mod"><option value="eg">Égbolt (belülről)</option><option value="nr">Naprendszer (kívülről)</option></select></label>' +
+      '<label class="csak-eg">Nézőpont <select data-egb="nezo"></select></label>' +
+      '<label class="csak-eg">Keret <select data-egb="keret"><option value="ekl">Ekliptika (zodiákus)</option><option value="hor">Horizont (a képlet helye)</option></select></label>' +
+      '<label class="csak-eg">Középre <select data-egb="kozep"><option value="">–</option></select></label>' +
+      '<label class="csak-nr">Távolság <select data-egb="tav"><option value="gyok">tömörített (√)</option><option value="valodi">valódi arányban</option></select></label>' +
+      '<label class="csak-nr"><input type="checkbox" data-egbk="iranyok"> Irányok a Földről</label>' +
+      '<label class="csak-nr"><input type="checkbox" data-egbk="palyak"> Pályák</label>' +
+      '<details class="egb-retegek csak-eg"' + (global.innerWidth > 760 ? ' open' : '') + '><summary>Rétegek</summary><span class="egb-pipak">' +
       '<label><input type="checkbox" data-egbk="vonal"> Csillagképek</label>' +
       '<label><input type="checkbox" data-egbk="cskNev"> Nevek</label>' +
       '<label><input type="checkbox" data-egbk="hatar"> Határok</label>' +
@@ -59,7 +63,14 @@
       '<label><input type="checkbox" data-egbk="tejut"> Tejút</label>' +
       '<label><input type="checkbox" data-egbk="egyenlito"> Égi egyenlítő</label>' +
       '<label><input type="checkbox" data-egbk="fsz"> Fényszögek</label></span></details>' +
-      '<button type="button" class="gomb" data-egb="alap" title="Alaphelyzet (dupla kattintás az égen)">Alaphelyzet</button></div>' +
+      '<button type="button" class="gomb" data-egb="alap" title="Alaphelyzet (dupla kattintás)">Alaphelyzet</button></div>' +
+      '<div class="egb-ido"><button type="button" class="gomb" data-egb="elore" title="Előre egy lépéssel" aria-label="Előre">+</button>' +
+      '<button type="button" class="gomb" data-egb="hatra" title="Vissza egy lépéssel" aria-label="Vissza">−</button>' +
+      '<span class="egb-datum"></span>' +
+      '<label>Lépés <select data-egb="lepes"><option value="0.0416666667">1 óra</option><option value="1">1 nap</option>' +
+      '<option value="7">1 hét</option><option value="30.436875">1 hónap</option><option value="365.2422">1 év</option></select></label>' +
+      '<button type="button" class="gomb" data-egb="play" aria-pressed="false">▶ Lejátszás</button>' +
+      '<button type="button" class="gomb" data-egb="most" title="Vissza a képlet időpontjára">A képlet ideje</button></div>' +
       '<div class="egb-vaszon"><canvas></canvas><div class="egb-tip" hidden></div></div>' +
       '<div class="egb-lab"><span class="egb-info"></span><span class="tolt"></span>' +
       '<span class="egb-sugo">Húzd: forgatás · görgő / két ujj: nagyítás · kattintás a planétán: középre · dupla kattintás: alaphelyzet</span></div>';
@@ -69,10 +80,14 @@
     ab.querySelector('.egb-cim').textContent = ' – ' + o.cim + (o.alcim ? ' (' + o.alcim + ')' : '');
 
     /* ---------- állapot ---------- */
-    var A = { keret: b.keret === 'hor' && o.tengelyek ? 'hor' : 'ekl', yaw: 0, pitch: 0, fov: 110, nezo: o.nezopont === undefined ? -1 : o.nezopont };
-    ['vonal', 'cskNev', 'hatar', 'nevek', 'tejut', 'egyenlito', 'fsz'].forEach(function (k) {
-      A[k] = b[k] !== undefined ? !!b[k] : { vonal: true, cskNev: true, hatar: false, nevek: true, tejut: true, egyenlito: false, fsz: false }[k];
+    var A = { keret: b.keret === 'hor' && o.tengelyek ? 'hor' : 'ekl', yaw: 0, pitch: 0, fov: 110, nezo: o.nezopont === undefined ? -1 : o.nezopont,
+      mod: b.mod === 'nr' ? 'nr' : 'eg', tav: b.tav === 'valodi' ? 'valodi' : 'gyok', nyaw: 0, npitch: 32, nd: 20, jd: o.jd0, lepes: +b.lepes || 1 };
+    ['vonal', 'cskNev', 'hatar', 'nevek', 'tejut', 'egyenlito', 'fsz', 'iranyok', 'palyak'].forEach(function (k) {
+      A[k] = b[k] !== undefined ? !!b[k] : { vonal: true, cskNev: true, hatar: false, nevek: true, tejut: true, egyenlito: false, fsz: false,
+        iranyok: true, palyak: true }[k];
     });
+    // az aktuális (léptetett) időpont adatai; a képlet idejében a képlet saját értékei
+    var pontokGeo = o.pontok, T = o.tengelyek, armc = o.armc, nrAdat = null, palyak = {};
     var pontok = o.pontok;
     var nezoSel = q('[data-egb="nezo"]');
     nezoSel.innerHTML = (o.nezopontok || [[-1, 'Föld (geocentrikus)']]).map(function (x) {
@@ -80,6 +95,10 @@
     }).join('');
     nezoSel.value = String(A.nezo);
     q('[data-egb="keret"]').value = A.keret;
+    q('[data-egb="mod"]').value = A.mod; q('[data-egb="tav"]').value = A.tav;
+    q('[data-egb="lepes"]').value = String(q('[data-egb="lepes"] option[value="' + A.lepes + '"]') ? A.lepes : 1);
+    if (!o.szamol) q('.egb-ido').hidden = true;
+    if (!o.helio) q('[data-egb="mod"] option[value="nr"]').disabled = true;
     Array.prototype.forEach.call(ab.querySelectorAll('[data-egbk]'), function (c) { c.checked = !!A[c.getAttribute('data-egbk')]; });
 
     /* ---------- keretek: a képlet ekliptikai hosszúsága (L, B) → egységvektor a nézet keretében ---------- */
@@ -90,7 +109,7 @@
         var l = Math.atan2(v[1], v[0]) * DEG + (o.ayan || 0), bb = Math.asin(Math.max(-1, Math.min(1, v[2]))) * DEG;
         var w = vekt(l, bb), e = o.eps * RAD;
         var x = w[0], y = w[1] * Math.cos(e) - w[2] * Math.sin(e), z = w[1] * Math.sin(e) + w[2] * Math.cos(e);
-        var ra = Math.atan2(y, x), de = Math.asin(Math.max(-1, Math.min(1, z))), h = o.armc * RAD - ra, fi = o.phi * RAD;
+        var ra = Math.atan2(y, x), de = Math.asin(Math.max(-1, Math.min(1, z))), h = armc * RAD - ra, fi = o.phi * RAD;
         return [-Math.cos(de) * Math.sin(h), Math.cos(fi) * Math.sin(de) - Math.sin(fi) * Math.cos(de) * Math.cos(h),
           Math.sin(fi) * Math.sin(de) + Math.cos(fi) * Math.cos(de) * Math.cos(h)];
       };
@@ -147,6 +166,7 @@
     var keres = false;
     function rajzol() {
       keres = false;
+      if (A.mod === 'nr') { rajzolNR(); return; }
       kamera();
       var g = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.7);
       g.addColorStop(0, '#16213d'); g.addColorStop(1, '#070b16');
@@ -195,11 +215,11 @@
       }
       ekliptika();
       if (A.keret === 'hor') horizont();
-      if (A.fsz && A.nezo === -1 && o.fszek) {
+      if (A.fsz && A.nezo === -1 && o.fszek && A.jd === o.jd0) {
         var pi = {}; pontok.forEach(function (x) { pi[x.id] = x; });
         o.fszek.forEach(function (f) { if (pi[f.a] && pi[f.b]) iv(pi[f.a], pi[f.b], f.szin || 'rgba(255,255,255,0.6)'); });
       }
-      if (A.nezo === -1 && o.tengelyek) tengelyek();
+      if (A.nezo === -1 && T) tengelyek();
       planetak();
     }
     /** horizont-keretben a horizont alatti rész halványabb */
@@ -248,6 +268,12 @@
     }
     function horizont() {
       var px = dpr, t = [], az;
+      // nappal (a Nap a horizont felett vagy a polgári szürkületben) az ég kékebb
+      var nap = pontokGeo.filter(function (x) { return x.id === 0; })[0];
+      if (nap && A.nezo === -1) {
+        var na = Math.asin(lb(nap.L, nap.B)[2]) * DEG;
+        if (na > -6) { ctx.fillStyle = 'rgba(70,120,200,' + (0.42 * Math.min(1, (na + 6) / 12)).toFixed(3) + ')'; ctx.fillRect(0, 0, W, H); }
+      }
       fold();
       // a horizont: a keret „egyenlítője” – közvetlenül vetítve (a lanc() ekliptikai pontokat vár)
       ctx.beginPath(); var elozo = null;
@@ -264,7 +290,7 @@
       void t;
     }
     function tengelyek() {
-      var px = dpr, T = o.tengelyek;
+      var px = dpr;
       ctx.font = 'bold ' + (12 * px) + 'px ' + TXT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       [['AC', T.asc], ['DC', fokNorm(T.asc + 180)], ['MC', T.mc], ['IC', fokNorm(T.mc + 180)]].forEach(function (x) {
         var p = vetit(lb(x[1], 0)); if (!p) return;
@@ -310,6 +336,135 @@
       ctx.globalAlpha = 1;
     }
 
+    /* ---------- idő: léptetés, lejátszás ---------- */
+    var jatek = null;
+    function idoAllit(jd) {
+      A.jd = jd;
+      if (Math.abs(jd - o.jd0) < 1e-9 || !o.szamol) { A.jd = o.jd0; pontokGeo = o.pontok; T = o.tengelyek; armc = o.armc; }
+      else { var r = o.szamol(jd); pontokGeo = r.pontok; T = r.tengelyek; armc = r.armc; }
+      Mhor = null;
+      pontok = A.nezo === -1 ? pontokGeo : (o.nezopontFv ? o.nezopontFv(A.nezo, A.jd) : pontokGeo);
+      nrAdat = A.mod === 'nr' && o.helio ? o.helio(A.jd) : null;
+      q('.egb-datum').textContent = (o.datum ? o.datum(A.jd) : '') + (A.jd === o.jd0 ? ' (a képlet ideje)' : '');
+      q('[data-egb="most"]').disabled = A.jd === o.jd0;
+      kell();
+    }
+    function lep(ir) { idoAllit(A.jd + ir * A.lepes); }
+    function jatekAll() {
+      if (!jatek) return; clearInterval(jatek); jatek = null;
+      var g = q('[data-egb="play"]'); g.textContent = '▶ Lejátszás'; g.setAttribute('aria-pressed', 'false');
+    }
+    function jatekIndit() {
+      jatekAll();
+      jatek = setInterval(function () { if (!document.hidden) lep(1); }, 120);
+      var g = q('[data-egb="play"]'); g.textContent = '⏸ Megállítás'; g.setAttribute('aria-pressed', 'true');
+    }
+
+    /* ---------- Naprendszer-nézet: a bolygók a Nap körül, kívülről, perspektivikusan ---------- */
+    var NC, NF, NR, NU, nfoc;
+    function nrSkala(r) { return A.tav === 'valodi' ? r : Math.sqrt(r) * 2.2; }
+    function nrPont(x) { var r = Math.hypot(x[0], x[1], x[2]); if (!r) return [0, 0, 0]; var k = nrSkala(r) / r; return [x[0] * k, x[1] * k, x[2] * k]; }
+    function RZ() { return nrSkala(A.tav === 'valodi' ? 45 : 48); }
+    function nrKamera() {
+      var cy = Math.cos(A.nyaw * RAD), sy = Math.sin(A.nyaw * RAD), cp = Math.cos(A.npitch * RAD), sp = Math.sin(A.npitch * RAD);
+      NC = [A.nd * cp * cy, A.nd * cp * sy, A.nd * sp];
+      NF = norm([-NC[0], -NC[1], -NC[2]]); NR = norm(kereszt(NF, [0, 0, 1])); NU = kereszt(NR, NF);
+      nfoc = Math.min(W, H) * 0.95;
+    }
+    function nrVetit(P) {
+      var v = [P[0] - NC[0], P[1] - NC[1], P[2] - NC[2]], z = skalar(v, NF);
+      if (z < A.nd * 0.02) return null;
+      return [W / 2 + skalar(v, NR) / z * nfoc, H / 2 - skalar(v, NU) / z * nfoc, z];
+    }
+    function nrIrany(v) {
+      var z = skalar(v, NF); if (z <= 0.05) return null;
+      return [W / 2 + skalar(v, NR) / z * nfoc, H / 2 - skalar(v, NU) / z * nfoc];
+    }
+    function nrLanc(pk, szin, vastag, zart, szaggat) {
+      ctx.beginPath(); var elso = true;
+      pk.concat(zart ? [pk[0]] : []).forEach(function (P) {
+        var p = nrVetit(P); if (!p) { elso = true; return; }
+        if (elso) ctx.moveTo(p[0], p[1]); else ctx.lineTo(p[0], p[1]); elso = false;
+      });
+      ctx.strokeStyle = szin; ctx.lineWidth = vastag; ctx.setLineDash(szaggat || []); ctx.stroke(); ctx.setLineDash([]);
+    }
+    function rajzolNR() {
+      var px = dpr, el = o.eltolas || 0;
+      nrKamera(); talalat = [];
+      if (!nrAdat && o.helio) nrAdat = o.helio(A.jd);
+      ctx.fillStyle = '#060912'; ctx.fillRect(0, 0, W, H);
+      // csillag-háttér (végtelen távol: csak az irány számít)
+      csV.forEach(function (s2) {
+        if (s2[2] > 4.6) return;
+        var p = nrIrany(vekt(s2[0] + el, s2[1])); if (!p) return;
+        ctx.globalAlpha = Math.min(0.85, 0.25 + (4.6 - s2[2]) * 0.14); ctx.fillStyle = s2[3];
+        ctx.beginPath(); ctx.arc(p[0], p[1], Math.max(0.5, (5 - s2[2]) * 0.35) * px, 0, 2 * Math.PI); ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+      var rz = RZ(), L, j, kor = [];
+      // az ekliptika síkja: zodiákus-gyűrű a jegyhatárokkal, fokbeosztással
+      for (L = 0; L < 360; L += 2) kor.push([rz * Math.cos(L * RAD), rz * Math.sin(L * RAD), 0]);
+      nrLanc(kor, 'rgba(255,205,90,0.8)', 1.6 * px, true);
+      for (j = 0; j < 12; j++) {
+        var c = Math.cos(j * 30 * RAD), sn = Math.sin(j * 30 * RAD);
+        nrLanc([[0, 0, 0], [rz * c, rz * sn, 0]], 'rgba(255,205,90,0.12)', 1 * px, false, [4 * px, 6 * px]);
+        nrLanc([[rz * 0.97 * c, rz * 0.97 * sn, 0], [rz * 1.03 * c, rz * 1.03 * sn, 0]], 'rgba(255,205,90,0.9)', 1.4 * px);
+        var g = nrVetit([rz * 1.09 * Math.cos((j * 30 + 15) * RAD), rz * 1.09 * Math.sin((j * 30 + 15) * RAD), 0]);
+        if (g) { ctx.font = (20 * px) + 'px ' + SYM; ctx.fillStyle = 'rgba(255,215,120,0.95)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(JEGY[j] + VS, g[0], g[1]); }
+      }
+      for (L = 0; L < 360; L += 10) {
+        if (L % 30 === 0) continue;
+        nrLanc([[rz * 0.985 * Math.cos(L * RAD), rz * 0.985 * Math.sin(L * RAD), 0], [rz * 1.015 * Math.cos(L * RAD), rz * 1.015 * Math.sin(L * RAD), 0]], 'rgba(255,205,90,0.6)', 1 * px);
+      }
+      if (!nrAdat) return;
+      var X = nrAdat.xyz, E = X[14] ? nrPont(X[14]) : null;
+      // pályák
+      if (A.palyak && o.palya) Object.keys(X).forEach(function (id) {
+        id = +id; if (id === 0) return;
+        var pk = palyak[id] || (palyak[id] = o.palya(id)); if (!pk || !pk.length) return;
+        nrLanc(pk.map(nrPont), (SZIN[id] || '#ffffff') + '66', 1.1 * px, true);
+      });
+      // irányok a Földről: a geocentrikus hosszúság (ahol a planéta a képletben áll) a zodiákus-gyűrűn
+      if (A.iranyok && E) pontokGeo.forEach(function (x) {
+        if (x.id > 9) return;
+        var d = vekt(x.L, x.B), a = d[0] * d[0] + d[1] * d[1], bq = 2 * (E[0] * d[0] + E[1] * d[1]), cq = E[0] * E[0] + E[1] * E[1] - rz * rz;
+        var t = (-bq + Math.sqrt(Math.max(0, bq * bq - 4 * a * cq))) / (2 * a), V = [E[0] + t * d[0], E[1] + t * d[1], 0];
+        nrLanc([E, V], (SZIN[x.id] || '#ffffff') + '70', 1.1 * px);
+        var p = nrVetit(V);
+        if (p) { ctx.font = (15 * px) + 'px ' + SYM; ctx.fillStyle = SZIN[x.id] || '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(x.jel, p[0], p[1] - 11 * px); }
+      });
+      // Nap, bolygók, Föld (+ a Hold nagyítva a Föld körül)
+      var lista = Object.keys(X).map(function (id) { return { id: +id, P: nrPont(X[id]), r: Math.hypot(X[id][0], X[id][1], X[id][2]) }; });
+      if (E && nrAdat.hold) {
+        var hr = Math.hypot(nrAdat.hold[0], nrAdat.hold[1], nrAdat.hold[2]) || 1, k2 = nrSkala(1) * 0.16 / hr;
+        lista.push({ id: 1, P: [E[0] + nrAdat.hold[0] * k2, E[1] + nrAdat.hold[1] * k2, E[2] + nrAdat.hold[2] * k2], r: 1, hold: true });
+      }
+      lista.forEach(function (x) { var p = nrVetit(x.P); x.p = p; x.z = p ? p[2] : 0; });
+      lista.sort(function (a, b2) { return b2.z - a.z; });
+      var foglalt = [], hely = function (x0, y0, w, h) {
+        // ha a felirat két sorral lejjebb sem fér el, elmarad (a buborék megmutatja)
+        for (var n = 0; n < 3; n++, y0 += h) {
+          if (foglalt.every(function (r2) { return x0 + w / 2 < r2[0] || x0 - w / 2 > r2[0] + r2[2] || y0 + h / 2 < r2[1] || y0 - h / 2 > r2[1] + r2[3]; })) {
+            foglalt.push([x0 - w / 2, y0 - h / 2, w, h]); return y0;
+          }
+        }
+        return null;
+      };
+      lista.forEach(function (x) {
+        var p = x.p; if (!p) return;
+        var sz = SZIN[x.id] || '#ffffff', r = (x.id === 0 ? 11 : x.id === 1 ? 3 : x.id === 14 ? 5 : 4.5) * px;
+        var halo = ctx.createRadialGradient(p[0], p[1], 0, p[0], p[1], r * (x.id === 0 ? 3.5 : 2.6));
+        halo.addColorStop(0, sz); halo.addColorStop(0.4, sz + '66'); halo.addColorStop(1, sz + '00');
+        ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(p[0], p[1], r * (x.id === 0 ? 3.5 : 2.6), 0, 2 * Math.PI); ctx.fill();
+        ctx.fillStyle = sz; ctx.beginPath(); ctx.arc(p[0], p[1], r * 0.55, 0, 2 * Math.PI); ctx.fill();
+        if (x.hold) return;
+        ctx.font = (10.5 * px) + 'px ' + TXT; ctx.fillStyle = 'rgba(235,240,250,0.85)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        var nv = x.id === 14 ? 'Föld' : R.nev ? R.nev(x.id) : String(x.id), nw = ctx.measureText(nv).width + 4 * px;
+        var ny = hely(p[0], p[1] + r * 2 + 8 * px, nw, 12 * px); if (ny !== null) ctx.fillText(nv, p[0], ny);
+        talalat.push({ x: p[0], y: p[1], gy: p[1], p: { id: x.id, nr: true, r: x.r } });
+      });
+    }
+
     /* ---------- méret, információs sor ---------- */
     function meretez() {
       var d = q('.egb-vaszon').getBoundingClientRect();
@@ -320,6 +475,13 @@
     }
     function kell() { if (!keres) { keres = true; global.requestAnimationFrame(rajzol); } info(); }
     function info() {
+      q('.egb-sugo').textContent = A.mod === 'nr' ? 'Húzd: forgatás · görgő / két ujj: közelítés · kattintás egy bolygón: adatai · dupla kattintás: alaphelyzet'
+        : 'Húzd: forgatás · görgő / két ujj: nagyítás · kattintás a planétán: középre · dupla kattintás: alaphelyzet';
+      if (A.mod === 'nr') {
+        q('.egb-info').textContent = 'Naprendszer · távolság ' + (A.tav === 'valodi' ? 'valódi arányban' : 'tömörítve (√)') +
+          ' · a Hold nagyítva · a vonalak: a Földről látott irány';
+        return;
+      }
       var d = A.keret === 'hor' ? 'irány: ' + Math.round(fokNorm(90 - A.yaw)) + '° (É = 0°, K = 90°), magasság ' + Math.round(A.pitch) + '°'
         : 'irány: ' + fokPerc(A.yaw) + ', ekliptikai szélesség ' + Math.round(A.pitch) + '°';
       var n = nezoSel.options[nezoSel.selectedIndex];
@@ -333,9 +495,13 @@
     function kozepLista() {
       var s = q('[data-egb="kozep"]');
       s.innerHTML = '<option value="">–</option>' + pontok.map(function (x) { return '<option value="' + x.id + '">' + x.nev + '</option>'; }).join('') +
-        (A.nezo === -1 && o.tengelyek ? '<option value="AC">Ascendens</option><option value="MC">Medium Coeli</option>' : '');
+        (A.nezo === -1 && T ? '<option value="AC">Ascendens</option><option value="MC">Medium Coeli</option>' : '');
     }
     function alap() {
+      if (A.mod === 'nr') {
+        var X = nrAdat && nrAdat.xyz, f = X && X[14] ? Math.atan2(X[14][1], X[14][0]) * DEG : 0;
+        A.nyaw = f; A.npitch = 35; A.nd = RZ() * 2.05; kell(); return;
+      }
       A.fov = 110; kijelolt = null;
       if (A.keret === 'hor') { A.yaw = -90; A.pitch = 25; }   // dél felé, kissé felfelé
       else { A.yaw = 0; A.pitch = 0; }
@@ -348,11 +514,12 @@
     }
     function ment() {
       if (!o.ment) return;
-      o.ment({ keret: A.keret, vonal: A.vonal, cskNev: A.cskNev, hatar: A.hatar, nevek: A.nevek, tejut: A.tejut, egyenlito: A.egyenlito, fsz: A.fsz });
+      o.ment({ keret: A.keret, vonal: A.vonal, cskNev: A.cskNev, hatar: A.hatar, nevek: A.nevek, tejut: A.tejut, egyenlito: A.egyenlito, fsz: A.fsz,
+        mod: A.mod, tav: A.tav, iranyok: A.iranyok, palyak: A.palyak, lepes: A.lepes });
     }
     function nezopontAllit(id) {
       A.nezo = id;
-      pontok = id === -1 ? o.pontok : (o.nezopontFv ? o.nezopontFv(id) : o.pontok);
+      pontok = id === -1 ? pontokGeo : (o.nezopontFv ? o.nezopontFv(id, A.jd) : pontokGeo);
       var hor = q('[data-egb="keret"] option[value="hor"]');
       hor.disabled = id !== -1 || !o.tengelyek;
       if (hor.disabled && A.keret === 'hor') { A.keret = 'ekl'; q('[data-egb="keret"]').value = 'ekl'; }
@@ -365,19 +532,22 @@
     cv.addEventListener('pointerdown', function (e) {
       cv.setPointerCapture(e.pointerId); mutatok[e.pointerId] = [e.clientX, e.clientY]; mozdult = false;
       var k = Object.keys(mutatok);
-      if (k.length === 1) huz = { x: e.clientX, y: e.clientY, yaw: A.yaw, pitch: A.pitch };
-      else if (k.length === 2) { var a = mutatok[k[0]], b2 = mutatok[k[1]]; csip = { d: Math.hypot(a[0] - b2[0], a[1] - b2[1]), fov: A.fov }; huz = null; }
+      if (k.length === 1) huz = { x: e.clientX, y: e.clientY, yaw: A.yaw, pitch: A.pitch, nyaw: A.nyaw, npitch: A.npitch };
+      else if (k.length === 2) { var a = mutatok[k[0]], b2 = mutatok[k[1]]; csip = { d: Math.hypot(a[0] - b2[0], a[1] - b2[1]), fov: A.fov, nd: A.nd }; huz = null; }
     });
     cv.addEventListener('pointermove', function (e) {
       if (mutatok[e.pointerId]) mutatok[e.pointerId] = [e.clientX, e.clientY];
       var k = Object.keys(mutatok);
       if (csip && k.length === 2) {
         var a = mutatok[k[0]], b2 = mutatok[k[1]], d = Math.hypot(a[0] - b2[0], a[1] - b2[1]);
-        A.fov = Math.max(15, Math.min(175, csip.fov * csip.d / Math.max(1, d))); mozdult = true; kell(); return;
+        if (A.mod === 'nr') A.nd = Math.max(2, Math.min(400, csip.nd * csip.d / Math.max(1, d)));
+        else A.fov = Math.max(15, Math.min(175, csip.fov * csip.d / Math.max(1, d)));
+        mozdult = true; kell(); return;
       }
       if (huz) {
         var dx = e.clientX - huz.x, dy = e.clientY - huz.y;
         if (Math.abs(dx) + Math.abs(dy) > 3) mozdult = true;
+        if (A.mod === 'nr') { A.nyaw = huz.nyaw - dx * 0.4; A.npitch = Math.max(-89, Math.min(89, huz.npitch + dy * 0.4)); tip.hidden = true; kell(); return; }
         var fokPx = A.fov / (Math.min(W, H) / dpr);
         A.yaw = huz.yaw + dx * fokPx; A.pitch = Math.max(-89, Math.min(89, huz.pitch + dy * fokPx));
         tip.hidden = true; kell(); return;
@@ -388,7 +558,11 @@
       delete mutatok[e.pointerId];
       if (Object.keys(mutatok).length < 2) csip = null;
       if (!Object.keys(mutatok).length) {
-        if (huz && !mozdult) { var t = legkozelebbi(e); if (t) { kozepre(t.p.id); q('[data-egb="kozep"]').value = String(t.p.id); } }
+        if (huz && !mozdult) {
+          var t = legkozelebbi(e);
+          if (t && A.mod === 'nr') buborek(e);
+          else if (t) { kozepre(t.p.id); q('[data-egb="kozep"]').value = String(t.p.id); }
+        }
         huz = null;
       }
     }
@@ -397,7 +571,9 @@
     cv.addEventListener('pointerleave', function () { tip.hidden = true; });
     cv.addEventListener('wheel', function (e) {
       e.preventDefault();
-      A.fov = Math.max(15, Math.min(175, A.fov * Math.pow(1.0015, e.deltaY))); kell();
+      if (A.mod === 'nr') A.nd = Math.max(2, Math.min(400, A.nd * Math.pow(1.0015, e.deltaY)));
+      else A.fov = Math.max(15, Math.min(175, A.fov * Math.pow(1.0015, e.deltaY)));
+      kell();
     }, { passive: false });
     cv.addEventListener('dblclick', alap);
     function legkozelebbi(e) {
@@ -408,9 +584,23 @@
       });
       return jo;
     }
+    function nrBuborek(e, p) {
+      var X = nrAdat.xyz, x = X[p.id], hl = fokNorm(Math.atan2(x[1], x[0]) * DEG), s;
+      s = (p.id === 14 ? 'Föld' : R.nev(p.id)) + (p.id ? '\nA Naptól ' + p.r.toFixed(2).replace('.', ',') + ' CsE, heliocentrikus hosszúság ' + fokPerc(hl) : '');
+      var g = null; pontokGeo.forEach(function (y) { if (y.id === p.id) g = y; });
+      if (g && X[14]) {
+        var d = Math.hypot(x[0] - X[14][0], x[1] - X[14][1], x[2] - X[14][2]);
+        s += '\nA Földtől ' + d.toFixed(2).replace('.', ',') + ' CsE, a Földről nézve ' + fokPerc(g.L) + (g.retro ? ' (retrográd)' : '');
+      }
+      tip.textContent = s; tip.hidden = false;
+      var dd = q('.egb-vaszon').getBoundingClientRect();
+      tip.style.left = Math.min(dd.width - tip.offsetWidth - 6, e.clientX - dd.left + 14) + 'px';
+      tip.style.top = Math.max(6, e.clientY - dd.top - tip.offsetHeight - 10) + 'px';
+    }
     function buborek(e) {
       var t = legkozelebbi(e);
       if (!t) { tip.hidden = true; return; }
+      if (t.p.nr) { nrBuborek(e, t.p); return; }
       var p = t.p, s = p.nev + ': ' + fokPerc(p.L) + (Math.abs(p.B) >= 0.05 ? ', szélesség ' + p.B.toFixed(1).replace('.', ',') + '°' : '') +
         (p.haz ? ', ' + p.haz + '. ház' : '') + (p.retro ? ', retrográd' : '');
       if (A.keret === 'hor') {
@@ -422,19 +612,31 @@
       tip.style.left = Math.min(d.width - tip.offsetWidth - 6, e.clientX - d.left + 14) + 'px';
       tip.style.top = Math.max(6, e.clientY - d.top - tip.offsetHeight - 10) + 'px';
     }
+    function modAllit(m) {
+      A.mod = m; ab.classList.toggle('nr', m === 'nr');
+      if (m === 'nr' && !nrAdat && o.helio) nrAdat = o.helio(A.jd);
+      alap();
+    }
+    q('[data-egb="mod"]').addEventListener('change', function () { modAllit(this.value); ment(); });
+    q('[data-egb="tav"]').addEventListener('change', function () { A.tav = this.value; ment(); alap(); });
+    q('[data-egb="elore"]').addEventListener('click', function () { jatekAll(); lep(1); });
+    q('[data-egb="hatra"]').addEventListener('click', function () { jatekAll(); lep(-1); });
+    q('[data-egb="lepes"]').addEventListener('change', function () { A.lepes = +this.value; ment(); });
+    q('[data-egb="play"]').addEventListener('click', function () { if (jatek) jatekAll(); else jatekIndit(); });
+    q('[data-egb="most"]').addEventListener('click', function () { jatekAll(); idoAllit(o.jd0); });
     nezoSel.addEventListener('change', function () { nezopontAllit(+this.value); alap(); });
     q('[data-egb="keret"]').addEventListener('change', function () { A.keret = this.value; ment(); alap(); });
     q('[data-egb="kozep"]').addEventListener('change', function () {
       var v = this.value; if (!v) return;
       if (v === 'AC' || v === 'MC') {
-        var d = irany(lb(v === 'AC' ? o.tengelyek.asc : o.tengelyek.mc, 0)); A.yaw = d[0]; A.pitch = Math.max(-85, Math.min(85, d[1])); kijelolt = null; kell();
+        var d = irany(lb(v === 'AC' ? T.asc : T.mc, 0)); A.yaw = d[0]; A.pitch = Math.max(-85, Math.min(85, d[1])); kijelolt = null; kell();
       } else kozepre(+v);
     });
     Array.prototype.forEach.call(ab.querySelectorAll('[data-egbk]'), function (c) {
       c.addEventListener('change', function () { A[c.getAttribute('data-egbk')] = c.checked; ment(); kell(); });
     });
     q('[data-egb="alap"]').addEventListener('click', alap);
-    function zar() { if (ro) ro.disconnect(); global.removeEventListener('resize', meretez); document.removeEventListener('keydown', bill, true); ab.remove(); if (o.bezarva) o.bezarva(); }
+    function zar() { jatekAll(); if (ro) ro.disconnect(); global.removeEventListener('resize', meretez); document.removeEventListener('keydown', bill, true); ab.remove(); if (o.bezarva) o.bezarva(); }
     function bill(e) { if (e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); zar(); } }
     q('[data-egb="zar"]').addEventListener('click', zar);
     document.addEventListener('keydown', bill, true);
@@ -443,9 +645,11 @@
     var ro = global.ResizeObserver ? new global.ResizeObserver(meretez) : null;
     if (ro) ro.observe(q('.egb-vaszon'));
     nezopontAllit(A.nezo);
+    ab.classList.toggle('nr', A.mod === 'nr');
+    idoAllit(o.jd0);
     meretez(); alap();
     q('[data-egb="zar"]').focus();
-    return { ablak: ab, zar: zar, allapot: A, kozepre: kozepre, rajzol: rajzol };
+    return { ablak: ab, zar: zar, allapot: A, kozepre: kozepre, rajzol: rajzol, ido: idoAllit, mod: modAllit };
   }
 
   R.Egbolt = { nyit: nyit };
