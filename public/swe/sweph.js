@@ -272,6 +272,11 @@
 
   /** Ajánamsa (a beállított sziderikus mód szerint; alapértelmezés: Fagan/Bradley, mint a Windows-os programban). */
   SwissEph.prototype.ayanamsaUt = function (jdUt) { return this.x.swe_get_ayanamsa_ut(jdUt); };
+  /** Ajánamsa egy megadott sziderikus módban (pl. 1 = Lahiri), utána visszaáll a Fagan/Bradley-re (0). */
+  SwissEph.prototype.ayanamsaUtMod = function (jdUt, mod) {
+    this.x.swe_set_sid_mode(mod, 0, 0);
+    try { return this.x.swe_get_ayanamsa_ut(jdUt); } finally { this.x.swe_set_sid_mode(0, 0, 0); }
+  };
 
   /** Időegyenlet (látszólagos − közép helyi idő), napokban. */
   SwissEph.prototype.timeEqu = function (jdUt) {

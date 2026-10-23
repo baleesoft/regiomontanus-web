@@ -252,6 +252,7 @@
     var nut = se.calc(jd + se.deltat(jd), -1, 0);
     x.nutacio = nut.dist;                             // nutáció hosszúságban, fok
     if (se.ayanamsaUt) x.ayanamsa = se.ayanamsaUt(jd);
+    if (se.ayanamsaUtMod) x.ayanamsaLahiri = se.ayanamsaUtMod(jd, 1);   // a naksatrákhoz
     if (poz[0] && poz[1]) {
       x.napHold = fok(poz[1].lon - poz[0].lon);       // a Hold hosszúsága a Napétól
       var ph = se.phenoUt ? se.phenoUt(jd, 1, SE.FLG_SWIEPH) : null;
