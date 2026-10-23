@@ -142,10 +142,11 @@
       R.KISBOLYGOK.forEach(function (k) { if (testek.indexOf(k[0]) < 0) testek.push(k[0]); });
     }
     testek = testek.filter(function (id) { return e.elemPl[id]; });
-    // pontok: ASC, MC, a Megjelenítésben bekapcsolt további tengelyek, a házcsúcsok (az 1. és a 10. az ASC/MC)
-    var pontok = [['A', 0], ['A', 1]];
+    // pontok: ASC, MC (mindig, mint a Windows-os táblában), a Megjelenítésben bekapcsolt további tengelyek, és csak a
+    // Megjelenítés › Fényszögek › „Fényszögelt elemek” alatt bekapcsolt házcsúcsok (az 1. és a 10. az ASC/MC)
+    var pontok = [['A', 0], ['A', 1]], fszHaz = kr.fszHaz || [];
     (kr.tengelyek || []).forEach(function (t) { if (TPONT_KULCS[t] !== undefined) pontok.push(['A', TPONT_KULCS[t]]); });
-    [2, 3, 4, 5, 6, 7, 8, 9, 11, 12].forEach(function (h) { pontok.push(['H', h]); });
+    [2, 3, 4, 5, 6, 7, 8, 9, 11, 12].forEach(function (h) { if (fszHaz.indexOf(h) >= 0) pontok.push(['H', h]); });
     return { testek: testek, pontok: pontok };
   };
   function pontAdat(e, pt, b) {
