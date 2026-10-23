@@ -129,7 +129,14 @@
   function szamol(k) {
     if (!se) return;
     var sz = ++k.sorszam;
-    K.szamol(se, k.adat, szamolOpt(true)).then(function (e) {
+    // rögzített képlet (pl. a direktált képlet önállóan): a radix időpontjának adatai, de a tárolt pozíciókkal és házakkal elemezve
+    var p = K.szamol(se, k.adat, szamolOpt(true));
+    if (k.rogzitett) p = p.then(function (e) {
+      var r = JSON.parse(JSON.stringify(k.rogzitett));
+      e.poz = r.poz; e.hz = r.hz; e.elemzes = null; e.rogzitett = true;
+      return K.elemez(e);
+    });
+    p.then(function (e) {
       if (sz !== k.sorszam) return;
       k.e = e; k.hiba = null; k.mini = miniSvg(k); k.olv = null;
       if (k.fajta) kulsoSzamol(k);
@@ -325,6 +332,7 @@
   function cim(k) { return k.fajta ? '<-> ' + K.cim(k.adat) + ' - ' + kulsoNev(k) : K.cim(k.adat); }
   /** A státuszsor és a csempe típusfelirata (GetActivePageStringTypeToStatBar) */
   function tipusNev(k) {
+    if (k.rogzitett) return k.rogzitett.tipus;
     if (!k.fajta) return K.tipusNev(k.adat);
     if (k.fajta === 'ph') {
       var nap = k.kulso.ph ? k.kulso.ph.napok + k.kulso.ph.orak / 24 : 0, d = new Date(Date.UTC(k.adat.ev, k.adat.ho - 1, k.adat.nap));
@@ -735,7 +743,8 @@
     $('lepPlay').textContent = megy ? '⏸ Megállítás' : '▶ Lejátszás';
     $('lepPlay').setAttribute('aria-pressed', String(megy));
     $('lepPlayIv').value = String(beall.jatekIv || 2000);
-    $('lepElt').textContent = k && !k.fajta && k.adat.tipus === 'persp' ? 'Planétaperspektíva nem léptethető – léptesd a radixot, majd nyisd újra.'
+    $('lepElt').textContent = k && k.rogzitett ? 'A direktált képlet nem léptethető – léptesd az összevetést, majd nyisd meg újra önállóan.'
+      : k && !k.fajta && k.adat.tipus === 'persp' ? 'Planétaperspektíva nem léptethető – léptesd a radixot, majd nyisd újra.'
       : k && k.fajta === 'szin' ? 'Szinasztriánál nem léptethető – használja a képletléptetőt az egyes képleteken.'
       : k && lepettE(k) ? (progr ? '(léptetve)' : '(' + eltolasStr(k.eltolas) + ')') : '';
     Array.prototype.forEach.call(l.querySelectorAll('button[data-lep]'), function (b) {
@@ -749,7 +758,7 @@
   }
   /** A léptetőben használható mezők (a Windows-os fProgrLepteto szabályai) */
   function lepEngedett(k) {
-    if (k && !k.fajta && k.adat.tipus === 'persp') return [];
+    if (k && !k.fajta && (k.adat.tipus === 'persp' || k.rogzitett)) return [];
     if (!k || !k.fajta) return [0, 1, 2, 3, 4];
     if (k.fajta === 'ph') return [0, 1];
     if (k.fajta === 'pd' || k.fajta === 'sol') return [0];
@@ -892,8 +901,11 @@
   var KELL_AKT = { adatok: 1, ment: 1, mentMaskent: 1, bezar: 1, kep: 1, nyomtat: 1, planetak: 1, hazak: 1, fenyszogek: 1,
     eletstrat: 1, enallapotok: 1, egyeb: 1, alloTabla: 1, kos0: 1, jegyzet: 1, mgjBe: 1, mgjKi: 1, kepValaszt: 1, kepTorol: 1, jj: 1, sze: 1, csatDok: 1, csatUrl: 1, csatTorol: 1, nagyit: 1, tranzit: 1, ph: 1, pd: 1, pdValodi: 1, sol: 1, rev: 1, kulsoKulon: 1, szemely: 1, enallPersp: 1, persp0: 1, persp1: 1, persp2: 1, persp3: 1, persp4: 1, persp5: 1, persp6: 1,
     persp7: 1, persp8: 1, persp9: 1, persp10: 1 };
+  var ROGZ_TILT = /^(ment|mentMaskent|adatok|pd|pdValodi|ph|tranzit|sol|rev|szin|kos0|enallPersp|persp\d+|jj|sze|szemely)$/;
   function engedelyezett(t) {
-    if (t === 'kulsoKulon' && !(akt() && akt().fajta && akt().fajta !== 'pd' && akt().fajta !== 'pdv')) return false;
+    if (t === 'kulsoKulon' && !(akt() && akt().fajta)) return false;
+    // rögzített (direktált) képletnek nincs saját születési időpontja: nem menthető, nem szerkeszthető, nem progresszálható
+    if (akt() && akt().rogzitett && ROGZ_TILT.test(t)) return false;
     return engedelyezettAlap(t);
   }
   function engedelyezettAlap(t) { return !!TETT[t] && (!KELL_AKT[t] || vanAkt()) && (betoltve || ['nevjegy', 'segitseg', 'facebook', 'iskola', 'megjelenites', 'egyebek', 'gyari', 'alloBeall', 'allo', 'inkognito', 'orbisok', 'szinek'].indexOf(t) >= 0 || t.indexOf('hsys') === 0 || t.indexOf('zod') === 0); }
@@ -940,7 +952,7 @@
         var m = akt() && akt().fajta ? akt().mod : (beall.osszevetesMod || 'egymason');
         return [{ c: '... egymáson', t: 'egymason', radio: true, pipa: function () { return m === 'egymason'; } },
           { c: '... egymás mellett', t: 'egymasmellett', radio: true, pipa: function () { return m === 'egymasmellett'; } }];
-      } }, '-', { c: 'A külső kör önálló képletként', t: 'kulsoKulon' }] },
+      } }, '-', { c: kulsoKulonCim, t: 'kulsoKulon' }] },
     { c: 'Beállítások', l: [
       { c: 'Megjelenítés', t: 'megjelenites' }, { c: 'Állócsillagok', t: 'alloBeall' }, { c: 'Egyebek', t: 'egyebek' }, { c: 'Fényszög orbisok', t: 'orbisok' }, { c: 'Színek és szimbólumok', t: 'szinek' },
       { c: 'Házrendszer', al: function () {
@@ -1039,7 +1051,7 @@
       b.type = 'button'; b.setAttribute('role', x.radio ? 'menuitemradio' : x.pipa ? 'menuitemcheckbox' : 'menuitem');
       var pipa = x.pipa ? x.pipa() : false;
       if (x.pipa) b.setAttribute('aria-checked', String(pipa));
-      b.innerHTML = '<span class="pipa" aria-hidden="true">' + (pipa ? (x.radio ? '•' : '✓') : '') + '</span><span>' + R.esc(x.c) + '</span>' +
+      b.innerHTML = '<span class="pipa" aria-hidden="true">' + (pipa ? (x.radio ? '•' : '✓') : '') + '</span><span>' + R.esc(typeof x.c === 'function' ? x.c() : x.c) + '</span>' +
         (x.b ? '<span class="bill">' + x.b + '</span>' : '') + (x.al ? '<span class="nyil" aria-hidden="true">▸</span>' : '') +
         (x.f ? '<span class="fazis">' + FAZIS[x.f] + '</span>' : '');
       if (x.f || (x.t !== undefined && !x.fn && !x.al && (!x.t || !engedelyezett(x.t)))) b.disabled = true;
@@ -1315,10 +1327,34 @@
   /** A külső kör megnyitása önálló képletként (a Windows-os program ezt is megnyitja) */
   function kulsoKulon() {
     var k = akt(); if (!k || !k.fajta) return;
-    if (k.fajta === 'pd' || k.fajta === 'pdv') { uzen('A direktált képlet önállóan nem nyitható meg.'); return; }
+    if (k.fajta === 'pd' || k.fajta === 'pdv') {
+      // a direktált képletnek nincs saját időpontja: rögzített képletként nyílik (a radix adataival, a direktált pozíciókkal)
+      var ks = k.kulso; if (!ks.e) { uzen('A direktált képlet még nem készült el.'); return; }
+      var mikor = k.fajta === 'pd' ? (k.adat.ev + (ks.konverz ? -ks.pd : ks.pd)) + '. év'
+        : R.datumStr(ks.pdv.datum[0], ks.pdv.datum[1], ks.pdv.datum[2]);
+      var a = belsoAdat(k); a.nev = kulsoNev(k) + ' (' + mikor + ')'; a.tipus = 'radix';
+      var u = ujKepletObj(a, null);
+      u.valtozott = false;
+      u.rogzitett = { tipus: k.fajta === 'pd' ? 'Primer (1° = 1 év) direkció – ' + mikor : 'Primer direkció – ' + mikor,
+        poz: JSON.parse(JSON.stringify(ks.e.poz)), hz: JSON.parse(JSON.stringify(ks.e.hz)) };
+      kepletek.push(u); aktiv = kepletek.length - 1; szamol(u); render();
+      return;
+    }
     if (!k.kulso.adat) return;
-    var a = K.masol(k.kulso.adat); a.nev = kulsoNev(k); a.tipus = 'radix';
-    hozzaad(a, null);
+    var a2 = K.masol(k.kulso.adat); a2.nev = kulsoNev(k); a2.tipus = 'radix';
+    hozzaad(a2, null);
+  }
+  /** az Összevetés menüpont felirata az aktív összevetés fajtája szerint */
+  function kulsoKulonCim() {
+    var k = akt(), f = k && k.fajta;
+    return f === 'ph' ? 'A progressziós képlet önálló képletként'
+      : f === 'tranzit' ? 'A tranzit-képlet önálló képletként'
+      : f === 'pd' ? 'A primer (1° = 1 év) direkciós képlet önálló képletként'
+      : f === 'pdv' ? 'A direkciós képlet önálló képletként'
+      : f === 'sol' ? 'A szolár-képlet önálló képletként'
+      : f === 'rev' ? 'A revolúciós képlet önálló képletként'
+      : f === 'szin' ? 'A külső kör (' + (kulsoNev(k) || 'szinasztria') + ') önálló képletként'
+      : 'A külső kör önálló képletként';
   }
   function megjelenitesMod(m) {
     beall.osszevetesMod = m; beallMent();
@@ -2094,6 +2130,7 @@
     S.munkamenetMent({
       kepletek: kepletek.map(function (k) {
         var m = { adat: k.eredeti, eltolas: k.eltolas, fajlnev: k.fajlnev, valtozott: k.valtozott, szemely: !!k.szemely };
+        if (k.rogzitett) m.rogzitett = k.rogzitett;
         if (k.fajta) {
           var ks = k.kulso;
           m.ossz = { fajta: k.fajta, mod: k.mod, eredeti: ks.eredeti, eltolas: ks.eltolas, ph: ks.ph, pd: ks.pd, pdv: ks.pdv, sol: ks.sol, rev: ks.rev,
@@ -2111,6 +2148,7 @@
       if (!x || !x.adat || typeof x.adat.ev !== 'number') return;
       var k = ujKepletObj(x.adat, x.fajlnev ? { nev: x.fajlnev } : null);
       k.valtozott = !!x.valtozott; k.szemely = !!x.szemely;
+      if (x.rogzitett && x.rogzitett.poz && x.rogzitett.hz) k.rogzitett = x.rogzitett;
       if (Array.isArray(x.eltolas) && x.eltolas.length === 5) { k.eltolas = x.eltolas.map(function (v) { return +v || 0; }); k.adat = K.leptet(k.eredeti, k.eltolas); }
       var o = x.ossz;
       if (o && R.Idotech.NEV[o.fajta]) {
