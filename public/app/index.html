@@ -37,6 +37,11 @@
     <span class="ido" id="lepIdo">–</span>
     <span id="lepMezok" style="display:contents"></span>
     <label>Mérték <input type="number" id="lepMertek" min="1" max="999" value="1" aria-label="Lépés mértéke"></label>
+    <span class="jatek" id="lepJatek" hidden><button type="button" class="gomb" id="lepPlay" aria-pressed="false"
+      title="Az aktuális égi állás folyamatos, valós idejű frissítése">▶ Lejátszás</button>
+      <select id="lepPlayIv" aria-label="Frissítés gyakorisága" title="Frissítés gyakorisága">
+        <option value="1000">1 mp</option><option value="2000">2 mp</option><option value="5000">5 mp</option>
+        <option value="10000">10 mp</option><option value="60000">1 perc</option></select></span>
     <button type="button" class="gomb" id="lepEredeti">Eredeti időpont</button>
     <span class="elt" id="lepElt"></span>
     <button type="button" class="zar" id="lepZar" aria-label="Léptető bezárása" title="Bezárás (Ctrl+L)">✕</button>

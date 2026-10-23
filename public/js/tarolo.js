@@ -46,7 +46,7 @@
     // több képlet egymás mellett: 'fuggoleges' (átlósan eltolva, 60%) | 'vizszintes' (egymás mellett, 50%)
     osszElhely: 'fuggoleges',
     alapHely: { telepules: 'Budapest', telepulesKijelzes: '', orszag: 'Hungary', orszagKod: 'H', lat: 47.5, lon: 19.0666667, tz: 'Europe/Budapest' },
-    elrendezes: 4, aktualisFrissit: true, lepes: 1, reszletArany: 0.58,
+    elrendezes: 4, aktualisFrissit: true, lepes: 1, reszletArany: 0.58, jatekIv: 2000,
     osszevetesMod: 'egymason', pdKonverz: false, phCsakHold: true, phTengely: false,
     // Színek és szimbólumok (fBeallitasok_Szinek) – az alapértelmezések visszaállítása szerint:
     // elemszínek, fényszög-háttér, fényszögszínek és -stílusok (0 sima, 1 szaggatott, 2 pettyezett), alapvonal, Uránusz-/Plútó-jel

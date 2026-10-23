@@ -108,6 +108,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .lepteto label { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--ink2); }
 .lepteto input { width: 56px; height: 26px; padding: 0 6px; border: 1px solid var(--line); }
 .lepteto .megj { margin-left: auto; font-size: 12px; color: var(--muted); }
+.lepteto .jatek { display: flex; align-items: center; gap: 4px; }
+.lepteto .jatek[hidden] { display: none; }
+.lepteto .jatek select { height: 26px; border: 1px solid var(--line); background: #fff; }
+.lepteto #lepPlay[aria-pressed="true"] { background: #e8f1e4; border-color: #8fbf7f; }
 .lepteto .elt { font-size: 12px; color: var(--warn); }
 
 /* munkaasztal: mozaik */

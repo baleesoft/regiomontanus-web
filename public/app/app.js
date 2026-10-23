@@ -718,8 +718,8 @@
     if (!lepNyitva) return;
     if (!$('lepMezok').firstChild) {
       $('lepMezok').innerHTML = MEZOK.map(function (n, i) {
-        return '<span class="mezo"><button type="button" data-lep="' + i + '" data-ir="-1" aria-label="' + n + ' mínusz">−</button><span>' + n +
-          '</span><button type="button" data-lep="' + i + '" data-ir="1" aria-label="' + n + ' plusz">+</button></span>';
+        return '<span class="mezo"><button type="button" data-lep="' + i + '" data-ir="1" aria-label="' + n + ' plusz">+</button><span>' + n +
+          '</span><button type="button" data-lep="' + i + '" data-ir="-1" aria-label="' + n + ' mínusz">−</button></span>';
       }).join('');
     }
     var progr = !!(k && k.fajta), eng = lepEngedett(k);
@@ -728,7 +728,13 @@
     var la = k ? (progr ? k.kulso.adat : k.adat) : null;
     $('lepIdo').textContent = progr && k.fajta === 'pd' ? (k.adat.ev + (k.kulso.konverz ? -k.kulso.pd : k.kulso.pd)) + '. év'
       : progr && k.fajta === 'pdv' ? R.datumStr(k.kulso.pdv.datum[0], k.kulso.pdv.datum[1], k.kulso.pdv.datum[2])
-      : la ? R.datumStr(la.ev, la.ho, la.nap, la.ora, la.perc) : '–';
+      : la ? R.datumStr(la.ev, la.ho, la.nap, la.ora, la.perc) + (jatek && jatek.k === k ? ':' + ('0' + (la.mp || 0)).slice(-2) : '') : '–';
+    // lejátszás: az aktuális égi állás valós időben, a választott gyakorisággal frissül
+    var jt = !!k && !k.fajta && k.adat.tipus === 'aktualis', megy = !!jatek && jatek.k === k;
+    $('lepJatek').hidden = !jt;
+    $('lepPlay').textContent = megy ? '⏸ Megállítás' : '▶ Lejátszás';
+    $('lepPlay').setAttribute('aria-pressed', String(megy));
+    $('lepPlayIv').value = String(beall.jatekIv || 2000);
     $('lepElt').textContent = k && !k.fajta && k.adat.tipus === 'persp' ? 'Planétaperspektíva nem léptethető – léptesd a radixot, majd nyisd újra.'
       : k && k.fajta === 'szin' ? 'Szinasztriánál nem léptethető – használja a képletléptetőt az egyes képleteken.'
       : k && lepettE(k) ? (progr ? '(léptetve)' : '(' + eltolasStr(k.eltolas) + ')') : '';
@@ -751,8 +757,25 @@
     if (k.fajta === 'szin') return [];
     return [0, 1, 2, 3, 4];
   }
+  /* lejátszás (aktuális égi állás): { k, idozito } */
+  var jatek = null;
+  function jatekAll() { if (!jatek) return; clearInterval(jatek.idozito); jatek = null; renderLepteto(); }
+  function jatekIndit(k) {
+    jatekAll();
+    k.eltolas = [0, 0, 0, 0, 0];
+    jatek = { k: k, idozito: setInterval(jatekLep, Math.max(1000, +beall.jatekIv || 2000)) };
+    jatekLep();
+  }
+  function jatekLep() {
+    if (!jatek) return;
+    if (kepletek.indexOf(jatek.k) < 0) { jatekAll(); return; }
+    if (document.hidden) return;              // háttérben lévő lapon nem számol
+    aktualisMost(jatek.k);
+    renderLepteto();
+  }
   function lep(i, ir) {
     var k = akt(); if (!k) return;
+    if (jatek && jatek.k === k) jatekAll();
     var m = Math.max(1, Math.min(999, Math.floor(+$('lepMertek').value) || 1));
     if (k.fajta) { progrLep(k, i, ir * m); return; }
     k.eltolas[i] += ir * m;
@@ -789,7 +812,8 @@
     renderLepteto(); renderStatusz();
   }
   function lepEredeti() {
-    var k = akt(); if (!k || !lepettE(k)) return;
+    var k = akt(); if (k && jatek && jatek.k === k) jatekAll();
+    if (!k || !lepettE(k)) return;
     if (k.fajta) {
       var ks = k.kulso, a = JSON.parse(JSON.stringify(ks.alap || {}));
       ks.eltolas = [0, 0, 0, 0, 0]; ks.adat = ks.eredeti ? K.masol(ks.eredeti) : null;
@@ -1132,13 +1156,17 @@
   function aktualisFrissit() {
     if (!beall.aktualisFrissit) return;
     kepletek.forEach(function (k) {
-      if (k.adat.tipus !== 'aktualis' || lepettE(k)) return;
-      var u = aktualisAdat(); u.telepules = k.adat.telepules; u.telepulesKijelzes = k.adat.telepulesKijelzes || ''; u.orszag = k.adat.orszag; u.orszagKod = k.adat.orszagKod;
-      u.lat = k.adat.lat; u.lon = k.adat.lon; u.tz = k.adat.tz; u.zonaMod = k.adat.zonaMod; u.eltolas = k.adat.eltolas;
-      if (u.zonaMod !== 'iana') { var d = new Date(Date.now() + K.zona(u).orak * 3600000);
-        u.ev = d.getUTCFullYear(); u.ho = d.getUTCMonth() + 1; u.nap = d.getUTCDate(); u.ora = d.getUTCHours(); u.perc = d.getUTCMinutes(); u.mp = d.getUTCSeconds(); }
-      k.eredeti = u; k.adat = K.masol(u); szamol(k);
+      if (k.adat.tipus !== 'aktualis' || lepettE(k) || (jatek && jatek.k === k)) return;
+      aktualisMost(k);
     });
+  }
+  /** az aktuális égi állás képletét a mostani időpontra állítja (a helye és zónája marad) és újraszámolja */
+  function aktualisMost(k) {
+    var u = aktualisAdat(); u.telepules = k.adat.telepules; u.telepulesKijelzes = k.adat.telepulesKijelzes || ''; u.orszag = k.adat.orszag; u.orszagKod = k.adat.orszagKod;
+    u.lat = k.adat.lat; u.lon = k.adat.lon; u.tz = k.adat.tz; u.zonaMod = k.adat.zonaMod; u.eltolas = k.adat.eltolas;
+    if (u.zonaMod !== 'iana') { var d = new Date(Date.now() + K.zona(u).orak * 3600000);
+      u.ev = d.getUTCFullYear(); u.ho = d.getUTCMonth() + 1; u.nap = d.getUTCDate(); u.ora = d.getUTCHours(); u.perc = d.getUTCMinutes(); u.mp = d.getUTCSeconds(); }
+    k.eredeti = u; k.adat = K.masol(u); szamol(k);
   }
   /* ---------- Progressziók ---------- */
   /** Az aktív képlet, ha egyszerű (nem összevetés) – a progressziók ehhez készülnek */
@@ -2183,7 +2211,15 @@
     var b = e.target.closest('button[data-lep]'); if (b) { lep(+b.getAttribute('data-lep'), +b.getAttribute('data-ir')); return; }
   });
   $('lepEredeti').addEventListener('click', lepEredeti);
-  $('lepZar').addEventListener('click', function () { lepNyitva = false; render(); });
+  $('lepZar').addEventListener('click', function () { jatekAll(); lepNyitva = false; render(); });
+  $('lepPlay').addEventListener('click', function () {
+    var k = akt(); if (!k) return;
+    if (jatek && jatek.k === k) jatekAll(); else jatekIndit(k);
+  });
+  $('lepPlayIv').addEventListener('change', function () {
+    beall.jatekIv = +this.value; beallMent();
+    if (jatek) jatekIndit(jatek.k);
+  });
   $('fajlInput').addEventListener('change', function () { fajlokMegnyit(this.files); this.value = ''; });
   $('mgjInput').addEventListener('change', function () {
     var f = this.files && this.files[0], k = akt(); this.value = '';
