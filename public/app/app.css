@@ -610,3 +610,28 @@ svg.fokusz line.fszvonal:not(.fk-be), svg.fokusz text.fszjel:not(.fk-be) { opaci
 svg.fokusz line.fszvonal.fk-be { stroke-width: 2.4; }
 svg.fokusz line.hazcsucs.fk-be { stroke: #c0161d; stroke-width: 2.4; }
 @media (prefers-reduced-motion: reduce) { .kerek svg g { transition: none; } }
+
+/* Égbolt-nézet (js/egbolt.js) */
+.egb-ablak { position: fixed; inset: 12px; z-index: 80; display: flex; flex-direction: column; background: #0b1020; color: #dfe6f5;
+  border: 1px solid #2a3558; box-shadow: 0 12px 40px rgba(0, 0, 0, .45); }
+.egb-fej { display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 12px; background: var(--accent); color: #fff; }
+.egb-fej .egb-cim { opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.egb-fej .kisgomb { background: transparent; border: 1px solid rgba(255, 255, 255, .45); }
+.egb-fej .kisgomb:hover { background: rgba(255, 255, 255, .15); }
+.egb-fej .kisgomb svg { width: 16px; height: 16px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; }
+.egb-eszk { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 6px 12px; background: #121a30; border-bottom: 1px solid #243052; font-size: 13px; }
+.egb-eszk label { display: inline-flex; align-items: center; gap: 4px; }
+.egb-eszk select { height: 26px; background: #1b2542; color: #e6ecf8; border: 1px solid #34436e; }
+.egb-eszk .egb-retegek { display: inline-flex; }
+.egb-eszk .egb-retegek summary { cursor: pointer; color: #aab6d3; }
+.egb-eszk .egb-retegek[open] summary { display: none; }
+.egb-eszk .egb-pipak { display: inline-flex; flex-wrap: wrap; gap: 4px 12px; }
+@media (max-width: 760px) { .egb-eszk .egb-retegek[open] summary { display: list-item; } .egb-eszk .egb-retegek { display: block; width: 100%; } }
+.egb-eszk .gomb { background: #1b2542; color: #e6ecf8; border-color: #34436e; }
+.egb-vaszon { position: relative; flex: 1 1 auto; min-height: 0; }
+.egb-vaszon canvas { display: block; touch-action: none; cursor: grab; }
+.egb-vaszon canvas:active { cursor: grabbing; }
+.egb-tip { position: absolute; z-index: 2; max-width: 360px; padding: 5px 8px; background: rgba(15, 22, 42, .94); border: 1px solid #3e4f80; color: #e8eefc;
+  font-size: 12px; line-height: 1.35; white-space: pre-line; pointer-events: none; border-radius: 3px; }
+.egb-lab { display: flex; gap: 12px; padding: 4px 12px; background: #121a30; border-top: 1px solid #243052; font-size: 12px; color: #aab6d3; }
+@media (max-width: 760px) { .egb-ablak { inset: 0; } .egb-sugo { display: none; } .egb-eszk { font-size: 12px; gap: 4px 10px; } }

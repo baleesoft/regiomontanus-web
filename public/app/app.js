@@ -223,6 +223,70 @@
     var T = (e.jd - 2451545) / 36525, p = (5028.796195 * T + 1.1054348 * T * T) / 3600;
     return p - (e.sid && e.egyeb && typeof e.egyeb.ayanamsa === 'number' ? e.egyeb.ayanamsa : 0);
   }
+  /* ---------- Égbolt-nézet (Speciális › Égbolt-nézet (3D)) ---------- */
+  var egbAblak = null;
+  function scriptBetolt(src) {
+    return new Promise(function (ok, hiba) {
+      var s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = function () { hiba(new Error(src)); };
+      document.head.appendChild(s);
+    });
+  }
+  /** a fényszögvonalak színei a sötét égen (a kerék színei fehér háttérre valók) */
+  var EGB_FSZ = { 1: 'rgba(255,224,102,0.8)', 2: 'rgba(255,92,92,0.8)', 3: 'rgba(255,92,92,0.8)', 4: 'rgba(255,154,122,0.7)', 5: 'rgba(255,154,122,0.7)',
+    6: 'rgba(92,200,255,0.8)', 7: 'rgba(92,200,255,0.8)', 8: 'rgba(160,170,195,0.6)', 9: 'rgba(160,170,195,0.6)', 10: 'rgba(180,140,255,0.7)',
+    11: 'rgba(180,140,255,0.7)', 12: 'rgba(180,140,255,0.7)' };
+  function egboltNyit(k) {
+    if (!k.e) { uzen('A képlet még nem készült el.'); return; }
+    if (egbAblak) egbAblak.zar();
+    (R.EGBOLT ? Promise.resolve() : scriptBetolt('../js/egbolt-adat.js')).then(function () {
+      var e = k.e, a = k.adat, g = e.egyeb || {};
+      var ayan = e.sid ? (typeof g.ayanamsa === 'number' ? g.ayanamsa : se.ayanamsaUt(e.jd)) : 0;
+      var cs = beall.csomo === 10 ? 10 : 11, ids = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, cs];
+      var pont = function (id, L, B, spd) {
+        var p = e.elemPl && e.elemPl[id];
+        return { id: id, jel: R.glif(id), nev: R.nev(id), L: L, B: B || 0, retro: spd < 0, haz: p ? p.house : 0 };
+      };
+      var pontok = ids.filter(function (id) { return e.poz[id]; }).map(function (id) { var x = e.poz[id]; return pont(id, x.lon, x.lat, x.speedLon); });
+      if (e.poz[cs]) {
+        var lesz = pont(cs === 10 ? 24 : 25, (e.poz[cs].lon + 180) % 360, 0, e.poz[cs].speedLon), pf = e.elemPl && e.elemPl[cs];
+        if (pf && pf.house) lesz.haz = (pf.house + 5) % 12 + 1;
+        pontok.push(lesz);
+      }
+      var vanIdo = !a.ismeretlen && !K.kos0e(a) && typeof e.hz.armc === 'number';
+      var hz = e.hz, persp = a.tipus === 'persp' ? a.perspId : null;
+      var fszTip = beall.kerek.fszTipus || [];
+      var fszek = ((e.elemzes && e.elemzes.aspects) || []).filter(function (f) {
+        return f.a[0] === 'P' && f.b[0] === 'P' && fszTip.indexOf(f.aspect) >= 0 && ids.indexOf(f.a[1]) >= 0 && ids.indexOf(f.b[1]) >= 0;
+      }).map(function (f) { return { a: f.a[1], b: f.b[1], fsz: f.aspect, szin: EGB_FSZ[f.aspect] }; });
+      // nézőpont: a Nap (heliocentrikus) vagy egy planéta – a heliocentrikus helyvektorok különbsége (fénymenet nélkül)
+      var nezopontFv = function (vid) {
+        var SE = SwissEph.SE, jdEt = e.jd + se.deltat(e.jd), fl = SE.FLG_SWIEPH | SE.FLG_HELCTR;
+        var xyz = function (id) {
+          if (id === 0) return [0, 0, 0];
+          var x = se.calc(jdEt, id, fl), l = x.lon * Math.PI / 180, b = x.lat * Math.PI / 180;
+          return [x.dist * Math.cos(b) * Math.cos(l), x.dist * Math.cos(b) * Math.sin(l), x.dist * Math.sin(b)];
+        };
+        var v = xyz(vid);
+        return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 14].filter(function (id) { return id !== vid; }).map(function (id) {
+          var t = xyz(id), d = [t[0] - v[0], t[1] - v[1], t[2] - v[2]], r = Math.hypot(d[0], d[1], d[2]) || 1;
+          var L = (Math.atan2(d[1], d[0]) * 180 / Math.PI - ayan + 720) % 360, B = Math.asin(d[2] / r) * 180 / Math.PI;
+          return { id: id, jel: id === 14 ? '' : R.glif(id), nev: id === 14 ? 'Föld' : R.nev(id), L: L, B: B, retro: false, haz: 0 };
+        });
+      };
+      var nev = [[-1, 'Föld (geocentrikus)'], [0, 'Nap (heliocentrikus)']].concat([1, 2, 3, 4, 5, 6, 7, 8, 9].map(function (id) { return [id, R.nev(id)]; }));
+      egbAblak = R.Egbolt.nyit({
+        cim: K.cim(a), alcim: tipusNev(k), pontok: pontok,
+        tengelyek: vanIdo ? { asc: hz.persp !== undefined ? hz.origAsc : hz.asc, mc: hz.persp !== undefined ? hz.origMc : hz.mc } : null,
+        eltolas: asztroEltolas(e), ayan: ayan, eps: e.eps, armc: hz.armc, phi: a.lat, fszek: fszek,
+        nezopontok: nev, nezopontFv: nezopontFv,
+        // planéta-perspektívánál a planéta szemszögéből (a Nap-perspektíva heliocentrikus); drakonikusnál a holdcsomó középen
+        nezopont: persp !== null && persp >= 0 && persp <= 9 ? persp : -1,
+        kozep: persp === 10 ? cs : null,
+        beall: beall.egbolt, ment: function (x) { beall.egbolt = x; beallMent(); },
+        bezarva: function () { egbAblak = null; }
+      });
+    }, function () { uzen('Az égbolt adatai nem tölthetők be.'); });
+  }
   /** a naksatrák kezdete (Ashwini 0°) a kerék zodiákusában: a Lahiri-ajánamsa; sziderikus (Fagan/Bradley) képletnél a kettő különbsége */
   function nakKezdet(e) {
     var g = e.egyeb || {}, T = (e.jd - 2451545) / 36525;
@@ -856,6 +920,7 @@
     },
     enallPersp: enallapotPerspektiva,
     asztro: function () { beall.kerek.asztro = !beall.kerek.asztro; beallMent(); render(); },
+    egbolt: function () { var k = akt(); if (k) egboltNyit(k); },
     naksatra: function () { beall.kerek.naksatra = !beall.kerek.naksatra; beallMent(); render(); },
     aszteroidak: function () { beall.kerek.asteroids = !beall.kerek.asteroids; beallMent(); mindSzamol(); render(); },
     allo: function () {
@@ -898,7 +963,7 @@
   TETT.zodT = function () { if (beall.sid) { beall.sid = false; beallMent(); mindSzamol(); render(); } };
   TETT.zodS = function () { if (!beall.sid) { beall.sid = true; beallMent(); mindSzamol(); render(); } };
 
-  var KELL_AKT = { adatok: 1, ment: 1, mentMaskent: 1, bezar: 1, kep: 1, nyomtat: 1, planetak: 1, hazak: 1, fenyszogek: 1,
+  var KELL_AKT = { egbolt: 1, adatok: 1, ment: 1, mentMaskent: 1, bezar: 1, kep: 1, nyomtat: 1, planetak: 1, hazak: 1, fenyszogek: 1,
     eletstrat: 1, enallapotok: 1, egyeb: 1, alloTabla: 1, kos0: 1, jegyzet: 1, mgjBe: 1, mgjKi: 1, kepValaszt: 1, kepTorol: 1, jj: 1, sze: 1, csatDok: 1, csatUrl: 1, csatTorol: 1, nagyit: 1, tranzit: 1, ph: 1, pd: 1, pdValodi: 1, sol: 1, rev: 1, kulsoKulon: 1, szemely: 1, enallPersp: 1, persp0: 1, persp1: 1, persp2: 1, persp3: 1, persp4: 1, persp5: 1, persp6: 1,
     persp7: 1, persp8: 1, persp9: 1, persp10: 1 };
   var ROGZ_TILT = /^(ment|mentMaskent|adatok|pd|pdValodi|ph|tranzit|sol|rev|szin|kos0|enallPersp|persp\d+|jj|sze|szemely)$/;
@@ -943,6 +1008,7 @@
         return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(function (id) { return { c: R.nev(id) + '-perspektíva', t: 'persp' + id }; })
           .concat(['-', { c: 'Drakonikus-perspektíva', t: 'persp10' }, '-', { c: 'Énállapotok perspektívája', t: 'enallPersp' }]);
       } }, { c: 'Kos 0° képlet', t: 'kos0' }, '-',
+      { c: 'Égbolt-nézet (3D)…', t: 'egbolt' }, '-',
       { c: 'Horoszkópolvasó aktiválása', b: 'Ctrl+Q', t: 'olvasoBe', pipa: function () { return olvasoBe; } }, '-', { c: 'Aktuális égi állások', t: 'aktualis' }, '-', { c: 'Keresés', t: 'kereses' }] },
     { c: 'Progressziók', l: [
       { c: 'Primer (1° = 1 év) direkciók', t: 'pd' }, { c: 'Primer direkciók (valódi)...', t: 'pdValodi' }, { c: 'Progressziós Hold', t: 'ph' }, { c: 'Tranzitok', t: 'tranzit' }, '-',
@@ -997,7 +1063,8 @@
     ['Naksatrák (27 holdház) a kerék körül – be/ki', 'M14 4a8 8 0 1 0 6 13A6.5 6.5 0 0 1 14 4zM18 3l.8 1.7 1.7.8-1.7.8L18 8l-.8-1.7-1.7-.8 1.7-.8z', 'naksatra', function () { return !!beall.kerek.naksatra; }], 0,
     ['Aktuális égi állás', 'M12 8a4 4 0 1 0 .01 0M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2', 'aktualis'],
     ['Planéta az Ascendensen – énállapotok perspektívája', 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 .01 0', 'enallPersp'],
-    ['Kos 0° képlet', 'M12 21V10a5 5 0 0 0-9-3M12 10a5 5 0 0 1 9-3', 'kos0'], 0,
+    ['Kos 0° képlet', 'M12 21V10a5 5 0 0 0-9-3M12 10a5 5 0 0 1 9-3', 'kos0'],
+    ['Égbolt-nézet (3D): a képlet a valódi égen', 'M12 3a9 9 0 1 0 .01 0M3.5 10.5c5 2 12 2 17 0M7 6.5h.01M16 15h.01M9 17h.01M17 7.5h.01', 'egbolt'], 0,
     ['Összevetés (szinasztria)', 'M9 6a6 6 0 1 0 .01 0M15 6a6 6 0 1 0 .01 0', 'szin'], 0,
     ['Primer (1° = 1 év) direkciók', 'M4 12h14M13 6l6 6-6 6', 'pd'],
     ['Progressziós Hold', 'M15 3a9 9 0 1 0 6 15A7 7 0 0 1 15 3z', 'ph'],
