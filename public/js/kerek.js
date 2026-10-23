@@ -240,6 +240,13 @@
 
     // asztroszkóp: a csillagképek ívei a kerék körül (az ekliptika menti sor, kívül a többi, átfedés nélkül sorokban)
     var AS = asztroTerv(o.asztroszkop), W_AS = r * 0.075, G_AS = r * 0.01, R_AS0 = R + G_AS;
+    // szoros elrendezés (egyetlen kerék): házcsúcs-feliratok nélkül, kisebb énjelölőkkel a zodiákuskörhöz simulva
+    var SZ = !!AS && !kulso, EN_SZ = SZ ? 0.7 : 1, sEn = pxJelolo * 0.62 * EN_SZ;
+    if (SZ) {
+      o.cuspLabels = false;
+      var enVan = o.selfMarkers && k.selfMarkers && k.selfMarkers.length, nemP = enVan && k.selfMarkers.some(function (m) { return m.type !== 'P'; });
+      R_AS0 = r + G_AS + (enVan ? 3 + sEn * (nemP ? 3.7 : 1.8) : 2);
+    }
     var RV = AS ? R_AS0 + (1 + AS.sorok.length) * (W_AS + G_AS) + G_AS : R;
     var svg = el('svg', { viewBox: [-RV, -RV, 2 * RV, 2 * RV].join(' '), xmlns: NS, role: 'img',
       'aria-label': 'Képletkerék', 'font-family': TXT, style: 'width:100%;height:auto;display:block' });
@@ -616,7 +623,7 @@
       var enPlanetak = k.selfMarkers.filter(function (m) { return m.type === 'P'; }).map(function (m) { return m.id; });
       var poz = {}; k.planets.forEach(function (p) { poz[p.id] = p; });
       k.selfMarkers.forEach(function (m, enIndex) {
-        var ra, sz, rr = r + pxJelolo * 1.85, nev;
+        var ra, sz, rr = SZ ? r + 3 + sEn : r + pxJelolo * 1.85, nev, plusz = SZ ? sEn * 1.9 : pxJelolo * 0.8;
         if (m.type === 'P') {
           if (hely[m.id] === undefined) return;
           var origRA = Math.round(poz[m.id].lon), ujRA = Math.round(hely[m.id]);
@@ -633,15 +640,15 @@
         } else if (m.type === 'H') {
           // az ASC (házcsúcs) jelölője kijjebb kerül (D: iGap + TextWidth('I')), hogy az ugyanott álló
           // planéta-énjelölő is látszódjon (pl. planétaperspektívában a planéta = ASC)
-          ra = Math.round(m.lon); sz = jegy(m.lon); rr += pxJelolo * 0.8;
+          ra = Math.round(m.lon); sz = jegy(m.lon); rr += plusz;
           if (+m.house !== 1) { ra += 10; nev = hazSzamStr(+m.house, arab) + '. ház'; } else nev = 'Ascendens';  // házközép (D)
         } else {
-          ra = Math.round(m.lon); sz = m.sign; nev = JNEV[m.sign] + ' (az 1. házba bezárt jegy)'; rr += pxJelolo * 0.8;
+          ra = Math.round(m.lon); sz = m.sign; nev = JNEV[m.sign] + ' (az 1. házba bezárt jegy)'; rr += plusz;
         }
         // kör: közelebb a kerékhez (TextWidth('MMI') a háromszög 'MMII'-je helyett)
-        if (o.enKor) rr -= pxJelolo * 1.85 * 0.126;
+        if (o.enKor && !SZ) rr -= pxJelolo * 1.85 * 0.126;
         var c = pont(ra, rr), cel = pont(ra, R_PLANETA), dx = cel[0] - c[0], dy = cel[1] - c[1], l = Math.hypot(dx, dy);
-        var ux = dx / l, uy = dy / l, s = pxJelolo * 0.62;
+        var ux = dx / l, uy = dy / l, s = sEn;
         if (o.enKor) {
           cim(el('circle', { cx: c[0].toFixed(2), cy: c[1].toFixed(2), r: (s * 0.78).toFixed(2), fill: elemSzin(sz, o.colors),
             'data-olv': 'en:' + enIndex, 'class': 'enkor' }, gEn), 'Énjelölő: ' + nev);
