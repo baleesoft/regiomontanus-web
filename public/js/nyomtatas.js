@@ -419,7 +419,10 @@
       if (d.kerekek.length === 1) {
         var sv = d.kerekek[0], vb = (sv.getAttribute('viewBox') || '-480 -480 960 960').split(/\s+/).map(Number);
         // a kerek.js-ben r = 400 a zodiákus-sáv külső sugara; a viewBox ±R
-        var meret = vb[2] * (D / 2) / 400;
+        // asztroszkóppal / naksatrákkal a gyűrűk is a szokásos helyre férjenek: a kerék ennyivel kisebb lesz
+        var alap = +sv.getAttribute('data-r-alap') || vb[2] / 2;
+        // (a teli gyűrűk a szokásos, ritkás feliratsávnál beljebb maradnak, hogy a sarkok tábláit ne érjék el)
+        var meret = (vb[2] > 2 * alap ? 2 * alap * 0.93 : vb[2]) * (D / 2) / 400;
         sv.setAttribute('x', (cx - meret / 2).toFixed(1)); sv.setAttribute('y', (cy - meret / 2).toFixed(1));
         sv.setAttribute('width', meret.toFixed(1)); sv.setAttribute('height', meret.toFixed(1)); sv.removeAttribute('style');
         svg.appendChild(sv);
