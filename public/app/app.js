@@ -223,6 +223,18 @@
     var T = (e.jd - 2451545) / 36525, p = (5028.796195 * T + 1.1054348 * T * T) / 3600;
     return p - (e.sid && e.egyeb && typeof e.egyeb.ayanamsa === 'number' ? e.egyeb.ayanamsa : 0);
   }
+  /* ---------- Nagy kerék: csak a kerék a teljes ablakban (kis képernyőkön, pl. 150%-os nagyítású laptopon) ---------- */
+  function nagyKerek(be) {
+    document.body.classList.toggle('kerek-max', !!be);
+    if (!be && document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () {});
+  }
+  function teljesKepernyo() {
+    var d = document.documentElement;
+    if (document.fullscreenElement) { if (document.exitFullscreen) document.exitFullscreen().catch(function () {}); return; }
+    if (d.requestFullscreen) d.requestFullscreen().catch(function () { uzen('A böngésző nem engedte a teljes képernyőt – próbáld az F11 billentyűt.'); });
+    else uzen('A teljes képernyőhöz nyomd meg az F11 billentyűt.');
+  }
+  document.addEventListener('fullscreenchange', function () { render(); });
   /* ---------- Égbolt-nézet (Speciális › Égbolt-nézet (3D)) ---------- */
   var egbAblak = null;
   function scriptBetolt(src) {
@@ -487,6 +499,8 @@
   }
 
   function render() {
+    // a nagy kerék csak a részletes nézetben, megnyitott képlettel
+    if (document.body.classList.contains('kerek-max') && (nezet !== 'reszlet' || !vanAkt())) nagyKerek(false);
     renderCim(); renderEszkoztar(); renderLista(); renderLepteto(); renderAsztal(); renderStatusz();
     // bekapcsolt horoszkópolvasónál a böngésző saját buboréka ne takarja az olvasó szövegét
     if (olvasoBe) Array.prototype.forEach.call(document.querySelectorAll('#asztal [data-olv] title'), function (t) { t.remove(); });
@@ -564,10 +578,10 @@
   }
   function renderReszlet(hova) {
     var k = akt();
-    hova.innerHTML = '<nav class="belyegek" aria-label="Megnyitott képletek">' + kepletek.map(function (x, i) {
+    hova.innerHTML = (kepletek.length < 2 ? '' : '<nav class="belyegek" aria-label="Megnyitott képletek">' + kepletek.map(function (x, i) {
       return '<button type="button" data-valt="' + i + '" aria-current="' + (i === aktiv) + '"><span class="mini">' + x.mini + '</span>' +
         '<span class="ln"><b>' + R.esc(cim(x)) + '</b><small>' + R.esc(tipusNev(x)) + '</small></span></button>';
-    }).join('') + '</nav>' +
+    }).join('') + '</nav>') +
       '<main class="reszlet" aria-label="Részletes nézet" style="--kerek-arany:' + (aranyKorlat(beall.reszletArany) * 100).toFixed(1) + '%"><section class="fo-kerek"><div class="fej"><b>' + R.esc(cim(k)) + '</b> ' +
       tipusCimke(k) + '<span class="tolt"></span>' + (!k.fajta && fk('csatolmany') ? '<button type="button" class="gomb" data-tett="oldalsav" aria-pressed="' + (beall.oldalsav !== false) +
         '" title="Oldalsáv elrejtése/mutatása (fénykép, csatolmányok, jegyzet)">Oldalsáv</button>' : '') +
@@ -575,7 +589,12 @@
         !!k.szemely + '" title="Csak az énállapotok (énjelölő planéták és együttállóik) a keréken">Személyiségrajz</button>' : '') + (k.fajta ? '<div class="csoport" role="group" aria-label="Megjelenítés">' +
         '<button type="button" data-tett="egymason" aria-pressed="' + (k.mod !== 'egymasmellett') + '">Egymáson</button>' +
         '<button type="button" data-tett="egymasmellett" aria-pressed="' + (k.mod === 'egymasmellett') + '">Egymás mellett</button></div>' : '') +
-      '<button type="button" class="gomb fo" data-tett="vissza">Vissza a mozaikhoz (Esc)</button></div>' +
+      (document.body.classList.contains('kerek-max')
+        ? '<button type="button" class="gomb" data-tett="teljesKepernyo" aria-pressed="' + !!document.fullscreenElement + '" title="A böngésző saját sávjai nélkül (F11)">' +
+          (document.fullscreenElement ? 'Kilépés a teljes képernyőből' : 'Teljes képernyő') + '</button>' +
+          '<button type="button" class="gomb fo" data-tett="nagyKerekValt" title="Vissza a táblákhoz és a menühöz (Esc)">Kicsinyítés (Esc)</button>'
+        : '<button type="button" class="gomb" data-tett="nagyKerekValt" title="Csak a kerék, a teljes ablakban (a menü, az eszköztár és a táblák nélkül)">⤢ Nagy kerék</button>' +
+          '<button type="button" class="gomb fo" data-tett="vissza">Vissza a mozaikhoz (Esc)</button>') + '</div>' +
       '<div class="torzs"><div class="kerek"></div>' + (oldalsavVan(k) ? oldalsavHtml(k) : '') + '</div></section>' +
       '<div class="elvalaszto" role="separator" tabindex="0" aria-orientation="vertical" aria-controls="tablaTart" ' +
       'aria-label="A kerék és a táblák szélességének állítása" aria-valuemin="30" aria-valuemax="80" aria-valuenow="' +
@@ -990,7 +1009,9 @@
     jegyzet: function () { if (fk('jegyzet')) R.Jegyzet.nyit(akt(), 'A', 999); },
     mgjBe: function () { if (!fk('jegyzet')) return; var k = akt(); if (k && k.fajta) { uzen('Összevetés képletekhez nem lehet megjegyzést adni!'); return; } $('mgjInput').click(); },
     mgjKi: function () { if (!fk('jegyzet')) return; var k = akt(); if (k && !k.fajta) R.Jegyzet.mgjExport(k, k.fajlnev); },
-    vissza: function () { nezet = 'mozaik'; render(); }, nagyit: function () { if (vanAkt()) { nezet = 'reszlet'; render(); } }
+    vissza: function () { nagyKerek(false); nezet = 'mozaik'; render(); }, nagyit: function () { if (vanAkt()) { nezet = 'reszlet'; render(); } },
+    nagyKerekValt: function () { if (vanAkt()) { if (nezet !== 'reszlet') nezet = 'reszlet'; nagyKerek(!document.body.classList.contains('kerek-max')); render(); } },
+    teljesKepernyo: function () { teljesKepernyo(); },
   };
   ['P', 'R', 'C', 'K', 'O', 'A'].forEach(function (h) {
     TETT['hsys' + h] = function () { if (beall.hsys !== h) { beall.hsys = h; beallMent(); mindSzamol(); render(); } };
@@ -2300,6 +2321,7 @@
       if (nyitottMenu !== null) { menuZar(); return; }
       if (!$('lista').hidden) { listaValt(false); $('listaGomb').focus(); return; }
       if (!beviteliMezo(e.target) && fokuszTorol()) return;
+      if (document.body.classList.contains('kerek-max')) { nagyKerek(false); render(); return; }
       if (nezet === 'reszlet') { nezet = 'mozaik'; render(); }
     }
   });

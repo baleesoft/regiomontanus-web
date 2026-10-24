@@ -25,7 +25,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
 [hidden] { display: none !important; }
 .app { height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
 /* rögzített keret: felül címsor, menü, eszköztár, léptető; alul státuszsor – csak a munkaasztal görög */
-.cimsor, .menusor, .eszkoztar, .lepteto, .statusz { flex: 0 0 auto; }
+.cimsor, .fosor, .eszkoztar, .lepteto, .statusz { flex: 0 0 auto; }
+/* a menüsor jobb végén a megnyitott képletek és az elrendezés (így az eszköztár egy sorral kevesebb) */
+.fosor { display: flex; align-items: center; flex-wrap: wrap; background: var(--menu); border-bottom: 1px solid var(--line); position: relative; z-index: 30; }
+.fosor .menusor { flex: 1 1 auto; border-bottom: 0; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 /* címsor */
@@ -68,7 +71,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .ikon[aria-pressed="true"] svg { stroke: #fff; }
 .ikon:disabled { cursor: default; }
 .ikon:disabled svg { stroke: #bdb7ac; }
-.eszkoztar .jobb { margin-left: auto; display: flex; align-items: center; gap: 8px; position: relative; }
+.fosor .jobb { margin-left: auto; display: flex; align-items: center; gap: 8px; position: relative; padding: 2px 8px; }
+.fosor .jobb .gomb, .fosor .jobb .csoport button { padding-top: 2px; padding-bottom: 2px; }
 .gomb { height: 30px; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid var(--line); background: #fff;
   border-radius: 3px; cursor: pointer; white-space: nowrap; }
 .gomb:hover:not(:disabled) { border-color: #9db6d8; background: #f4f8fd; }
@@ -326,8 +330,8 @@ dialog textarea { width: 100%; min-height: 70px; resize: vertical; }
   .csempe .kerek { flex: none; }
   .csempe .kerek > svg { height: auto !important; }
   .eszkoztar .ikonok { flex-wrap: nowrap; overflow-x: auto; max-width: 100%; }
-  .eszkoztar .jobb { margin-left: 0; flex-wrap: wrap; }
-  .eszkoztar .jobb .cimke { display: none; }
+  .fosor .jobb { margin-left: 0; flex-wrap: wrap; }
+  .fosor .jobb .cimke { display: none; }
   .lepteto .megj { margin-left: 0; }
   .menu { position: fixed; left: 8px !important; right: 8px; top: auto; min-width: 0; max-height: 70vh; overflow: auto; }
   .menu .menu { position: static; box-shadow: none; border: 0; border-left: 2px solid var(--line); margin-left: 12px; }
@@ -645,3 +649,27 @@ svg.fokusz line.hazcsucs.fk-be { stroke: #c0161d; stroke-width: 2.4; }
 .egb-ido .egb-datum { font-variant-numeric: tabular-nums; padding: 2px 8px; background: #1b2542; border: 1px solid #34436e; border-radius: 3px; }
 .egb-ido select { height: 26px; background: #1b2542; color: #e6ecf8; border: 1px solid #34436e; }
 .egb-ido label { display: inline-flex; align-items: center; gap: 4px; }
+
+/* Nagy kerék (⤢): csak a kerék a teljes ablakban */
+body.kerek-max .cimsor, body.kerek-max .fosor, body.kerek-max .eszkoztar, body.kerek-max .lepteto, body.kerek-max .belyegek,
+body.kerek-max .tablak, body.kerek-max .elvalaszto, body.kerek-max .oldalsav { display: none !important; }
+body.kerek-max .reszlet { grid-template-columns: minmax(0, 1fr) !important; padding: 4px; }
+body.kerek-max .reszlet .fo-kerek .kerek { padding: 4px; }
+body.kerek-max .reszlet .fo-kerek .fej { padding: 3px 8px; }
+/* alacsony ablak (pl. 1920×1080 kijelző 150%-os Windows-nagyítással ≈ 600 px magas): tömörebb fejrészek */
+@media (max-height: 780px) and (min-width: 761px) {
+  .cimsor { padding: 3px 12px; }
+  .menusor > .mf > button { padding: 2px 9px; }
+  .eszkoztar { padding: 1px 8px; }
+  .ikon { width: 27px; height: 27px; }
+  .ikon svg { width: 16px; height: 16px; }
+  .eszkoztar .sep { height: 18px; margin: 0 3px; }
+  .belyegek { padding: 4px 12px 0; }
+  .belyegek .mini { display: none; }
+  .belyegek button { padding: 2px 8px; }
+  .reszlet { padding: 6px; }
+  .reszlet .fo-kerek .fej { padding: 3px 8px; gap: 6px; }
+  .reszlet .fo-kerek .fej .gomb { padding-top: 2px; padding-bottom: 2px; }
+  .reszlet .fo-kerek .kerek { padding: 4px; }
+  .statusz { font-size: 12px; }
+}
