@@ -46,6 +46,8 @@ public/                ← ez a tartalom kerül fel FTP-vel a tárhelyre
   js/idotech.js        időbeli technikák: tranzit, progressziós Hold, primer (1° = 1 év) direkció, szolár, revolúció-kereső
   js/primer.js         valódi primer direkciók: Placidus-félív, zodiákális / mundán, Ptolemaiosz / Naibod / valódi napív kulcs
   js/tablak.js         a Táblázatok menü táblái
+  js/suti.js           látogatottsági statisztika (Google Analytics 4) csak beleegyezéssel; a mérési azonosító a
+                       js/ga-azonosito.js-ben – a nyilvános forrásban üres (nincs mérés, nincs sáv)
   js/egbolt.js         égbolt-nézet („mini Stellarium”): a képlet planétái a valódi égen, forgatható gömbön (Canvas 2D,
                        sztereografikus vetítés); nézőpont Föld / Nap / planéta, ekliptika- vagy horizont-keret
   js/egbolt-adat.js    az égbolt adatai (generált, lustán töltődik): 5044 csillag 6m-ig, csillagképvonalak, -határok, -nevek

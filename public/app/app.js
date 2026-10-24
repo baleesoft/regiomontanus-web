@@ -956,6 +956,7 @@
     enallPersp: enallapotPerspektiva,
     asztro: function () { beall.kerek.asztro = !beall.kerek.asztro; beallMent(); render(); },
     egbolt: function () { var k = akt(); if (k) egboltNyit(k); },
+    suti: function () { if (R.Suti) R.Suti.beallit(); },
     naksatra: function () { beall.kerek.naksatra = !beall.kerek.naksatra; beallMent(); render(); },
     aszteroidak: function () { beall.kerek.asteroids = !beall.kerek.asteroids; beallMent(); mindSzamol(); render(); },
     allo: function () {
@@ -1008,7 +1009,7 @@
     if (akt() && akt().rogzitett && ROGZ_TILT.test(t)) return false;
     return engedelyezettAlap(t);
   }
-  function engedelyezettAlap(t) { return !!TETT[t] && (!KELL_AKT[t] || vanAkt()) && (betoltve || ['nevjegy', 'segitseg', 'facebook', 'iskola', 'megjelenites', 'egyebek', 'gyari', 'alloBeall', 'allo', 'inkognito', 'orbisok', 'szinek'].indexOf(t) >= 0 || t.indexOf('hsys') === 0 || t.indexOf('zod') === 0); }
+  function engedelyezettAlap(t) { return !!TETT[t] && (!KELL_AKT[t] || vanAkt()) && (betoltve || ['nevjegy', 'suti', 'segitseg', 'facebook', 'iskola', 'megjelenites', 'egyebek', 'gyari', 'alloBeall', 'allo', 'inkognito', 'orbisok', 'szinek'].indexOf(t) >= 0 || t.indexOf('hsys') === 0 || t.indexOf('zod') === 0); }
   function vegrehajt(t) { if (engedelyezett(t)) TETT[t](); }
 
   function legutobbiMenu() {
@@ -1073,6 +1074,7 @@
     { c: 'Információk', l: [
       { c: 'Segítség a program használatához', t: 'segitseg' }, { c: 'Tippek és trükkök', f: 5 }, '-',
       { c: 'Regiomontanus a Facebookon', t: 'facebook' }, { c: 'Humanisztikus Asztrológia Iskola', t: 'iskola' }, '-',
+      { c: 'Adatvédelem és sütik…', t: 'suti', lathato: function () { return !!(R.Suti && R.Suti.van); } }, '-',
       { c: 'Névjegy', t: 'nevjegy' }] },
     { c: 'Kiegészítések', l: [{ c: 'Jegyek és játszmák', t: 'jj' }, { c: 'Születési értesítő', t: 'sze' }] }
   ];
