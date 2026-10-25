@@ -1,12 +1,12 @@
 # Az angol felület szakkifejezései
 
-A Humanisztikus Asztrológia Iskola saját fogalmaihoz javasolt angol megfelelők. A felület **jelenleg ezekkel fut**,
-de jóváhagyásra várnak (Rákos Péter, Nemes Balázs). Ha egy fogalom változik, a `tools/i18n/en_szotar.py`-ben kell
+A Humanisztikus Asztrológia Iskola saját fogalmainak angol megfelelői – **jóváhagyva** (Nemes Balázs, 2026-10-25;
+a járt/járatlan út és a ferális módosításával). A felület ezekkel fut. Ha egy fogalom változik, a `tools/i18n/en_szotar.py`-ben kell
 cserélni (keresés a régi angol szóra), majd: `python3 tools/i18n/build-lang.py`.
 
-## Az iskola fogalmai (jóváhagyandó)
+## Az iskola fogalmai
 
-| Magyar | Javaslat | Más lehetőség | Megjegyzés |
+| Magyar | Angol | Más lehetőség | Megjegyzés |
 |---|---|---|---|
 | énállapot | **ego state** | self-state, I-state | A tranzakcióanalízis (Berne) „ego state”-je – ha a fogalom onnan ered, ez a legérthetőbb. |
 | énjelölő (planéta) | **ego-state marker** | self-marker | A Delphi-kódban „SelfMarker”. |
@@ -23,7 +23,7 @@ cserélni (keresés a régi angol szóra), majd: `python3 tools/i18n/build-lang.
 | Horoszkópolvasó | **Horoscope reader** | | A szövegei magyarok maradnak. |
 | Humanisztikus Asztrológia Iskola | **School of Humanistic Astrology** | | |
 
-## Általános asztrológiai szavak (bevett angol megfelelők)
+## Általános asztrológiai szavak (bevett angol megfelelők; jóváhagyva)
 
 | Magyar | Angol |
 |---|---|
