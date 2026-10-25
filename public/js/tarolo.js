@@ -24,7 +24,8 @@
   S.ALAP = {
     hsys: 'P', sid: false, csomo: 11,
     // Megjelenítés (fBeallitasok_Megjelenites) – a Windows-os „Alapértelmezések visszaállítása” szerint
-    kerek: { houseLords: true, feral: true, retrograde: false, stationary: false, selfMarkers: true,
+    // stilus: az ábra kinézete – 'regio' (Regiomontanus) | 'placidus'
+    kerek: { stilus: 'regio', houseLords: true, feral: true, retrograde: false, stationary: false, selfMarkers: true,
       cuspLabels: true, nodes: false, nodesDown: false, asteroids: false,
       // Általános I.: jegyek (+ analóg planéta), tengelyek (Vertex, Keletpont, Koascendens, Sarki ASC), házhatárok, házszámok, planéták
       jegyek: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], analog: false, tengelyek: [],

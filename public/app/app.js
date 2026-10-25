@@ -204,7 +204,7 @@
     if (b.fszCsomo.indexOf('fel') >= 0) fszPl.push(cs);
     if (b.fszCsomo.indexOf('le') >= 0) fszPl.push(csLe);
     var sz = beall.szin, ff = nyomtatFelul && nyomtatFelul.colors, kos0 = !!(k.e && k.e.hz.kos0);
-    return { planets: pl, csillagMind: !!(beall.allo && beall.allo.mind), jelek: jelek(), vonal: sz.vonal,
+    return { stilus: b.stilus || 'regio', nyomtat: !!nyomtatFelul, feketeFeher: !!ff, planets: pl, csillagMind: !!(beall.allo && beall.allo.mind), jelek: jelek(), vonal: sz.vonal,
       aspectColors: ff ? null : sz.fsz, aspectStyles: sz.stilus, houseLords: b.houseLords, feral: b.feral, retrograde: b.retrograde, stationary: b.stationary,
       selfMarkers: b.selfMarkers && !kos0, selfMarkerAtOrigPlace: b.enEredeti, enKor: b.enMod === 0,
       cuspLabels: b.cuspLabels, szemely: !!k.szemely && !k.fajta,
@@ -415,7 +415,7 @@
     if (!k.e) return '';
     var d = document.createElement('div');
     var sz = beall.szin;
-    RegioKerek.rajzol(d, T.kerekAdat(k.e), { houseLords: false, cuspLabels: false, selfMarkers: false, feral: false,
+    RegioKerek.rajzol(d, T.kerekAdat(k.e), { stilus: beall.kerek.stilus || 'regio', houseLords: false, cuspLabels: false, selfMarkers: false, feral: false,
       aspectSymbols: [], jelek: jelek(), aspectColors: sz.fsz, aspectStyles: sz.stilus,
       colors: { fire: sz.fire, earth: sz.earth, air: sz.air, water: sz.water, aspectBg: sz.aspectBg, aspect: '#000000' } });
     var s = d.firstChild; s.removeAttribute('style'); s.setAttribute('aria-hidden', 'true'); s.removeAttribute('role');
@@ -977,6 +977,12 @@
     egbolt: function () { var k = akt(); if (k) egboltNyit(k); },
     suti: function () { if (R.Suti) R.Suti.beallit(); },
     naksatra: function () { beall.kerek.naksatra = !beall.kerek.naksatra; beallMent(); render(); },
+    // az ábra stílusa: Regiomontanus ↔ Placidus (később több stílusnál körbe)
+    stilus: function () {
+      var L = RegioKerek.STILUSOK.map(function (x) { return x[0]; }), i = L.indexOf(beall.kerek.stilus || 'regio');
+      beall.kerek.stilus = L[(i + 1) % L.length]; beallMent(); render();
+      uzen('Az ábra stílusa: ' + RegioKerek.STILUSOK[(i + 1) % L.length][1]);
+    },
     aszteroidak: function () { beall.kerek.asteroids = !beall.kerek.asteroids; beallMent(); mindSzamol(); render(); },
     allo: function () {
       beall.allo.megj = !beall.allo.megj; beallMent(); mindSzamol(); render();
@@ -1118,7 +1124,8 @@
     ['Állócsillagok – be/ki', 'M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.6l-5.3 2.8 1.2-6-4.5-4.1 6-.7z', 'allo', function () { return !!beall.allo.megj; }],
     ['Chiron és a kisbolygók – be/ki', 'M7 5a2 2 0 1 0 .01 0M16 7a3 3 0 1 0 .01 0M10 15a2.5 2.5 0 1 0 .01 0', 'aszteroidak', function () { return beall.kerek.asteroids; }],
     ['Asztroszkóp: csillagképek az ábra körül – be/ki', 'M12 9a3 3 0 1 0 .01 0M4.6 8A8.5 8.5 0 0 1 10 3.7M14 3.7A8.5 8.5 0 0 1 19.4 8M20.5 12a8.5 8.5 0 0 1-2.6 6.1M15 20a8.5 8.5 0 0 1-6 0M6.1 18.1A8.5 8.5 0 0 1 3.5 12', 'asztro', function () { return !!beall.kerek.asztro; }],
-    ['Naksatrák (27 holdház) az ábra körül – be/ki', 'M14 4a8 8 0 1 0 6 13A6.5 6.5 0 0 1 14 4zM18 3l.8 1.7 1.7.8-1.7.8L18 8l-.8-1.7-1.7-.8 1.7-.8z', 'naksatra', function () { return !!beall.kerek.naksatra; }], 0,
+    ['Naksatrák (27 holdház) az ábra körül – be/ki', 'M14 4a8 8 0 1 0 6 13A6.5 6.5 0 0 1 14 4zM18 3l.8 1.7 1.7.8-1.7.8L18 8l-.8-1.7-1.7-.8 1.7-.8z', 'naksatra', function () { return !!beall.kerek.naksatra; }],
+    ['Az ábra stílusa: Regiomontanus / Placidus (váltás)', 'M12 3a9 9 0 1 0 .01 0M12 3v18M3.5 9.5L12 12l8.5-2.5M17 4.5l-2.5 3', 'stilus', function () { return (beall.kerek.stilus || 'regio') !== 'regio'; }], 0,
     ['Aktuális égi állás', 'M12 8a4 4 0 1 0 .01 0M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2', 'aktualis'],
     ['Planéta az Ascendensen – énállapotok perspektívája', 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 .01 0', 'enallPersp'],
     ['Kos 0° képlet', 'M12 21V10a5 5 0 0 0-9-3M12 10a5 5 0 0 1 9-3', 'kos0'],
@@ -1929,6 +1936,7 @@
       Array.prototype.forEach.call(d.querySelectorAll('input[name="mElhely"]'), function (r) { r.checked = r.value === x.osszElhely; });
       Array.prototype.forEach.call(d.querySelectorAll('input[data-b]'), function (c) { c.checked = !!x[c.getAttribute('data-b')]; });
       $('mMeret').value = (+kr.meret || 1).toFixed(1);
+      Array.prototype.forEach.call(d.querySelectorAll('input[name="mStilus"]'), function (r) { r.checked = r.value === (kr.stilus || 'regio'); });
       Array.prototype.forEach.call(d.querySelectorAll('input[name="mAsztroMod"]'), function (r) { r.checked = r.value === (kr.asztroMod || 'kep'); });
       $('mAsztroSav').value = +kr.asztroSav || 10;
       // Nyomtatás és Exportálás: a nyomtatási ablakkal közös beállítások (beall.nyomtatas)
@@ -1958,6 +1966,7 @@
       var m = +String($('mMeret').value).replace(',', '.');
       kr.meret = isFinite(m) && m > 0 ? Math.round(Math.min(2, Math.max(0.5, m)) * 10) / 10 : 1;
       r = d.querySelector('input[name="mAsztroMod"]:checked'); if (r) kr.asztroMod = r.value;
+      r = d.querySelector('input[name="mStilus"]:checked'); if (r) kr.stilus = r.value;
       m = +String($('mAsztroSav').value).replace(',', '.'); kr.asztroSav = isFinite(m) && m > 0 ? Math.round(Math.min(30, Math.max(1, m))) : 10;
       Array.prototype.forEach.call(d.querySelectorAll('input[data-b]'), function (c) { beall[c.getAttribute('data-b')] = c.checked; });
       beall.nyomtatas = beall.nyomtatas || {};
