@@ -1152,15 +1152,18 @@
     ['Megnyitás névre kereséssel', 'M4 6h10M4 12h7M4 18h7M17 11a3 3 0 1 0 .01 0M19.5 15.5L22 18', 'gyorsKeres']
   ];
   function eszkoztarEpit() {
+    var jobb = $('ikonok').querySelector('.jobb');   // az áthelyezett „Megnyitott képletek / Elrendezés” megmarad
+    if (jobb) document.querySelector('.fosor').appendChild(jobb);
     $('ikonok').innerHTML = ESZKOZ.map(function (e, i) {
       if (e === 0) return '<span class="sep" aria-hidden="true"></span>';
       var fz = typeof e[2] === 'number', cim = e[0] + (fz ? ' – ' + FAZIS[e[2]] : '');
       return '<button type="button" class="ikon" data-eszk="' + i + '" aria-label="' + R.esc(cim) + '" title="' + R.esc(cim) + '"' +
         (e[3] ? ' aria-pressed="false"' : '') + '><svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + e[1] + '"/></svg></button>';
     }).join('');
+    if (jobb) jobbAthelyez();
   }
   function renderEszkoztar() {
-    Array.prototype.forEach.call($('ikonok').querySelectorAll('button'), function (b) {
+    Array.prototype.forEach.call($('ikonok').querySelectorAll('button[data-eszk]'), function (b) {
       var e = ESZKOZ[+b.getAttribute('data-eszk')];
       b.disabled = typeof e[2] === 'number' || !engedelyezett(e[2]);
       if (e[3]) b.setAttribute('aria-pressed', String(!!e[3]()));
@@ -2361,6 +2364,16 @@
     else if (e.key === 'ArrowRight') { e.preventDefault(); $('menusor').querySelector('[data-m="' + ((i + 1) % MENU.length) + '"] > button').focus(); }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); $('menusor').querySelector('[data-m="' + ((i - 1 + MENU.length) % MENU.length) + '"] > button').focus(); }
   });
+  // álló táblagépen (761–1000 px) a menüsor nem fér el a „Megnyitott képletek” és az „Elrendezés” mellett: ilyenkor az eszköztár
+  // (amúgy is két sorba törő) végére kerülnek, így nem foglalnak külön sort
+  var jobbHely = window.matchMedia ? window.matchMedia('(min-width: 761px) and (max-width: 1000px)') : null;
+  function jobbAthelyez() {
+    var j = document.querySelector('.fosor .jobb, #ikonok .jobb'); if (!j) return;
+    var cel = jobbHely && jobbHely.matches ? $('ikonok') : document.querySelector('.fosor');
+    if (j.parentNode !== cel) cel.appendChild(j);
+  }
+  if (jobbHely) { if (jobbHely.addEventListener) jobbHely.addEventListener('change', jobbAthelyez); else jobbHely.addListener(jobbAthelyez); }
+  jobbAthelyez();
   $('ikonok').addEventListener('click', function (e) {
     var b = e.target.closest('button[data-eszk]'); if (!b || b.disabled) return;
     vegrehajt(ESZKOZ[+b.getAttribute('data-eszk')][2]);

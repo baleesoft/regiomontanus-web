@@ -28,7 +28,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .cimsor, .fosor, .eszkoztar, .lepteto, .statusz { flex: 0 0 auto; }
 /* a menüsor jobb végén a megnyitott képletek és az elrendezés (így az eszköztár egy sorral kevesebb) */
 .fosor { display: flex; align-items: center; flex-wrap: wrap; background: var(--menu); border-bottom: 1px solid var(--line); position: relative; z-index: 30; }
-.fosor .menusor { flex: 1 1 auto; border-bottom: 0; }
+.fosor .menusor { flex: 0 1 auto; border-bottom: 0; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 /* címsor */
@@ -61,7 +61,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* eszköztár */
 .eszkoztar { display: flex; align-items: center; gap: 2px; padding: 3px 8px; background: var(--panel); border-bottom: 1px solid var(--line);
   position: relative; z-index: 20; flex-wrap: wrap; }
-.eszkoztar .ikonok { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; min-width: 0; }
+.eszkoztar .ikonok { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; min-width: 0; flex: 1 1 auto; }
+#ikonok .jobb { margin-left: auto; display: flex; align-items: center; gap: 6px; position: relative; padding: 0 0 0 8px; z-index: 31; }
+#ikonok .jobb .cimke { display: none; }
 .eszkoztar .sep { width: 1px; height: 22px; background: var(--line); margin: 0 4px; }
 .ikon { width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 3px;
   border: 1px solid transparent; background: transparent; cursor: pointer; padding: 0; }
@@ -73,6 +75,21 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .ikon:disabled svg { stroke: #bdb7ac; }
 .fosor .jobb { margin-left: auto; display: flex; align-items: center; gap: 8px; position: relative; padding: 2px 8px; }
 .fosor .jobb .gomb, .fosor .jobb .csoport button { padding-top: 2px; padding-bottom: 2px; }
+#listaGomb .rovid, #listaGomb .lista-ikon { display: none; }
+/* táblagépen (álló és fekvő): a „Megnyitott képletek” és az „Elrendezés” rövidebben, a menüsorral egy sorban */
+@media (max-width: 1280px) {
+  .fosor .jobb { gap: 6px; padding: 2px 6px; }
+  .fosor .jobb .cimke { display: none; }
+  #listaGomb .hosszu { display: none; }
+  #listaGomb .rovid { display: inline; }
+}
+@media (max-width: 1000px) {
+  .menusor > .mf > button { padding: 4px 7px; }
+  #listaGomb { gap: 3px; padding-left: 6px; padding-right: 4px; }
+  #listaGomb .rovid, #racs .hosszu { display: none; }
+  #listaGomb .lista-ikon { display: block; width: 16px; height: 16px; stroke-width: 1.8; }
+  .fosor .jobb .csoport button { padding-left: 7px; padding-right: 7px; }
+}
 .gomb { height: 30px; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid var(--line); background: #fff;
   border-radius: 3px; cursor: pointer; white-space: nowrap; }
 .gomb:hover:not(:disabled) { border-color: #9db6d8; background: #f4f8fd; }
@@ -161,6 +178,13 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .belyegek button { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; padding: 4px 10px 4px 4px; border: 1px solid var(--line);
   background: #fff; border-radius: 3px; font-size: 12px; cursor: pointer; }
 .belyegek button[aria-current="true"] { border: 2px solid var(--accent); background: var(--sel); }
+/* táblagépen, kis vagy alacsony kijelzőn egysoros bélyegek kis ábrával (állóban és fekvőben egyformán) */
+@media (max-width: 1366px), (max-height: 860px) and (min-width: 761px) {
+  .belyegek { padding: 4px 12px 0; gap: 6px; }
+  .belyegek button { padding: 2px 8px 2px 2px; gap: 6px; }
+  .belyegek .mini, .belyegek .mini svg { width: 24px; height: 24px; }
+  .belyegek .ln { flex-direction: row; align-items: baseline; gap: 6px; white-space: nowrap; }
+}
 .reszlet { flex: 1 1 0; min-height: 0; display: grid; padding: 12px; align-items: stretch;
   grid-template-columns: minmax(260px, var(--kerek-arany, 58%)) 12px minmax(300px, 1fr); }
 .reszlet .fo-kerek { min-width: 0; min-height: 0; display: flex; flex-direction: column; border: 2px solid var(--accent); background: #fff; }
@@ -669,9 +693,6 @@ body.kerek-max .lepteto { padding: 3px 10px; }
   .ikon { width: 27px; height: 27px; }
   .ikon svg { width: 16px; height: 16px; }
   .eszkoztar .sep { height: 18px; margin: 0 3px; }
-  .belyegek { padding: 4px 12px 0; }
-  .belyegek .mini { display: none; }
-  .belyegek button { padding: 2px 8px; }
   .reszlet { padding: 6px; }
   .reszlet .fo-kerek .fej { padding: 3px 8px; gap: 6px; }
   .reszlet .fo-kerek .fej .gomb { padding-top: 2px; padding-bottom: 2px; }

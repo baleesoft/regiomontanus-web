@@ -21,11 +21,11 @@
   <nav class="menusor" id="menusor" aria-label="Főmenü"></nav>
     <div class="jobb">
       <button type="button" class="gomb" id="listaGomb" aria-expanded="false" aria-haspopup="true" title="Megnyitott képletek (Alt+1…9)">
-        <span>Megnyitott képletek (<span id="db">0</span>)</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        <svg class="lista-ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h11v14M5 7h11v14H5z"/></svg><span><span class="hosszu">Megnyitott képletek </span><span class="rovid">Képletek </span>(<span id="db">0</span>)</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
       </button>
       <span class="cimke">Elrendezés:</span>
       <div class="csoport" role="group" aria-label="Elrendezés" id="racs">
-        <button type="button" data-r="1" aria-pressed="false">1 képlet</button>
+        <button type="button" data-r="1" aria-pressed="false" title="1 képlet">1<span class="hosszu"> képlet</span></button>
         <button type="button" data-r="2" aria-pressed="false">2</button>
         <button type="button" data-r="4" aria-pressed="false">4</button>
       </div>
