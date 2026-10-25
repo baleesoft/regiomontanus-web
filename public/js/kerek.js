@@ -788,7 +788,7 @@
   }
 
   /* ==================== „Placidus” stílus ====================
-   * Egy másik magyar asztrológiai program ábrájának mintájára (Balázs kérése, 2026-10-25): szürke háttér, kék vonalak,
+   * Egy másik magyar asztrológiai program ábrájának mintájára (Balázs kérése, 2026-10-25): fehér háttér, kék vonalak,
    * a jegyek jele a zodiákuskörön kívül, a planéták a körön belül fokszámmal (a perc felső indexben), vastag fekete
    * tengelyek nyíllal (ASC, MC), középen vastag kör a házszámgyűrűvel. A Regiomontanus-elemek (házurak, énjelölők,
    * F/i/R, jegyzetjelek, horoszkópolvasó, kiemelés) ugyanazokkal az osztályokkal és data-attribútumokkal, mint a
@@ -799,7 +799,7 @@
   var PF_SZIN = { 1: '#16168c', 2: '#c81e1e', 3: '#a3402b', 4: '#a3402b', 5: '#a3402b', 6: '#2a8a2a', 7: '#2a8a2a',
     8: '#5a5abe', 9: '#5a5abe', 10: '#8a1a8a', 11: '#8a1a8a', 12: '#8a1a8a' };
   var PF_VONAL = { 4: '6 4', 5: '6 4', 6: '7 4', 7: '2 3', 8: '2 3', 9: '2 3', 10: '5 3', 11: '5 3', 12: '5 3' };
-  var PLACIDUS_HATTER = '#c0c0c0';
+  var PLACIDUS_HATTER = '#ffffff';   // a minta szürke háttere helyett fehér (Balázs döntése, 2026-10-25)
 
   /** a körön elhelyezett elemek széttolása (fokban): a szomszédok legalább (w1 + w2) / 2 távolságra; a fix elemek nem mozdulnak */
   function korSzettol(lista, iter) {
@@ -866,7 +866,7 @@
     var R_FOK = R_PL - pxPl * 0.5 - (o.houseLords ? pxUr * 1.2 : 0) - pxFok * 0.6;   // fokszám
     var R_FSZ = R_FOK - pxFok * 0.75 - 6;                  // a fényszögvonalak végpontja
     var R_HN = 0.29 * R_ZB, R_HUB = 0.155 * R_ZB;          // házszámgyűrű, középső kör
-    var RV0 = kulso ? 1.34 * r : 1.21 * r;
+    var RV0 = kulso ? 1.34 * r : 1.22 * r;
 
     if (o.asztroszkop) o.asztroszkop.colors = o.colors;
     var AS = asztroTerv(o.asztroszkop, o.naksatra), G_AS = r * 0.01, R_AS0 = RV0 + G_AS;
@@ -891,10 +891,11 @@
     }
     fokVonalak(r, -1);
     if (kulso) fokVonalak(R_ZB, 1);
-    var jegyLat = o.jegyek || ALAP.jegyek, R_JEGY = kulso ? (r + R_ZB) / 2 : 1.135 * r;
+    // a jegyek jele közvetlenül a zodiákuskör mellett, rajtuk kívül (legkívül) az énjelölők
+    var jegyLat = o.jegyek || ALAP.jegyek, R_JEGY = kulso ? (r + R_ZB) / 2 : r + 6 + pxJegy * 0.5;
     for (var j = 0; j < 12; j++) {
       if (kulso) vonal(j * 30, R_ZB, r, { 'stroke-width': 1.6 * VV }, gZod);
-      else vonal(j * 30, r, 1.065 * r, { 'stroke-width': 3.5 * VV }, gZod);
+      else vonal(j * 30, r, r + pxJegy * 0.9, { 'stroke-width': 3.5 * VV }, gZod);
       var pjg = pont(j * 30 + 15, R_JEGY);
       if (jegyLat.indexOf(j) >= 0) {
         cim(szoveg(JEGY[j] + VS, halo({ x: f2(pjg[0]), y: f2(pjg[1]), 'font-size': pxJegy, 'font-family': SYM, 'text-anchor': 'middle',
@@ -913,7 +914,7 @@
     }
 
     /* ---------- házcsúcsok, tengelyek, középső kör, házszámok ---------- */
-    var hazHatar = o.hazHatar || ALAP.hazHatar, hazSzam = o.hazSzam || ALAP.hazSzam;
+    var hazHatar = o.hazHatar || ALAP.hazHatar, hazSzam = o.hazSzam || ALAP.hazSzam, arab = o.arab !== false;
     var gHaz = el('g', { stroke: VKEK }, svg);
     var mc = typeof k.mc === 'number' ? k.mc : cs[10];
     var tengelyHaz = kos0 ? {} : { 1: asc, 7: fokNorm(asc + 180), 10: mc, 4: fokNorm(mc + 180) };
@@ -944,8 +945,8 @@
       var kezd = cs[hs], veg = cs[hs % 12 + 1];
       if (veg < kezd) veg += 360;
       var hp = pont(kezd + (veg - kezd) / 2, (R_HUB + R_HN) / 2 + 2);
-      // a sarokházak római számmal (I, IV, VII, X), mint a mintán
-      szoveg(hazSzamStr(hs, false), { x: f2(hp[0]), y: f2(hp[1]), 'font-size': f2(pxHaz * (hs % 3 === 1 ? 0.92 : 1)), 'text-anchor': 'middle',
+      // a sarokházak az „arab számokkal” beállítás szerint (ki: I, IV, VII, X)
+      szoveg(hazSzamStr(hs, arab), { x: f2(hp[0]), y: f2(hp[1]), 'font-size': f2(pxHaz * (hs % 3 === 1 ? 0.92 : 1)), 'text-anchor': 'middle',
         'dominant-baseline': 'central', fill: KEK, 'data-olv': 'haz:' + hs, 'class': 'hazszam' }, gHsz);
       if (jJel['H_' + hs]) felkialtP(hp[0] + pxHaz * 0.8, hp[1] - pxHaz * 0.5, gHsz);
     }
@@ -1120,14 +1121,14 @@
       var gEn = el('g', { stroke: FEK, 'stroke-width': 1 }, svg), poz = {};
       k.planets.forEach(function (p) { poz[p.id] = p; });
       k.selfMarkers.forEach(function (m, enIndex) {
-        var ra, sz, rr = r + 13, nev;
+        var ra, sz, rr = R_JEGY + pxJegy * 0.5 + 6 + pxJelolo, nev;
         if (m.type === 'P') {
           if (!hely[m.id]) return;
           ra = o.selfMarkerAtOrigPlace ? poz[m.id].lon : hely[m.id].uj; sz = jegy(poz[m.id].lon); nev = PNEV[m.id];
         } else if (m.type === 'H') {
           ra = m.lon; sz = jegy(m.lon); rr += 18;
           // az ASC jelölője kicsit odébb, hogy a tengely nyila ne takarja
-          if (+m.house !== 1) { ra += 10; nev = hazSzamStr(+m.house, false) + '. ház'; } else { ra += 3.5; nev = 'Ascendens'; }
+          if (+m.house !== 1) { ra += 10; nev = hazSzamStr(+m.house, arab) + '. ház'; } else { ra += 3.5; nev = 'Ascendens'; }
         } else { ra = m.lon; sz = m.sign; nev = JNEV[m.sign] + ' (az 1. házba bezárt jegy)'; rr += 18; }
         var c = pont(ra, rr), u = pont(ra, 1), ux = -u[0], uy = -u[1], s = pxJelolo;
         var szinE = ff ? '#fff' : elemSzin(sz, o.colors);
