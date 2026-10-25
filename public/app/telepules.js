@@ -56,6 +56,18 @@
     }, function () { return hely; });
   };
 
+  /** Település név (+ országkód) szerint, pl. a Windows-os settings.ini „KivalTelepules=Budapest; H” értékéhez. Promise<t | null> */
+  R.telepulesNevrol = function (nev, kod) {
+    nev = String(nev || '').trim();
+    if (nev.length < 2) return Promise.resolve(null);
+    var n = norm(nev), b = helyi(nev).filter(function (t) { return norm(t.adatNev) === n || norm(t.nev) === n; });
+    if (b.length && (!kod || b[0].orszagKod === kod)) return Promise.resolve(b[0]);
+    return lekerdez('q=' + encodeURIComponent(nev) + '&max=20' + (/^[A-Za-z]{1,5}$/.test(kod || '') ? '&orszag=' + kod : '')).then(function (l) {
+      var t = l.filter(function (x) { return norm(x.adatNev || x.nev) === n || norm(x.nev) === n; })[0];
+      return t || l[0] || null;
+    }, function () { return null; });
+  };
+
   /**
    * input: a beviteli mező, lista: <ul role=listbox>, valaszt(t): a kiválasztott településsel hívódik.
    * t = { nev (megjelenített), adatNev (a .szk-ba), orszagKod, orszag, lat, lon, tz }

@@ -59,6 +59,8 @@ public/                ← ez a tartalom kerül fel FTP-vel a tárhelyre
                        csillagai szerint, J2000; generált)
   js/allocsillagok.js  a Windows-os program 737 állócsillaga (név, nómenklatúra, csillagkép latinul és magyarul)
   js/tarolo.js         beállítások, legutóbbi képletek, munkamenet (localStorage)
+  js/beallini.js       a Windows-os program beállításfájlja (settings.ini) – betöltés és mentés (Beállítások › Betöltés fájlból /
+                       Mentés fájlba); a webes beállítások a [WebRegiomontanus] szakaszban
   js/nyelv.js          a felület nyelve: magyar (alap) / angol (`?lang=en`, a választás megmarad); a megjelenő
                        szöveget fordítja (MutationObserver) a lang/<nyelv>.js szótárával; a data-nofordit részek kimaradnak
   lang/en.js           az angol szótár (generált: tools/i18n/build-lang.py)

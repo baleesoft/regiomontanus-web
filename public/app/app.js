@@ -2284,18 +2284,35 @@
       render(); uzen('Az alapértelmezések visszaálltak.');
     });
   }
+  /**
+   * Beállítások › Mentés fájlba / Betöltés fájlból: a Windows-os Regiomontanus settings.ini formátumában (js/beallini.js) –
+   * a Windows-os program is betölti; a webes beállítások a [WebRegiomontanus] szakaszban. Betölteni a régi webes .json is lehet.
+   */
   function beallLetolt() {
-    letolt(new Blob([JSON.stringify(beall, null, 2)], { type: 'application/json' }), 'regiomontanus-beallitasok.json');
+    letolt(new Blob([R.BeallIni.ir(beall)], { type: 'application/octet-stream' }), 'regiomontanus-beallitasok.ini');
+  }
+  function beallAlkalmaz(uj, uzenet) {
+    // az orbisok, a fényszögelt elemek és a házrendszer is változhat: minden képlet újraszámol
+    S.beallitasMent(uj); beall = S.beallitasok(); szimbolumAlkalmaz(); kepletek.forEach(function (k) { k.mini = miniSvg(k); });
+    mindSzamol(); render(); uzen(uzenet);
   }
   function beallBetolt() {
-    var i = document.createElement('input'); i.type = 'file'; i.accept = '.json,application/json';
+    var i = document.createElement('input'); i.type = 'file'; i.accept = '.ini,.json';
     i.onchange = function () {
       var f = i.files[0]; if (!f) return;
-      f.text().then(function (t) {
-        var v = JSON.parse(t), h = beall.hsys, s = beall.sid, al = alloKulcs();
-        S.beallitasMent(v); beall = S.beallitasok(); szimbolumAlkalmaz(); kepletek.forEach(function (k) { k.mini = miniSvg(k); });
-        if (beall.hsys !== h || beall.sid !== s || alloKulcs() !== al) mindSzamol();
-        render(); uzen('Beállítások betöltve.');
+      f.arrayBuffer().then(function (buf) {
+        if (/\.json$/i.test(f.name)) { beallAlkalmaz(JSON.parse(new TextDecoder().decode(buf)), 'Beállítások betöltve.'); return; }
+        var r = R.BeallIni.olvas(buf, beall), uj = r.beall, m = /^(.*?)\s*;\s*(\S*)\s*$/.exec(r.alapTelepules || '');
+        var tel = m ? m[1] : r.alapTelepules, kod = m ? m[2] : '';
+        var kesz = function () { beallAlkalmaz(uj, 'Beállítások betöltve: ' + f.name + '.'); };
+        if (tel && (tel !== (uj.alapHely || {}).telepules || (kod && kod !== uj.alapHely.orszagKod)) && R.telepulesNevrol) {
+          return R.telepulesNevrol(tel, kod).then(function (t) {
+            if (t) uj.alapHely = { telepules: t.adatNev || t.nev, telepulesKijelzes: t.nev !== (t.adatNev || t.nev) ? t.nev : '', orszag: t.orszag,
+              orszagKod: t.orszagKod, lat: t.lat, lon: t.lon, tz: t.tz };
+            kesz();
+          });
+        }
+        kesz();
       }).catch(function (e) { uzen('A beállításfájl nem olvasható: ' + e.message); });
     };
     i.click();

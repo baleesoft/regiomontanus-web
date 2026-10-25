@@ -98,6 +98,7 @@
     return b;
   };
   S.beallitasMent = function (b) { return ir('beallitasok', b); };
+  S.osszefesul = osszefesul;
   S.gyari = function () { torol('beallitasok'); return melyMasol(S.ALAP); };
 
   /* ---------- legutóbbi képletek (adatként, mert a böngésző nem tud fájlútvonalat megjegyezni) ---------- */

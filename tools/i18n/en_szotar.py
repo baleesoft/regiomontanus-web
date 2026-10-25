@@ -449,13 +449,15 @@ SZAVAK.update({
     'a zóna nem illik a földrajzi hosszúsághoz – ellenőrizd az időpontot': 'the time zone does not match the longitude – check the time',
 })
 
+SZAVAK.update({'Ez nem Regiomontanus beállításfájl.': 'This is not a Regiomontanus settings file.'})
+
 MINTAK = [
     # sorrend számít: a pontosabbak előbb
     ('Nincs ilyen nap: {0} (Julián-naptár).', 'No such day: {0} (Julian calendar).'), ('i. e. {0}', 'BC {0}'),
     ('{0}: nem nyitható meg – {1}', '{0}: cannot be opened – {1}'),
     ('{0}: csak .szk / .hor képletfájl nyitható meg.', '{0}: only .szk / .hor chart files can be opened.'),
     ('{0}: csak .szk / .hor képletfájl (és .mgj jegyzetfájl) nyitható meg.', '{0}: only .szk / .hor chart files (and .mgj notes files) can be opened.'),
-    ('{0} (Placidus): {1}.', '{0} (Placidus): {1}.'), ('{0} (Morinus): {1}.', '{0} (Morinus): {1}.'),
+    ('Beállítások betöltve: {0}.', 'Settings loaded: {0}.'), ('{0} (Placidus): {1}.', '{0} (Placidus): {1}.'), ('{0} (Morinus): {1}.', '{0} (Morinus): {1}.'),
     ('a zóna ({0}) nem illik a földrajzi hosszúsághoz – ellenőrizd az időpontot', 'the time zone ({0}) does not match the longitude – check the time'),
     ('zónaidő {0}-ben – akkor még a helyi középidő volt használatban, ellenőrizd', 'zone time in {0} – local mean time was still in use then, check it'),
     ('Időszámításunk előtti dátum (i. e. {0}) még nem támogatott.', 'Dates BC ({0} BC) are not supported yet.'),

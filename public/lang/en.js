@@ -234,6 +234,7 @@ Regio.Nyelv.szotar("en",
 "Ez nem Morinus horoszkópfájl.": "This is not a Morinus horoscope file.",
 "Ez nem PLACIDUS v4.0 horoszkópfájl.": "This is not a PLACIDUS v4.0 horoscope file.",
 "Ez nem PLACIDUS v4.0 és nem Morinus horoszkópfájl.": "This is neither a PLACIDUS v4.0 nor a Morinus horoscope file.",
+"Ez nem Regiomontanus beállításfájl.": "This is not a Regiomontanus settings file.",
 "Ez nem Regiomontanus képletfájl (hiányzik a [BirthInfo] szakasz).": "This is not a Regiomontanus chart file (the [BirthInfo] section is missing).",
 "Fejléc": "Header",
 "Fejléc megjelenítése": "Show header",
@@ -1007,6 +1008,10 @@ Regio.Nyelv.szotar("en",
 [
 "{0}: csak .szk / .hor képletfájl (és .mgj jegyzetfájl) nyitható meg.",
 "{0}: only .szk / .hor chart files (and .mgj notes files) can be opened."
+],
+[
+"Beállítások betöltve: {0}.",
+"Settings loaded: {0}."
 ],
 [
 "{0} (Placidus): {1}.",
