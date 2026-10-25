@@ -214,7 +214,10 @@
             var kulcs = x.ut + '|' + f.lastModified + '|' + f.size;
             if (cache[kulcs] === undefined) {
               return f.arrayBuffer().then(function (b) {
-                try { var p2 = RegioSzk.parse(b); cache[kulcs] = p2.bc ? null : RegioSzk.toAdat(p2); } catch (e) { cache[kulcs] = null; }
+                try {
+                  if (/\.(hor|ho_)$/i.test(x.nev)) cache[kulcs] = RegioHor.toAdat(RegioHor.parse(b)).adat;
+                  else { var p2 = RegioSzk.parse(b); cache[kulcs] = p2.bc ? null : RegioSzk.toAdat(p2); }
+                } catch (e) { cache[kulcs] = null; }
                 if (cache[kulcs]) ki.push({ ut: x.ut, nev: x.nev, adat: cache[kulcs], file: x.file, handle: x.handle, kulcs: kulcs, sorszam: i - 1 });
               });
             }

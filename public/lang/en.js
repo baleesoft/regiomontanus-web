@@ -229,6 +229,7 @@ Regio.Nyelv.szotar("en",
 "Eris": "Eris",
 "Erre az időpontra nincs adat:": "No data for this time:",
 "Eszköztár": "Toolbar",
+"Ez nem PLACIDUS v4.0 horoszkópfájl.": "This is not a PLACIDUS v4.0 horoscope file.",
 "Ez nem Regiomontanus képletfájl (hiányzik a [BirthInfo] szakasz).": "This is not a Regiomontanus chart file (the [BirthInfo] section is missing).",
 "Fejléc": "Header",
 "Fejléc megjelenítése": "Show header",
@@ -623,6 +624,7 @@ Regio.Nyelv.szotar("en",
 "Orbis értékek beállítása": "Orb settings",
 "Oroszlán": "Leo",
 "Ország": "Country",
+"PLACIDUS horoszkóp": "PLACIDUS horoscope",
 "Pallas": "Pallas",
 "Pallas Athene": "Pallas Athene",
 "Perc": "Minute",
@@ -829,6 +831,7 @@ Regio.Nyelv.szotar("en",
 "Zóna": "Zone",
 "Zóna (automatikus, történeti nyári időszámítással)": "Zone (automatic, with historical daylight saving)",
 "a Regiomontanus mappában (hors\\ és almappái)": "in the Regiomontanus folder (hors\\ and subfolders)",
+"a fájlban tárolt világidő nem egyezik a helyi idővel és a zónával": "the universal time stored in the file does not match the local time and the zone",
 "a képlet ideje": "chart time",
 "a megnyitott képletek közt": "among the open charts",
 "a promisszor ekliptikai szélességével": "with the promissor’s ecliptic latitude",
@@ -971,6 +974,34 @@ Regio.Nyelv.szotar("en",
 "⤢ Nagy ábra": "⤢ Large chart"
 },
 [
+[
+"{0}: nem nyitható meg – {1}",
+"{0}: cannot be opened – {1}"
+],
+[
+"{0}: csak .szk / .hor képletfájl nyitható meg.",
+"{0}: only .szk / .hor chart files can be opened."
+],
+[
+"{0}: csak .szk / .hor képletfájl (és .mgj jegyzetfájl) nyitható meg.",
+"{0}: only .szk / .hor chart files (and .mgj notes files) can be opened."
+],
+[
+"{0} (Placidus): {1}.",
+"{0} (Placidus): {1}."
+],
+[
+"a zóna ({0}) nem illik a földrajzi hosszúsághoz – ellenőrizd az időpontot",
+"the time zone ({0}) does not match the longitude – check the time"
+],
+[
+"zónaidő {0}-ben – akkor még a helyi középidő volt használatban, ellenőrizd",
+"zone time in {0} – local mean time was still in use then, check it"
+],
+[
+"Időszámításunk előtti dátum (i. e. {0}) még nem támogatott.",
+"Dates BC ({0} BC) are not supported yet."
+],
 [
 "{0} jegyében {1} fokon a(z) {2}. Házban",
 "{0} {1}, house {2}"
@@ -1390,6 +1421,10 @@ Regio.Nyelv.szotar("en",
 [
 "{0} / {1}",
 "{0} / {1}"
+],
+[
+"{0}; {1}",
+"{0}; {1}"
 ],
 [
 "{0}, {1}",

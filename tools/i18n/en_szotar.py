@@ -429,8 +429,20 @@ SZAVAK.update({
     'Számítás': 'Calculation', 'Irány': 'Direction',
 })
 
+SZAVAK.update({
+    'PLACIDUS horoszkóp': 'PLACIDUS horoscope', 'Ez nem PLACIDUS v4.0 horoszkópfájl.': 'This is not a PLACIDUS v4.0 horoscope file.',
+    'a fájlban tárolt világidő nem egyezik a helyi idővel és a zónával': 'the universal time stored in the file does not match the local time and the zone',
+})
+
 MINTAK = [
     # sorrend számít: a pontosabbak előbb
+    ('{0}: nem nyitható meg – {1}', '{0}: cannot be opened – {1}'),
+    ('{0}: csak .szk / .hor képletfájl nyitható meg.', '{0}: only .szk / .hor chart files can be opened.'),
+    ('{0}: csak .szk / .hor képletfájl (és .mgj jegyzetfájl) nyitható meg.', '{0}: only .szk / .hor chart files (and .mgj notes files) can be opened.'),
+    ('{0} (Placidus): {1}.', '{0} (Placidus): {1}.'),
+    ('a zóna ({0}) nem illik a földrajzi hosszúsághoz – ellenőrizd az időpontot', 'the time zone ({0}) does not match the longitude – check the time'),
+    ('zónaidő {0}-ben – akkor még a helyi középidő volt használatban, ellenőrizd', 'zone time in {0} – local mean time was still in use then, check it'),
+    ('Időszámításunk előtti dátum (i. e. {0}) még nem támogatott.', 'Dates BC ({0} BC) are not supported yet.'),
     ('{0} jegyében {1} fokon a(z) {2}. Házban', '{0} {1}, house {2}'), ('{0} jegyében {1} fokon', '{0} {1}'),
     ('{0} éves {1} hónapos {2} napos', '{0} years {1} months {2} days'), ('{0} év {1} hónapos korra', 'for age {0} years {1} months'),
     ('{0} éves korra', 'for age {0}'), ('{0} év {1} hó', '{0} y {1} m'), ('{0} év', '{0} y'), ('{0} é', '{0} y'),
@@ -484,5 +496,5 @@ MINTAK = [
     ('A(z) „{0}” képlet változásai nincsenek elmentve. Mented bezárás előtt?', 'The changes of the “{0}” chart are not saved. Save before closing?'),
     # általános elválasztók, a legerősebbtől
     ('{0} · {1}', '{0} · {1}'), ('{0} – {1}', '{0} – {1}'), ('{0} - {1}', '{0} - {1}'), ('{0} ({1})', '{0} ({1})'), ('{0} ({1}) {2}', '{0} ({1}) {2}'), ('{0}: {1}', '{0}: {1}'),
-    ('{0} / {1}', '{0} / {1}'), ('{0}, {1}', '{0}, {1}'), ('{0}:', '{0}:'), ('{0}…', '{0}…'), ('{0}...', '{0}...'), ('{0} *', '{0} *'), ('{0}.', '{0}.'),
+    ('{0} / {1}', '{0} / {1}'), ('{0}; {1}', '{0}; {1}'), ('{0}, {1}', '{0}, {1}'), ('{0}:', '{0}:'), ('{0}…', '{0}…'), ('{0}...', '{0}...'), ('{0} *', '{0} *'), ('{0}.', '{0}.'),
 ]

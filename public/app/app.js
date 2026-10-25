@@ -1681,7 +1681,9 @@
   }
 
   /* ---------- fájlok ---------- */
+  var HOR = /\.(hor|ho_)$/i;
   function fajlbolMegnyit(nev, buf, handle) {
+    if (HOR.test(nev)) return horMegnyit(nev, buf);
     try {
       var p = RegioSzk.parse(buf);
       if (p.bc) throw new Error('Időszámításunk előtti dátum még nem támogatott.');
@@ -1690,11 +1692,24 @@
       return true;
     } catch (e) { uzen(nev + ': nem nyitható meg – ' + e.message); return false; }
   }
+  /**
+   * A PLACIDUS v4.0 horoszkópfájl (.hor) új, még nem mentett képletként nyílik meg (a .hor-t sosem írjuk felül;
+   * mentéskor .szk lesz belőle); az ellenőrzések figyelmeztetései üzenetben.
+   */
+  function horMegnyit(nev, buf) {
+    try {
+      var r = RegioHor.toAdat(RegioHor.parse(buf));
+      hozzaad(r.adat, null);
+      if (r.figyelmeztetes.length) uzen(nev + ' (Placidus): ' + r.figyelmeztetes.join('; ') + '.');
+      return true;
+    } catch (e) { uzen(nev + ': nem nyitható meg – ' + e.message); return false; }
+  }
   function megnyit() {
     if (window.showOpenFilePicker) {
       window.showOpenFilePicker({ multiple: true, types: [fk('jegyzet')
         ? { description: 'Regiomontanus képlet (és jegyzetfájl)', accept: { 'application/octet-stream': ['.szk', '.mgj'] } }
-        : { description: 'Regiomontanus képlet', accept: { 'application/octet-stream': ['.szk'] } }] })
+        : { description: 'Regiomontanus képlet', accept: { 'application/octet-stream': ['.szk'] } },
+        { description: 'PLACIDUS horoszkóp', accept: { 'application/octet-stream': ['.hor', '.ho_'] } }] })
         .then(function (hl) {
           var mgj = [];
           return hl.reduce(function (p, h) {
@@ -1706,13 +1721,13 @@
         }).catch(function (e) { if (e && e.name !== 'AbortError') uzen('Megnyitási hiba: ' + e.message); });
       return;
     }
-    $('fajlInput').accept = fk('jegyzet') ? '.szk,.mgj' : '.szk';
+    $('fajlInput').accept = fk('jegyzet') ? '.szk,.hor,.ho_,.mgj' : '.szk,.hor,.ho_';
     $('fajlInput').click();
   }
   function fajlokMegnyit(lista) {
-    var l = Array.prototype.slice.call(lista), szk = l.filter(function (f) { return /\.szk$/i.test(f.name); }),
+    var l = Array.prototype.slice.call(lista), szk = l.filter(function (f) { return /\.szk$/i.test(f.name) || HOR.test(f.name); }),
       mgj = l.filter(function (f) { return /\.mgj$/i.test(f.name); });
-    l.forEach(function (f) { if (szk.indexOf(f) < 0 && mgj.indexOf(f) < 0) uzen(f.name + (fk('jegyzet') ? ': csak .szk képletfájl (és .mgj jegyzetfájl) nyitható meg.' : ': csak .szk képletfájl nyitható meg.')); });
+    l.forEach(function (f) { if (szk.indexOf(f) < 0 && mgj.indexOf(f) < 0) uzen(f.name + (fk('jegyzet') ? ': csak .szk / .hor képletfájl (és .mgj jegyzetfájl) nyitható meg.' : ': csak .szk / .hor képletfájl nyitható meg.')); });
     return szk.reduce(function (p, f) {
       return p.then(function () { return f.arrayBuffer().then(function (b) { fajlbolMegnyit(f.name, b, null); }); });
     }, Promise.resolve()).then(function () { return mgjParosit(mgj); });
@@ -2556,7 +2571,7 @@
   R.Kereses.init({
     se: function () { return se; }, beall: beall, uzen: uzen, kepletek: function () { return kepletek; },
     aktival: function (k) { var i = kepletek.indexOf(k); if (i >= 0) aktival(i); },
-    megnyitFajl: function (nev, buf, handle) { if (fajlbolMegnyit(nev, buf, handle) && handle) S.legutobbiHozzaad(akt().adat, nev); }
+    megnyitFajl: function (nev, buf, handle) { if (fajlbolMegnyit(nev, buf, handle) && handle && !HOR.test(nev)) S.legutobbiHozzaad(akt().adat, nev); }
   });
   menuEpit(); eszkoztarEpit(); elvalasztoInit(); olvasoInit();
   munkamenetBetolt();

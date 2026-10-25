@@ -120,7 +120,7 @@
   }
 
   /**
-   * Az összes .szk a választott mappában – a Windows-os FindFilesW szerint: ha van hors\ almappa, azt járja be,
+   * Az összes .szk (és PLACIDUS .hor) a választott mappában – a Windows-os FindFilesW szerint: ha van hors\ almappa, azt járja be,
    * rekurzívan, előbb a mappa fájljai, majd az almappák; a „.”-tal kezdődő mappák kimaradnak.
    * Promise<[{ ut: 'hors/x/a.szk', nev: 'a.szk', file?: File, handle?: FileSystemFileHandle }]>
    */
@@ -128,7 +128,7 @@
     if (lista) {
       var van = lista.some(function (x) { return /^hors\//i.test(x.ut); });
       return Promise.resolve(lista.filter(function (x) {
-        return /\.szk$/i.test(x.ut) && (!van || /^hors\//i.test(x.ut)) && !/(^|\/)\.[^/]*\//.test(x.ut);
+        return /\.(szk|hor|ho_)$/i.test(x.ut) && (!van || /^hors\//i.test(x.ut)) && !/(^|\/)\.[^/]*\//.test(x.ut);
       }).map(function (x) { return { ut: x.ut, nev: x.ut.split('/').pop(), file: x.file }; }));
     }
     if (!gyoker) return Promise.resolve([]);
@@ -140,7 +140,7 @@
         return it.next().then(function (r) {
           if (r.done) return null;
           var e = r.value;
-          if (e.kind === 'file' && /\.szk$/i.test(e.name)) fajlok.push(e);
+          if (e.kind === 'file' && /\.(szk|hor|ho_)$/i.test(e.name)) fajlok.push(e);
           else if (e.kind === 'directory' && e.name.charAt(0) !== '.') mappak.push(e);
           return kov();
         });
