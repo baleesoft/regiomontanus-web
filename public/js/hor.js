@@ -59,7 +59,7 @@
   function parse(buf) {
     var d = new Uint8Array(buf);
     if (szddE(d)) d = szdd(d);
-    if (d.length < 0x884 || cp1250(d.subarray(0, FEJ.length)) !== FEJ) throw new Error('Ez nem PLACIDUS v4.0 horoszkópfájl.');
+    if (d.length < 0x884 || cp1250(d.subarray(0, FEJ.length)) !== FEJ) throw new Error('Ez nem PLACIDUS v4.0 és nem Morinus horoszkópfájl.');
     var p = {
       nev: szoveg(d, 0x20, 0x49), tipus: szoveg(d, 0x49, 0x54),
       ut: idopont(d, 0x57), helyi: idopont(d, 0x80),
@@ -129,5 +129,18 @@
     return { adat: a, figyelmeztetes: fig };
   }
 
-  global.RegioHor = { parse: parse, toAdat: adatba, szdd: szdd, FEJ: FEJ };
+  /**
+   * Bármelyik .hor (PLACIDUS v4.0, tömörítve is, vagy Morinus – js/morinus.js) beolvasása:
+   * { adat, figyelmeztetes: [], forras: 'Placidus' | 'Morinus' }; hibánál kivételt dob.
+   */
+  function olvas(buf) {
+    if (global.RegioMorinus && global.RegioMorinus.morinusE(buf)) {
+      var m = global.RegioMorinus.toAdat(global.RegioMorinus.parse(buf));
+      m.forras = 'Morinus'; return m;
+    }
+    var r = adatba(parse(buf));
+    r.forras = 'Placidus'; return r;
+  }
+
+  global.RegioHor = { parse: parse, toAdat: adatba, olvas: olvas, szdd: szdd, FEJ: FEJ };
 })(typeof window !== 'undefined' ? window : globalThis);

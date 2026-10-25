@@ -215,7 +215,7 @@
             if (cache[kulcs] === undefined) {
               return f.arrayBuffer().then(function (b) {
                 try {
-                  if (/\.(hor|ho_)$/i.test(x.nev)) cache[kulcs] = RegioHor.toAdat(RegioHor.parse(b)).adat;
+                  if (/\.(hor|ho_)$/i.test(x.nev)) cache[kulcs] = RegioHor.olvas(b).adat;
                   else { var p2 = RegioSzk.parse(b); cache[kulcs] = RegioSzk.toAdat(p2); }
                 } catch (e) { cache[kulcs] = null; }
                 if (cache[kulcs]) ki.push({ ut: x.ut, nev: x.nev, adat: cache[kulcs], file: x.file, handle: x.handle, kulcs: kulcs, sorszam: i - 1 });

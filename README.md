@@ -39,6 +39,7 @@ public/                ← ez a tartalom kerül fel FTP-vel a tárhelyre
                        kiegészítések: [Megjegyzes] elemenkénti jegyzetek, [Other] PictureData kicsinyített fénykép)
   js/hor.js            a magyar PLACIDUS v4.0 program horoszkópfájljainak (.hor, tömörítve .ho_) beolvasása: név, nem,
                        Gergely/Julián dátum, világidő / helyi középidő / zónaidő, koordináták, település, jegyzet, életesemények
+  js/morinus.js        a Morinus program horoszkópfájljainak (.hor: egymás utáni Python-pickle-ök, 0. és bináris protokoll) beolvasása
   js/rtf.js            a Windows-os jegyzetek (RichEdit RTF, RegiomontanusWIN szimbólumok) és a .mgj fájl olvasása/írása
   js/nyomtatas.js      A4-es nyomtatási / exportálási lapkép SVG-ben (fejléc, kerék, táblák, lábléc)
   js/kerek.js          a képletkerék SVG-ben, a Windows-os program geometriája szerint (összevetésnél bi-kerék,

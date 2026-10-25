@@ -1692,14 +1692,14 @@
     } catch (e) { uzen(nev + ': nem nyitható meg – ' + e.message); return false; }
   }
   /**
-   * A PLACIDUS v4.0 horoszkópfájl (.hor) új, még nem mentett képletként nyílik meg (a .hor-t sosem írjuk felül;
+   * A PLACIDUS v4.0 vagy Morinus horoszkópfájl (.hor) új, még nem mentett képletként nyílik meg (a .hor-t sosem írjuk felül;
    * mentéskor .szk lesz belőle); az ellenőrzések figyelmeztetései üzenetben.
    */
   function horMegnyit(nev, buf) {
     try {
-      var r = RegioHor.toAdat(RegioHor.parse(buf));
+      var r = RegioHor.olvas(buf);
       hozzaad(r.adat, null);
-      if (r.figyelmeztetes.length) uzen(nev + ' (Placidus): ' + r.figyelmeztetes.join('; ') + '.');
+      if (r.figyelmeztetes.length) uzen(nev + ' (' + r.forras + '): ' + r.figyelmeztetes.join('; ') + '.');
       return true;
     } catch (e) { uzen(nev + ': nem nyitható meg – ' + e.message); return false; }
   }
@@ -1710,7 +1710,7 @@
         : { description: 'Regiomontanus képlet', accept: { 'application/octet-stream': ['.szk'] } },
         // a .ho_ (tömörített) itt nem adható meg (a böngésző csak betűt/számot fogad el a kiterjesztésben):
         // „Minden fájl” választással vagy ráhúzással nyitható meg
-        { description: 'PLACIDUS horoszkóp', accept: { 'application/octet-stream': ['.hor'] } }] })
+        { description: 'PLACIDUS / Morinus horoszkóp', accept: { 'application/octet-stream': ['.hor'] } }] })
         .then(function (hl) {
           var mgj = [];
           return hl.reduce(function (p, h) {
