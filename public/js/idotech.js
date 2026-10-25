@@ -19,21 +19,17 @@
   function kul(a, b) { var d = fokNorm(a - b); return d >= 180 ? d - 360 : d; }
   I.kul = kul;
 
-  /** UT Julián-dátum -> helyi idő (óra eltolással) mezőkre bontva */
-  function jdBol(se, jd, orak) {
-    var r = se.revjul(jd + orak / 24), h = r.hour, ora = Math.floor(h), perc = Math.floor((h - ora) * 60),
-      mp = Math.round(((h - ora) * 60 - perc) * 60);
-    if (mp === 60) { mp = 0; perc++; }
-    if (perc === 60) { perc = 0; ora++; }
-    var d = new Date(0); d.setUTCFullYear(r.year, r.month - 1, r.day); d.setUTCHours(ora, perc, mp, 0);
-    return { ev: d.getUTCFullYear(), ho: d.getUTCMonth() + 1, nap: d.getUTCDate(), ora: d.getUTCHours(), perc: d.getUTCMinutes(), mp: d.getUTCSeconds() };
-  }
+  /** UT Julián-dátum -> helyi idő (óra eltolással) mezőkre bontva, a megadott naptárban (julian: Julián) */
+  function jdBol(se, jd, orak, julian) { return R.jdBont(jd + orak / 24, !!julian); }
   I.jdBol = jdBol;
+  /** Az időbeli technikák képlete a radix naptárában marad, ha az 1582.10.15 (Gergely-naptár bevezetése) előtt van */
+  function naptarJd(alap, jd) { return alap && alap.naptar === 'J' && jd < 2299160.5 ? 'J' : 'G'; }
+  I.naptarJd = naptarJd;
 
   /** A képlet UT Julián-dátuma */
   I.jd = function (se, a) {
     var z = K.zona(a), h = a.ismeretlen ? 12 : a.ora, mi = a.ismeretlen ? 0 : a.perc, s = a.ismeretlen ? 0 : (a.mp || 0);
-    return se.julday(a.ev, a.ho, a.nap, h + mi / 60 + s / 3600 - z.orak);
+    return se.julday(a.ev, a.ho, a.nap, h + mi / 60 + s / 3600 - z.orak, K.gflag(a));
   };
 
   /**
@@ -56,7 +52,8 @@
       orak = hely && hely.eltolas !== undefined ? +hely.eltolas : K.zona(a).orak;
       a.zonaMod = 'kezi'; a.eltolas = orak; a.tzKod = hely && hely.tzKod !== undefined ? hely.tzKod : a.tzKod;
     }
-    var l = jdBol(se, jd, orak);
+    a.naptar = naptarJd(alap, jd);
+    var l = jdBol(se, jd, orak, a.naptar === 'J');
     a.ev = l.ev; a.ho = l.ho; a.nap = l.nap; a.ora = l.ora; a.perc = l.perc; a.mp = l.mp;
     return a;
   };
@@ -84,7 +81,8 @@
   I.progr = function (se, a, napok, orak) {
     var jd0 = I.jd(se, a), z = K.zona(a), jd = jd0 + napok + orak / 24;
     var u = K.masol(a); delete u.eredeti;
-    var l = jdBol(se, jd, z.orak);
+    u.naptar = naptarJd(a, jd);
+    var l = jdBol(se, jd, z.orak, u.naptar === 'J');
     u.ev = l.ev; u.ho = l.ho; u.nap = l.nap; u.ora = l.ora; u.perc = l.perc; u.mp = l.mp;
     if (u.zonaMod !== 'lmt') { u.zonaMod = 'kezi'; u.eltolas = z.orak; u.tzKod = z.kod; u.nyari = z.nyari; }
     u.ismeretlen = false; u.jegyzet = ''; u.cimkek = [];
@@ -112,7 +110,7 @@
       ki.push(jd);
     }
     keres(27, 2); ki.push(jdAkt); keres(-27, -2); keres(-54, -2);
-    var szulDatum = new Date(Date.UTC(szul.ev, szul.ho - 1, szul.nap));
+    var szulDatum = new Date(0); szulDatum.setUTCFullYear(szul.ev, szul.ho - 1, szul.nap);
     return ki.map(function (jd) {
       var napok = jd - jdSzul, d = new Date(szulDatum.getTime());
       d.setUTCMonth(d.getUTCMonth() + Math.round(napok * 12));

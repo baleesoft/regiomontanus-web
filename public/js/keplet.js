@@ -6,7 +6,9 @@
  * Képletadat (a .szk [BirthInfo] megfelelője):
  *   { nev, ev, ho, nap, ora, perc, mp, ismeretlen, telepules (adatbázis-név → .szk LocCity),
  *     telepulesKijelzes (pl. „Bécs (Wien)”), orszag, orszagKod, lat, lon,
- *     zonaMod: 'iana' | 'lmt' | 'kezi', tz, eltolas, tzKod, nyari, jegyzet, cimkek: [], tipus: 'radix' | 'kos0' | 'aktualis' }
+ *     zonaMod: 'iana' | 'lmt' | 'kezi', tz, eltolas, tzKod, nyari, jegyzet, cimkek: [], tipus: 'radix' | 'kos0' | 'aktualis',
+ *     naptar: 'G' | 'J' (Gergely / Julián; hiányzó = Gergely) }
+ * Az év csillagászati: 0 = i. e. 1, −62 = i. e. 63 (R.evStr).
  */
 (function (global) {
   'use strict';
@@ -18,9 +20,12 @@
   K.ures = function () {
     return { nev: '', ev: 2000, ho: 1, nap: 1, ora: 12, perc: 0, mp: 0, ismeretlen: false,
       telepules: 'Budapest', orszag: 'Hungary', orszagKod: 'H', lat: 47.5, lon: 19.0666667,
-      zonaMod: 'iana', tz: 'Europe/Budapest', eltolas: 1, tzKod: '', nyari: false, jegyzet: '', cimkek: [], tipus: 'radix' };
+      zonaMod: 'iana', tz: 'Europe/Budapest', eltolas: 1, tzKod: '', nyari: false, jegyzet: '', cimkek: [], tipus: 'radix', naptar: 'G' };
   };
   K.masol = function (a) { return JSON.parse(JSON.stringify(a)); };
+  K.julian = function (a) { return a.naptar === 'J'; };
+  /** a Swiss Ephemeris naptárjelzője (SE_GREG_CAL = 1, SE_JUL_CAL = 0) */
+  K.gflag = function (a) { return a.naptar === 'J' ? 0 : 1; };
   /** A település megjelenített neve (magyar név, ha van) */
   K.helyNev = function (a) { return a.telepulesKijelzes || a.telepules || ''; };
 
@@ -30,11 +35,13 @@
   /** A léptető eltolása (év, hó, nap, óra, perc) a helyi időn, naptárhelyesen. */
   K.leptet = function (a, l) {
     if (!l || !(l[0] || l[1] || l[2] || l[3] || l[4])) return a;
-    var u = K.masol(a), d = new Date(0);
-    d.setUTCFullYear(a.ev + l[0], a.ho - 1 + l[1], a.nap + l[2]);
-    d.setUTCHours(a.ora + l[3], a.perc + l[4], a.mp || 0, 0);
-    u.ev = d.getUTCFullYear(); u.ho = d.getUTCMonth() + 1; u.nap = d.getUTCDate();
-    u.ora = d.getUTCHours(); u.perc = d.getUTCMinutes(); u.mp = d.getUTCSeconds();
+    // a képlet naptárában (a hónap túlcsordulása a következő hónapba, mint a JavaScript Date-nél)
+    var u = K.masol(a), jul = K.julian(a), y = a.ev + l[0], m = a.ho + l[1];
+    y += Math.floor((m - 1) / 12); m = ((m - 1) % 12 + 12) % 12 + 1;
+    var mp = (a.ora + l[3]) * 3600 + (a.perc + l[4]) * 60 + (a.mp || 0), napok = a.nap - 1 + l[2] + Math.floor(mp / 86400);
+    mp = ((mp % 86400) + 86400) % 86400;
+    var t = R.jdBont(R.jdNap(y, m, 1, jul) + napok + mp / 86400, jul);
+    u.ev = t.ev; u.ho = t.ho; u.nap = t.nap; u.ora = t.ora; u.perc = t.perc; u.mp = t.mp;
     if (u.zonaMod === 'kezi' && u.tz && R.zonaErvenyes(u.tz)) u.zonaMod = 'iana'; // léptetve a valódi zónaszabály érvényes
     return u;
   };
@@ -42,7 +49,8 @@
   /** Zónaeltolás órában + leírás. LMT: a Windows-os program szerint egész percre kerekítve. */
   K.zona = function (a) {
     var h = a.ismeretlen ? 12 : a.ora, mi = a.ismeretlen ? 0 : a.perc, s = a.ismeretlen ? 0 : (a.mp || 0);
-    if (a.zonaMod === 'lmt') {
+    // IANA-zóna i. e. dátumnál és Julián-naptárnál nincs (a böngésző adatbázisa ott úgyis a helyi középidőt adná): LMT
+    if (a.zonaMod === 'lmt' || (a.zonaMod === 'iana' && (a.ev < 1 || K.julian(a)))) {
       var fok = Math.trunc(Math.abs(a.lon)), perc = Math.round((Math.abs(a.lon) - fok) * 60);
       var pp = Math.round(4 * fok + (4 / 60) * perc), o = (a.lon < 0 ? -pp : pp) / 60;
       return { orak: o, kod: 'LMT', nyari: false, info: 'LMT (helyi középidő) → ' + R.oraStr(o) };
@@ -97,11 +105,11 @@
   K.szamol = function (se, a, opt) {
     opt = opt || {};
     var SE = SwissEph.SE, hsys = opt.hsys || 'P', sid = !!opt.sid;
-    if (a.ev < 1 || a.ev > 2999) return Promise.reject(new Error('Az év 1 és 2999 között lehet.'));
+    if (!R.evJo(a.ev)) return Promise.reject(new Error(R.EV_HIBA));
     var z = K.zona(a);
     var h = a.ismeretlen ? 12 : a.ora, mi = a.ismeretlen ? 0 : a.perc, s = a.ismeretlen ? 0 : (a.mp || 0);
-    var jd = se.julday(a.ev, a.ho, a.nap, h + mi / 60 + s / 3600 - z.orak);
-    var ut = se.revjul(jd);
+    var jd = se.julday(a.ev, a.ho, a.nap, h + mi / 60 + s / 3600 - z.orak, K.gflag(a));
+    var ut = se.revjul(jd, K.gflag(a));
     // a kiválasztott kisbolygók közül azok, amelyek nincsenek az alaplistában (Eris, üstökösök, Magellán) – saját adatfájllal
     var kisb = opt.kisb && opt.kisb.be ? (opt.kisb.ids || []).filter(function (id) { return R.SZAMOLT.indexOf(id) < 0 && R.kisbolygo(id); }) : [];
     var kisbFajlok = [];
@@ -269,7 +277,7 @@
     if (se.riseTrans && Math.abs(a.lat) < 89.9) {
       var kel = function (j) { return se.riseTrans(j, 0, 1, a.lon, a.lat, 0); };
       var nyug = function (j) { return se.riseTrans(j, 0, 2, a.lon, a.lat, 0); };
-      var ejfel = se.julday(a.ev, a.ho, a.nap, 0) - z.orak * nap;   // a születési nap helyi éjfele
+      var ejfel = se.julday(a.ev, a.ho, a.nap, 0, K.gflag(a)) - z.orak * nap;   // a születési nap helyi éjfele
       x.napkelte = kel(ejfel); x.napnyugta = nyug(ejfel);
       if (x.napkelte !== null && x.napkelte >= ejfel + 1) x.napkelte = null;   // aznap nem kel fel
       if (x.napnyugta !== null && x.napnyugta >= ejfel + 1) x.napnyugta = null;
@@ -280,17 +288,18 @@
       if (r !== null && sz !== null && kov !== null && r <= jd && kov > jd && sz > r && sz < kov) {
         var ora = jd < sz ? Math.floor((jd - r) / ((sz - r) / 12)) : 12 + Math.floor((jd - sz) / ((kov - sz) / 12));
         // a planetáris nap a napkelte helyi naptári napja; vasárnap: Nap, hétfő: Hold, …
-        var dt = se.revjul(r + z.orak * nap), het = new Date(Date.UTC(dt.year, dt.month - 1, dt.day)).getUTCDay();
+        var het = ((Math.floor(r + z.orak * nap + 1.5) % 7) + 7) % 7;   // a helyi naptári nap hete napja
         var NAPUR = [0, 1, 4, 2, 5, 3, 6], KALDEUS = [6, 5, 4, 0, 3, 2, 1];
         x.planNap = NAPUR[het];
         x.planOra = KALDEUS[(KALDEUS.indexOf(x.planNap) + Math.min(23, ora)) % 7];
       }
     }
     // naptári alak (revjul): { year, month, day, hour }
-    x.lmtIdo = se.revjul(x.lmt);
-    if (x.lat !== undefined) x.latIdo = se.revjul(x.lat);
-    if (x.napkelte) x.napkelteIdo = se.revjul(x.napkelte + z.orak * nap);
-    if (x.napnyugta) x.napnyugtaIdo = se.revjul(x.napnyugta + z.orak * nap);
+    var g = K.gflag(a);
+    x.lmtIdo = se.revjul(x.lmt, g);
+    if (x.lat !== undefined) x.latIdo = se.revjul(x.lat, g);
+    if (x.napkelte) x.napkelteIdo = se.revjul(x.napkelte + z.orak * nap, g);
+    if (x.napnyugta) x.napnyugtaIdo = se.revjul(x.napnyugta + z.orak * nap, g);
     return x;
   }
 

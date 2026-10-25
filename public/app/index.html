@@ -74,12 +74,14 @@
       </fieldset>
       <fieldset><legend>Születési időpont (helyi idő)</legend>
         <div class="mezok">
-          <label>Év <input id="aEv" class="sz" type="number" min="1" max="2999" inputmode="numeric"></label>
+          <label>Korszak <select id="aKor"><option value="isz">i. sz.</option><option value="ie">i. e.</option></select></label>
+          <label>Év <input id="aEv" class="sz" type="number" min="1" max="3000" inputmode="numeric"></label>
           <label>Hó <input id="aHo" class="sz2" type="number" min="1" max="12" inputmode="numeric"></label>
           <label>Nap <input id="aNap" class="sz2" type="number" min="1" max="31" inputmode="numeric"></label>
           <label>Óra <input id="aOra" class="sz2" type="number" min="0" max="23" inputmode="numeric"></label>
           <label>Perc <input id="aPerc" class="sz2" type="number" min="0" max="59" inputmode="numeric"></label>
           <label>Mp <input id="aMp" class="sz2" type="number" min="0" max="59" inputmode="numeric"></label>
+          <label title="A Windows-os Regiomontanus a Gergely-naptárral számol, a régi korokra is visszavetítve; a történeti (1582 előtti, i. e.) dátumok többnyire Julián-naptár szerintiek">Naptár <select id="aNaptar"><option value="G">Gergely</option><option value="J">Julián</option></select></label>
           <label class="pipa"><input type="checkbox" id="aIsm"> A születési idő ismeretlen (Kos 0° képlet)</label>
         </div>
       </fieldset>

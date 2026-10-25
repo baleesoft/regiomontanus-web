@@ -20,7 +20,7 @@ public/                ← ez a tartalom kerül fel FTP-vel a tárhelyre
   swe/
     sweph.js           betöltő + csak olvasható WASI-réteg (függőség nélkül)
     swe.wasm           Swiss Ephemeris 2.10.03 (WebAssembly)
-    ephe/              .se1 adatfájlok 600–2999 (600 éves blokkok, igény szerint töltődnek) + sefstars.txt
+    ephe/              .se1 adatfájlok i. e. 3000 – i. sz. 2999 (600 éves blokkok, igény szerint töltődnek) + sefstars.txt
                        (a csillagkatalógus a Windows-os programéval azonos, 2018-as változat: ugyanazok a pozíciók)
   index.html           átirányítás az app/-ra
   app/                 a program: menüsor, eszköztár, mozaikos munkaasztal, részletes nézet, léptető
@@ -32,7 +32,8 @@ public/                ← ez a tartalom kerül fel FTP-vel a tárhelyre
     mappa.js           a Windows-os Regiomontanus mappájának elérése (hors\, képek, csatolmányok; File System Access)
     kereses.js         „Keresés a képletek közt” és „Megnyitás névre kereséssel”
     kartyak.js         Kiegészítések: „Jegyek és játszmák”, „Születési értesítő” kártya
-  js/kozos.js          közös nevek, jelek, formázás, időzóna (böngésző IANA-adatbázisa)
+  js/kozos.js          közös nevek, jelek, formázás, időzóna (böngésző IANA-adatbázisa), naptár (Gergely / Julián, i. e. évek;
+                       az év belül csillagászati: 0 = i. e. 1)
   js/keplet.js         képletadat, zóna/LMT, Kos 0°, léptetés, planétaperspektíva, számítás (WASM + api/szamol.php)
   js/szk.js            a Windows-os program .szk képletfájljainak olvasása és írása (UTF-16LE, v3.1; a webes
                        kiegészítések: [Megjegyzes] elemenkénti jegyzetek, [Other] PictureData kicsinyített fénykép)

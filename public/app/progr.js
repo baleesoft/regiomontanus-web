@@ -315,7 +315,7 @@
       '<button type="button" class="gomb fo" data-pdg="zar">Bezárás</button></div></dialog>');
     document.body.appendChild(d);
     var sorok = [];
-    var szulMs = Date.UTC(e.ut.year, e.ut.month - 1, e.ut.day) + e.ut.hour * 3600000;
+    var szulMs = (e.jd - 2440587.5) * 86400000;   // a születés UT-ja (i. e. és Julián-naptári képletnél is)
     var mostKor = (Date.now() - szulMs) / (365.2422 * 86400000);
     function olvas() {
       ['mod', 'kulcs', 'irany'].forEach(function (k) { o[k] = d.querySelector('[data-pdv="' + k + '"]').value; });
@@ -331,7 +331,10 @@
       d.querySelector('[data-szelsor]').hidden = o.mod !== 'zod';
     }
     function korStr(k) { var ev = Math.floor(k), ho = Math.floor((k - ev) * 12); return ev + ' év ' + ho + ' hó'; }
-    function datum(k) { var t = new Date(szulMs + k * 365.2422 * 86400000); return t.getUTCFullYear() + '.' + R.pad(t.getUTCMonth() + 1) + '.' + R.pad(t.getUTCDate()); }
+    function datum(k) {
+      var jd = e.jd + k * 365.2422, t = R.jdBont(jd, R.Idotech.naptarJd(e.adat, jd) === 'J');
+      return R.datumStr(t.ev, t.ho, t.nap);
+    }
     function szamol() {
       olvas(); ment();
       var ck = o.kulcs + (o.kulcs === 'egyeni' ? o.egyeni : '');

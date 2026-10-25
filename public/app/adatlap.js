@@ -19,7 +19,9 @@
 
   function kitolt(a) {
     $('aNev').value = a.nev || '';
-    $('aEv').value = a.ev; $('aHo').value = a.ho; $('aNap').value = a.nap;
+    // az év a felületen történeti: i. e. 63 = csillagászati −62
+    $('aKor').value = a.ev <= 0 ? 'ie' : 'isz'; $('aEv').value = a.ev <= 0 ? 1 - a.ev : a.ev;
+    $('aHo').value = a.ho; $('aNap').value = a.nap; $('aNaptar').value = a.naptar === 'J' ? 'J' : 'G';
     $('aOra').value = a.ora; $('aPerc').value = a.perc; $('aMp').value = a.mp || 0;
     $('aIsm').checked = !!a.ismeretlen;
     $('aTelep').value = K.helyNev(a); $('aTelep').dataset.adat = a.telepules || ''; $('aTelep').dataset.megj = K.helyNev(a);
@@ -51,9 +53,13 @@
     }
     a.nev = $('aNev').value.trim();
     if (ell && !a.nev) { $('aNev').focus(); throw new Error('Adj nevet a képletnek.'); }
-    a.ev = szam('aEv', 1, 2999, 'Év'); a.ho = szam('aHo', 1, 12, 'Hó'); a.nap = szam('aNap', 1, 31, 'Nap');
-    var d = new Date(0); d.setUTCFullYear(a.ev, a.ho - 1, a.nap);
-    if (ell && d.getUTCDate() !== a.nap) { $('aNap').focus(); throw new Error('Nincs ilyen nap: ' + R.datumStr(a.ev, a.ho, a.nap) + '.'); }
+    var ie = $('aKor').value === 'ie';
+    a.ev = szam('aEv', 1, ie ? 1 - R.EV_MIN : R.EV_MAX, 'Év'); if (ie) a.ev = 1 - a.ev;
+    a.ho = szam('aHo', 1, 12, 'Hó'); a.nap = szam('aNap', 1, 31, 'Nap');
+    a.naptar = $('aNaptar').value === 'J' ? 'J' : 'G';
+    if (ell && !R.datumJo(a.ev, a.ho, a.nap, a.naptar === 'J')) {
+      $('aNap').focus(); throw new Error('Nincs ilyen nap: ' + R.datumStr(a.ev, a.ho, a.nap) + (a.naptar === 'J' ? ' (Julián-naptár)' : '') + '.');
+    }
     a.ismeretlen = $('aIsm').checked;
     if (a.ismeretlen) { a.ora = 12; a.perc = 0; a.mp = 0; } else {
       a.ora = szam('aOra', 0, 23, 'Óra'); a.perc = szam('aPerc', 0, 59, 'Perc'); a.mp = szam('aMp', 0, 59, 'Másodperc');
@@ -108,7 +114,7 @@
       var d = new Date(n + K.zona(a).orak * 3600000);
       r = [d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate(), d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds()];
     }
-    $('aIsm').checked = false;
+    $('aIsm').checked = false; $('aKor').value = 'isz'; $('aNaptar').value = 'G';
     ['aEv', 'aHo', 'aNap', 'aOra', 'aPerc', 'aMp'].forEach(function (id, i) { $(id).value = r[i]; });
     allapot();
   }

@@ -98,8 +98,8 @@
    *  a „Születés napja” semmit nem kapcsolt); az életkor az „Életkor kijelzés elrejtése” szerint (GetHideEletkor) */
   function szulIdo(e, o, b) {
     o = o || ALAP;
-    var a = e.adat, nap = new Date(Date.UTC(a.ev, a.ho - 1, a.nap)).getUTCDay();
-    var s = [o.fDatum ? R.datumStr(a.ev, a.ho, a.nap) : '', o.fIdo ? (a.ismeretlen ? '12:00' : pad(a.ora) + ':' + pad(a.perc)) : '']
+    var a = e.adat, nap = R.hetNapja(a.ev, a.ho, a.nap, a.naptar === 'J');
+    var s = [o.fDatum ? R.datumStr(a.ev, a.ho, a.nap) + (a.naptar === 'J' ? ' (Jul.)' : '') : '', o.fIdo ? (a.ismeretlen ? '12:00' : pad(a.ora) + ':' + pad(a.perc)) : '']
       .filter(Boolean).join(' - ');
     if (o.fNap) s += (s ? '  ' : '') + '(' + NAPOK[nap] + ')';
     if (!s) return '';

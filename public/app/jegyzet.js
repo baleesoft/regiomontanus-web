@@ -216,7 +216,7 @@
   /* ---------- „Összes jegyzet” (LoadAllItemToMEMO, javítva: kettőspont után szóköz, minden P_ és E_) ---------- */
   function osszesHtml(k) {
     var a = k.adat, mj = megj(k), ki = '<h3>Születési képlet tulajdonosának adatai</h3>';
-    var nap = new Date(Date.UTC(a.ev, a.ho - 1, a.nap)).getUTCDay();
+    var nap = R.hetNapja(a.ev, a.ho, a.nap, a.naptar === 'J');
     var NAP = ['vasárnap', 'hétfő', 'kedd', 'szerda', 'csütörtök', 'péntek', 'szombat'];
     ki += '<p class="nagy"><b>Név:</b> ' + R.esc(a.nev) + '<br><b>Születési idő:</b> ' +
       R.datumStr(a.ev, a.ho, a.nap, a.ora, a.perc).replace(' ', ' - ') + '  (' + NAP[nap] + ')' +

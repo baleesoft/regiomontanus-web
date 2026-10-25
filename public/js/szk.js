@@ -71,7 +71,7 @@
     return {
       name: bi.Name || '', year: I('Year'), month: I('Month'), day: I('Day'),
       hour: I('Hour', 12), minute: I('Minute'), second: I('Second') === 999 ? 0 : I('Second'),
-      bc: B('BirthDateIsBC'), timeUnknown: B('TimeIsUnknown'),
+      bc: B('BirthDateIsBC'), julian: bi.Calendar === 'J', timeUnknown: B('TimeIsUnknown'),
       tzCode: tzCode, tzManual: B('TZCodeIsManual'), offsetHours: offset, dst: B('IsDayLightSavingTime'),
       city: bi.LocCity || '', country: bi.LocCountry || '', countryId: bi.LocCountryID || '',
       lat: lat, lon: lon, tags: tags, notes: notes,
@@ -94,14 +94,24 @@
    * A webes képletadatból (Regio.Keplet) .szk szöveg. z: a Regio.Keplet.zona() eredménye.
    * A fájlban nem kezelt mezők (Gender, IsDead, kép, csatolmányok) az eredeti fájlból öröklődnek (a.eredeti).
    */
+  /**
+   * A dátum a .szk-ban mindig Gergely-naptári (a Windows-os program így számol); a Julián-naptári képlet dátuma átszámolva,
+   * mellette a webes kiegészítés: Calendar=J (a Windows-os program nem olvassa). i. e.: BirthDateIsBC=T, a történeti évszámmal
+   * (i. e. 63 → Year=63; a csillagászati év −62).
+   */
+  function gergelyre(a) {
+    var R = global.Regio;
+    if (a.naptar !== 'J' || !R || !R.jdNap) return { ev: a.ev, ho: a.ho, nap: a.nap };
+    return R.jdBont(R.jdNap(a.ev, a.ho, a.nap, true), false);
+  }
   function szoveg(a, z) {
-    var e = a.eredeti || {}, bi = e.BirthInfo || {}, ot = e.Other || {};
+    var e = a.eredeti || {}, bi = e.BirthInfo || {}, ot = e.Other || {}, g = gergelyre(a);
     var orak = z.orak, perc = Math.round(Math.abs(orak) * 60), h = Math.floor(perc / 60), m = perc % 60;
     var lon = fokPerc(a.lon), lat = fokPerc(a.lat);
     var s = ['', '[BirthInfo]',
       'Name=' + a.nev,
       'Gender=' + (bi.Gender || '2'),
-      'Year=' + a.ev, 'Month=' + a.ho, 'Day=' + a.nap,
+      'Year=' + (g.ev <= 0 ? 1 - g.ev : g.ev), 'Month=' + g.ho, 'Day=' + g.nap,
       'Hour=' + (a.ismeretlen ? 12 : a.ora), 'Minute=' + (a.ismeretlen ? 0 : a.perc), 'Second=' + (a.ismeretlen ? 0 : (a.mp || 0)),
       'TimeIsUnknown=' + TF(a.ismeretlen),
       'TZoneCode=' + (z.kod || ''),
@@ -114,8 +124,8 @@
       'LocLongDegree=' + lon[0], 'LocLongMinute=' + lon[1], 'LocLongSecond=999', 'LocLongWest=' + TF(a.lon < 0),
       'LocLatDegree=' + lat[0], 'LocLatMinute=' + lat[1], 'LocLatSecond=999', 'LocLatSouth=' + TF(a.lat < 0),
       'IsDayLightSavingTime=' + TF(z.nyari),
-      'BirthDateIsBC=F',
-      'IsDead=' + (bi.IsDead === 'T' ? 'T' : 'F')];
+      'BirthDateIsBC=' + TF(g.ev <= 0)].concat(a.naptar === 'J' ? ['Calendar=J'] : [], [
+      'IsDead=' + (bi.IsDead === 'T' ? 'T' : 'F')]);
     if (bi.IsDead === 'T') ['DeathYear', 'DeathMonth', 'DeathDay', 'DeathHour', 'DeathMin', 'DeathSec'].forEach(function (k) {
       s.push(k + '=' + (bi[k] || '0'));
     });
@@ -151,8 +161,12 @@
 
   /** A beolvasott fájlból a webes képletadat (Regio.Keplet). A fájl saját zónaadatai érvényesek. */
   function adatba(p) {
+    var R = global.Regio, ev = p.bc ? 1 - p.year : p.year, ho = p.month, nap = p.day, naptar = 'G';
+    if (p.julian && R && R.jdNap) {   // a fájlban Gergely-naptári; a felületen a Julián-naptári dátum
+      var t = R.jdBont(R.jdNap(ev, ho, nap, false), true); ev = t.ev; ho = t.ho; nap = t.nap; naptar = 'J';
+    }
     return {
-      nev: p.name, ev: p.year, ho: p.month, nap: p.day, ora: p.hour, perc: p.minute, mp: p.second,
+      nev: p.name, ev: ev, ho: ho, nap: nap, naptar: naptar, ora: p.hour, perc: p.minute, mp: p.second,
       ismeretlen: p.timeUnknown, telepules: p.city, orszag: p.country, orszagKod: p.countryId, lat: p.lat, lon: p.lon,
       zonaMod: p.tzCode === 'LMT' ? 'lmt' : 'kezi', tz: '', eltolas: p.offsetHours, tzKod: p.tzCode, nyari: p.dst,
       jegyzet: p.notes, cimkek: p.tags, megjegyzesek: p.megjegyzesek || {}, kepFajl: p.picture || '', kepAdat: p.pictureData || '',

@@ -78,9 +78,41 @@
   R.glif = function (id) { return R.PLANETA[id] && R.PLANETA[id][1] ? R.PLANETA[id][1] + VS : ''; };
   R.jegyGlif = function (j) { return R.JEGYGLIF[j] + VS; };
   R.nev = function (id) { return R.PLANETA[id] ? R.PLANETA[id][0] : R.TENGELY[id] ? R.TENGELY[id][0] : String(id); };
+  /* ---------- évszám, naptár ----------
+   * Az évszám belül csillagászati (0 = i. e. 1, −62 = i. e. 63); a felületen és a .szk-ban történeti („i. e. 63”).
+   * A naptár képletenként Gergely (alap, mint a Windows-os programban, visszavetítve) vagy Julián (a.naptar = 'J'). */
+  R.EV_MIN = -2999; R.EV_MAX = 2999;          // i. e. 3000 – i. sz. 2999 (a Moshier-efemeriszek tartománya)
+  R.evJo = function (ev) { return ev === Math.floor(ev) && ev >= R.EV_MIN && ev <= R.EV_MAX; };
+  R.EV_HIBA = 'Az év i. e. 3000 és i. sz. 2999 között lehet.';
+  R.evStr = function (ev) { return ev <= 0 ? 'i. e. ' + (1 - ev) : String(ev); };
   R.datumStr = function (y, mo, d, h, mi) {
-    return y + '.' + R.pad(mo) + '.' + R.pad(d) + (h === undefined ? '' : ' ' + R.pad(h) + ':' + R.pad(mi));
+    return R.evStr(y) + '.' + R.pad(mo) + '.' + R.pad(d) + (h === undefined ? '' : ' ' + R.pad(h) + ':' + R.pad(mi));
   };
+  /** A naptári nap kezdetének (0h) Julián-napja – Meeus; julian: Julián-naptár, különben (visszavetített) Gergely */
+  R.jdNap = function (ev, ho, nap, julian) {
+    var y = ev, m = ho;
+    if (m <= 2) { y--; m += 12; }
+    var a = Math.floor(y / 100), b = julian ? 0 : 2 - a + Math.floor(a / 4);
+    return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + nap + b - 1524.5;
+  };
+  /** Julián-nap → naptári dátum + másodperc a nap kezdetétől (egészre kerekítve) */
+  R.jdBont = function (jd, julian) {
+    var z = Math.floor(jd + 0.5), mp = Math.round((jd + 0.5 - z) * 86400);
+    if (mp >= 86400) { z++; mp -= 86400; }
+    var a = z;
+    if (!julian) { var al = Math.floor((z - 1867216.25) / 36524.25); a = z + 1 + al - Math.floor(al / 4); }
+    var b = a + 1524, c = Math.floor((b - 122.1) / 365.25), d = Math.floor(365.25 * c), e = Math.floor((b - d) / 30.6001);
+    var nap = b - d - Math.floor(30.6001 * e), ho = e < 14 ? e - 1 : e - 13, ev = ho > 2 ? c - 4716 : c - 4715;
+    return { ev: ev, ho: ho, nap: nap, ora: Math.floor(mp / 3600), perc: Math.floor(mp / 60) % 60, mp: mp % 60 };
+  };
+  /** Létező naptári nap-e (a Julián-naptárban pl. 1500.02.29 igen) */
+  R.datumJo = function (ev, ho, nap, julian) {
+    if (ho < 1 || ho > 12 || nap < 1 || nap > 31) return false;
+    var t = R.jdBont(R.jdNap(ev, ho, nap, julian), julian);
+    return t.ev === ev && t.ho === ho && t.nap === nap;
+  };
+  /** A hét napja (0 = vasárnap) */
+  R.hetNapja = function (ev, ho, nap, julian) { return ((Math.floor(R.jdNap(ev, ho, nap, julian) + 1.5) % 7) + 7) % 7; };
 
   /* ---------- időzóna (IANA a böngésző adatbázisából) ---------- */
   function zonaEltolas(utcMs, tz) {

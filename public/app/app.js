@@ -283,7 +283,7 @@
       };
       var zo = (e.zona && typeof e.zona.orak === 'number') ? e.zona.orak : 0, zk = e.zona && e.zona.kod ? ' ' + e.zona.kod : '';
       var datum = function (jd) {
-        var d = se.revjul(jd + zo / 24), h = Math.floor(d.hour + 1e-9), mi = Math.floor((d.hour - h) * 60 + 1e-6);
+        var d = se.revjul(jd + zo / 24, R.Idotech.naptarJd(a, jd) === 'J' ? 0 : 1), h = Math.floor(d.hour + 1e-9), mi = Math.floor((d.hour - h) * 60 + 1e-6);
         return R.datumStr(d.year, d.month, d.day, h, mi) + zk;
       };
       // heliocentrikus helyvektorok (CsE, a képlet zodiákusában) – a Naprendszer-nézethez; a Hold geocentrikusan
@@ -449,9 +449,8 @@
     if (k.rogzitett) return k.rogzitett.tipus;
     if (!k.fajta) return K.tipusNev(k.adat);
     if (k.fajta === 'ph') {
-      var nap = k.kulso.ph ? k.kulso.ph.napok + k.kulso.ph.orak / 24 : 0, d = new Date(Date.UTC(k.adat.ev, k.adat.ho - 1, k.adat.nap));
-      d.setUTCMonth(d.getUTCMonth() + Math.round(nap * 12));
-      return 'Progressziós Hold - ' + d.getUTCFullYear() + '. évre';
+      var nap = k.kulso.ph ? k.kulso.ph.napok + k.kulso.ph.orak / 24 : 0, ho = k.adat.ho - 1 + Math.round(nap * 12);
+      return 'Progressziós Hold - ' + R.evStr(k.adat.ev + Math.floor(ho / 12)) + '. évre';
     }
     return { tranzit: 'Tranzit - Összevetés', pd: 'Primer (1° = 1 év) direkció - Összevetés', pdv: 'Primer direkció - Összevetés',
       sol: 'Szolár-képlet - Összevetés' }[k.fajta] || 'Összevetés';
@@ -481,7 +480,7 @@
    */
   function inkognito() { return !!(beall.nyomtatas && beall.nyomtatas.inkognito); }
   function idoStr(a) {
-    return R.datumStr(a.ev, a.ho, a.nap) + (a.ismeretlen ? ' (idő ismeretlen)' : ' ' + R.pad(a.ora) + ':' + R.pad(a.perc));
+    return R.datumStr(a.ev, a.ho, a.nap) + (a.naptar === 'J' ? ' (Jul.)' : '') + (a.ismeretlen ? ' (idő ismeretlen)' : ' ' + R.pad(a.ora) + ':' + R.pad(a.perc));
   }
   function datumSor(k) {
     var a = k.adat;
@@ -917,7 +916,7 @@
     k.eltolas[i] += ir * m;
     k.adat = K.leptet(k.eredeti, k.eltolas);
     if (k.adat.ismeretlen && (i >= 3)) { k.adat.ismeretlen = false; k.adat.tipus = 'kos0'; }
-    if (k.adat.ev < 1 || k.adat.ev > 2999) { k.eltolas[i] -= ir * m; k.adat = K.leptet(k.eredeti, k.eltolas); uzen('Az év 1 és 2999 között lehet.'); }
+    if (!R.evJo(k.adat.ev)) { k.eltolas[i] -= ir * m; k.adat = K.leptet(k.eredeti, k.eltolas); uzen(R.EV_HIBA); }
     k.valtozott = lepettE(k) || k.valtozott;
     utemezSzamol(k);
     renderLepteto(); renderStatusz(); renderCim();
@@ -941,7 +940,7 @@
     } else {
       ks.eltolas[i] += d;
       var u = K.leptet(ks.eredeti, ks.eltolas);
-      if (u.ev < 1 || u.ev > 2999) { ks.eltolas[i] -= d; uzen('Az év 1 és 2999 között lehet.'); return; }
+      if (!R.evJo(u.ev)) { ks.eltolas[i] -= d; uzen(R.EV_HIBA); return; }
       ks.adat = u;
     }
     utemezSzamol(k, true);
@@ -1424,8 +1423,9 @@
   function pdvKeplet(k) {
     var e = k.e, ks = k.kulso, x = ks.pdv, ctx = napFv(e);
     var kulcs = R.Primer.kulcs(x.kulcs, { napRa: ctx.napRa, napLon: ctx.napLon, egyeni: x.egyeni });
-    var ms = Date.UTC(x.datum[0], x.datum[1] - 1, x.datum[2], 12), szul = Date.UTC(e.ut.year, e.ut.month - 1, e.ut.day) + e.ut.hour * 3600000;
-    var kor = Math.max(0, (ms - szul) / (365.2422 * 86400000)), iv = kulcs.iv(kor);
+    // a direkció napja (déli 12 óra) a radix naptárában, ha az 1582 előtti; különben Gergely
+    var jul = k.adat.naptar === 'J' && R.jdNap(x.datum[0], x.datum[1], x.datum[2], true) < 2299160.5;
+    var kor = Math.max(0, (R.jdNap(x.datum[0], x.datum[1], x.datum[2], jul) + 0.5 - e.jd) / 365.2422), iv = kulcs.iv(kor);
     // a házak swe_houses_armc-vel; a radix ARMC-jén mért eltérés (pl. sziderikus zodiákus) levonva
     var hsys = beall.hsys, h0 = se.housesArmc(e.hz.armc, k.adat.lat, e.eps, hsys), elt = h0.mc - e.hz.mc;
     var hazak = function (armc) {
@@ -1685,10 +1685,9 @@
   function fajlbolMegnyit(nev, buf, handle) {
     if (HOR.test(nev)) return horMegnyit(nev, buf);
     try {
-      var p = RegioSzk.parse(buf);
-      if (p.bc) throw new Error('Időszámításunk előtti dátum még nem támogatott.');
-      if (p.year < 1 || p.year > 2999) throw new Error('Az év 1 és 2999 között lehet.');
-      hozzaad(RegioSzk.toAdat(p), { nev: nev, handle: handle });
+      var p = RegioSzk.parse(buf), a = RegioSzk.toAdat(p);
+      if (!R.evJo(a.ev)) throw new Error(R.EV_HIBA);
+      hozzaad(a, { nev: nev, handle: handle });
       return true;
     } catch (e) { uzen(nev + ': nem nyitható meg – ' + e.message); return false; }
   }

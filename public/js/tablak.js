@@ -269,6 +269,7 @@
       'Név', R.esc(R.Keplet.cim(a)),
       'Helyi idő', R.datumStr(a.ev, a.ho, a.nap) + '. ' + (ism && a.ismeretlen ? '12:00 (ismeretlen időpont – helyi dél)'
         : R.pad(a.ora) + ':' + R.pad(a.perc) + ':' + R.pad(a.mp || 0)),
+      'Naptár', a.naptar === 'J' ? 'Julián' : 'Gergely' + (a.ev < 1583 ? ' (visszavetítve)' : ''),
       'Időzóna', R.esc(e.zona.info),
       'Világidő (UT)', R.datumStr(ut.year, ut.month, ut.day) + '. ' + R.pad(uh) + ':' + R.pad(um) + ':' + R.pad(us),
       'Julián dátum (UT)', e.jd.toFixed(6),

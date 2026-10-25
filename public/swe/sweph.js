@@ -158,10 +158,14 @@
   };
 
   /** A 600 éves adatfájl-blokk utótagja egy évre: 1436 -> '_12', 2026 -> '_18'. */
+  /** A Swiss Ephemeris fájlnév-blokkja (600 évenként; swi_gen_filename): 1981 → '_18', 0..599 → '_00', −62 (i. e. 63) → 'm06' */
   SwissEph.epheBlock = function (year) {
-    if (year < 0) return null;
-    var b = Math.floor(year / 600) * 6;
-    return '_' + (b < 10 ? '0' + b : b);
+    if (year < -5400 || year > 5399) return null;
+    var c = Math.trunc(year / 100);
+    if (year < 0 && year % 100 !== 0) c--;
+    while (c % 6 !== 0) c--;
+    var b = Math.abs(c);
+    return (c < 0 ? 'm' : '_') + (b < 10 ? '0' + b : b);
   };
 
   /**

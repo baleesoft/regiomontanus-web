@@ -434,8 +434,16 @@ SZAVAK.update({
     'a fájlban tárolt világidő nem egyezik a helyi idővel és a zónával': 'the universal time stored in the file does not match the local time and the zone',
 })
 
+SZAVAK.update({
+    'Korszak': 'Era', 'i. sz.': 'AD', 'i. e.': 'BC', 'Naptár': 'Calendar', 'Gergely': 'Gregorian', 'Julián': 'Julian',
+    'Gergely (visszavetítve)': 'Gregorian (proleptic)', 'Az év i. e. 3000 és i. sz. 2999 között lehet.': 'The year must be between 3000 BC and AD 2999.',
+    'A Windows-os Regiomontanus a Gergely-naptárral számol, a régi korokra is visszavetítve; a történeti (1582 előtti, i. e.) dátumok többnyire Julián-naptár szerintiek':
+        'The Windows Regiomontanus calculates with the Gregorian calendar, projected back to earlier ages too; historical dates (before 1582, BC) are mostly given in the Julian calendar',
+})
+
 MINTAK = [
     # sorrend számít: a pontosabbak előbb
+    ('Nincs ilyen nap: {0} (Julián-naptár).', 'No such day: {0} (Julian calendar).'), ('i. e. {0}', 'BC {0}'),
     ('{0}: nem nyitható meg – {1}', '{0}: cannot be opened – {1}'),
     ('{0}: csak .szk / .hor képletfájl nyitható meg.', '{0}: only .szk / .hor chart files can be opened.'),
     ('{0}: csak .szk / .hor képletfájl (és .mgj jegyzetfájl) nyitható meg.', '{0}: only .szk / .hor chart files (and .mgj notes files) can be opened.'),

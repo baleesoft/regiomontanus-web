@@ -77,36 +77,28 @@
     return p;
   }
 
-  /* ---------- naptár ---------- */
-  function jdJulian(e, h, n) {          // a Julián-naptári dátum Julián-napja (csillagászati évszám)
-    if (h <= 2) { e--; h += 12; }
-    return Math.floor(365.25 * (e + 4716)) + Math.floor(30.6001 * (h + 1)) + n - 1524;
+  function evSzoveg(t) { return t < 0 ? 'i. e. ' + (-t) : String(t); }
+  /** az esemény dátuma szövegként (a Placidus-fájl történeti évszámával: −63 = i. e. 63) */
+  function datumStr(t) {
+    return (t.ev < 0 ? 'i. e. ' + (-t.ev) : t.ev) + '.' + (t.ho < 10 ? '0' : '') + t.ho + '.' + (t.nap < 10 ? '0' : '') + t.nap + (t.julian ? ' (Jul.)' : '');
   }
-  function gergelyJdbol(jd) {          // Julián-nap → Gergely-naptári dátum (Fliegel–Van Flandern)
-    var l = jd + 68569, n = Math.floor(4 * l / 146097); l -= Math.floor((146097 * n + 3) / 4);
-    var i = Math.floor(4000 * (l + 1) / 1461001); l = l - Math.floor(1461 * i / 4) + 31;
-    var j = Math.floor(80 * l / 2447), nap = l - Math.floor(2447 * j / 80); l = Math.floor(j / 11);
-    return { ev: 100 * (n - 49) + i + l, ho: j + 2 - 12 * l, nap: nap };
-  }
-  function datumStr(t) { return (t.ev < 0 ? 'i. e. ' + (-t.ev) : t.ev) + '.' + (t.ho < 10 ? '0' : '') + t.ho + '.' + (t.nap < 10 ? '0' : '') + t.nap; }
 
   /**
    * A webes képletadat (Regio.Keplet) a beolvasott fájlból: { adat, figyelmeztetes: [] }.
-   * A dátum Gergely-naptárra kerül (a Julián-naptári a jegyzetbe), az időszámítás: világidő → kézi 0, helyi középidő → LMT,
-   * zónaidő → kézi eltolás. A jegyzet a Placidus jegyzete + az életesemények + a nem radix típus.
+   * A dátum a fájl naptárában marad (Julián → naptar 'J'); az év csillagászati (i. e. 63 → −62). Az időszámítás:
+   * világidő → kézi 0, helyi középidő → LMT, zónaidő → kézi eltolás. A jegyzet a Placidus jegyzete + az életesemények +
+   * a nem radix típus.
    */
   function adatba(p) {
     var h = p.helyi, fig = [];
-    if (h.ev < 0) throw new Error('Időszámításunk előtti dátum (i. e. ' + (-h.ev) + ') még nem támogatott.');
-    var datum = { ev: h.ev, ho: h.ho, nap: h.nap };
-    if (h.julian) datum = gergelyJdbol(jdJulian(h.ev, h.ho, h.nap));
-    if (datum.ev < 1 || datum.ev > 2999) throw new Error('Az év 1 és 2999 között lehet.');
+    var ev = h.ev < 0 ? h.ev + 1 : h.ev;
+    if (ev < -2999 || ev > 2999) throw new Error('Az év i. e. 3000 és i. sz. 2999 között lehet.');
     var lon = (p.hossz.fok + p.hossz.perc / 60) * (p.hossz.neg ? -1 : 1), lat = (p.szel.fok + p.szel.perc / 60) * (p.szel.neg ? -1 : 1);
     var z = p.zona, elt = (z.ora + z.perc / 60) * (z.nyugat ? -1 : 1);
     // „Város, Ország” → település és ország (az utolsó vessző szerint)
     var v = p.hely.lastIndexOf(','), telepules = v > 0 ? p.hely.slice(0, v).trim() : p.hely.trim(), orszag = v > 0 ? p.hely.slice(v + 1).trim() : '';
     var a = {
-      nev: p.nev.trim(), ev: datum.ev, ho: datum.ho, nap: datum.nap, ora: h.ora, perc: h.perc, mp: h.mp || 0, ismeretlen: false,
+      nev: p.nev.trim(), ev: ev, ho: h.ho, nap: h.nap, naptar: h.julian ? 'J' : 'G', ora: h.ora, perc: h.perc, mp: h.mp || 0, ismeretlen: false,
       telepules: telepules, orszag: orszag, orszagKod: '', lat: lat, lon: lon,
       zonaMod: z.mod === 1 ? 'lmt' : 'kezi', tz: '', eltolas: z.mod === 0 ? 0 : elt, tzKod: z.mod === 0 ? 'UT' : '', nyari: false,
       jegyzet: '', cimkek: [], megjegyzesek: {}, csatolmanyok: [], tipus: 'radix',
@@ -117,12 +109,8 @@
     if (p.jegyzet.trim()) j.push(p.jegyzet.replace(/\s+$/, ''));
     if (p.esemenyek.length) {
       j.push('Életesemények:');
-      p.esemenyek.forEach(function (e) {
-        var t = e.julian && e.ev > 0 ? gergelyJdbol(jdJulian(e.ev, e.ho, e.nap)) : e;
-        j.push(datumStr(t) + ' ' + e.nev);
-      });
+      p.esemenyek.forEach(function (e) { j.push(datumStr(e) + ' ' + e.nev); });
     }
-    if (h.julian) j.push('Julián-naptári születési dátum: ' + datumStr(h) + ' (a képletben a Gergely-naptári: ' + datumStr(datum) + ')');
     if (p.tipus && p.tipus !== 'radix') j.push('A Placidus-fájl típusa: ' + p.tipus);
     a.jegyzet = j.join('\n');
 
@@ -130,7 +118,7 @@
     if (z.mod === 2) {
       if (Math.abs(elt - lon / 15) > 3.5) fig.push('a zóna (' + (elt < 0 ? '−' : '+') + z.ora + ':' + (z.perc < 10 ? '0' : '') + z.perc +
         ') nem illik a földrajzi hosszúsághoz – ellenőrizd az időpontot');
-      if (datum.ev < 1880) fig.push('zónaidő ' + datum.ev + '-ben – akkor még a helyi középidő volt használatban, ellenőrizd');
+      if (ev < 1880) fig.push('zónaidő ' + evSzoveg(h.ev) + '-ben – akkor még a helyi középidő volt használatban, ellenőrizd');
     }
     var u = p.ut;
     if (u.ev === h.ev && !h.julian === !u.julian) {
