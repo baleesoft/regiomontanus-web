@@ -1708,7 +1708,9 @@
       window.showOpenFilePicker({ multiple: true, types: [fk('jegyzet')
         ? { description: 'Regiomontanus képlet (és jegyzetfájl)', accept: { 'application/octet-stream': ['.szk', '.mgj'] } }
         : { description: 'Regiomontanus képlet', accept: { 'application/octet-stream': ['.szk'] } },
-        { description: 'PLACIDUS horoszkóp', accept: { 'application/octet-stream': ['.hor', '.ho_'] } }] })
+        // a .ho_ (tömörített) itt nem adható meg (a böngésző csak betűt/számot fogad el a kiterjesztésben):
+        // „Minden fájl” választással vagy ráhúzással nyitható meg
+        { description: 'PLACIDUS horoszkóp', accept: { 'application/octet-stream': ['.hor'] } }] })
         .then(function (hl) {
           var mgj = [];
           return hl.reduce(function (p, h) {
