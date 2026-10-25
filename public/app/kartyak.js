@@ -71,7 +71,7 @@
 
   function ablak(cim, osztaly, w, h) {
     var d = document.createElement('dialog');
-    d.className = 'kartya-dlg ' + osztaly;
+    d.className = 'kartya-dlg ' + osztaly; d.setAttribute('data-nofordit', ''); // a kártyák magyarul maradnak
     d.setAttribute('aria-label', cim);
     d.style.width = w + 'px'; d.style.height = h + 'px';
     // kis képernyőn arányosan kicsinyítve

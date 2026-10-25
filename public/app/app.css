@@ -703,3 +703,9 @@ body.kerek-max .lepteto { padding: 3px 10px; }
   .reszlet .fo-kerek .kerek { padding: 4px; }
   .statusz { font-size: 12px; }
 }
+
+/* a felület nyelve */
+.nyelvval { display: inline-flex; align-items: center; gap: 2px; color: inherit; }
+.nyelvval svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.5; opacity: .8; }
+.nyelvval select { font: inherit; font-size: 12px; padding: 1px 2px; border: 1px solid #b9b2a5; border-radius: 3px; background: #fff; color: #1f1d1a; }
+@media (max-width: 1280px) { .nyelvval svg { display: none; } .nyelvval select { padding: 1px 0; } }

@@ -67,8 +67,8 @@
     function mutat(l, uzenet) {
       talalatok = l; kijelolt = l.length ? 0 : -1;
       lista.innerHTML = l.length ? l.map(function (t, i) {
-        return '<li role="option" id="' + lista.id + '_' + i + '" data-i="' + i + '"' + (i === 0 ? ' aria-selected="true"' : '') + '>' +
-          R.esc(t.nev) + '<small>' + R.esc(t.orszag) + ' · ' + R.fokStr(Math.abs(t.lat), false) + (t.lat >= 0 ? 'É' : 'D') + ' ' +
+        return '<li role="option" id="' + lista.id + '_' + i + '" data-i="' + i + '"' + (i === 0 ? ' aria-selected="true"' : '') + '><span data-nofordit>' +
+          R.esc(t.nev) + '</span><small>' + R.esc(t.orszag) + ' · ' + R.fokStr(Math.abs(t.lat), false) + (t.lat >= 0 ? 'É' : 'D') + ' ' +
           R.fokStr(Math.abs(t.lon), false) + (t.lon >= 0 ? 'K' : 'Ny') + '</small></li>';
       }).join('') : '<li class="nincs">' + R.esc(uzenet || 'Nincs találat.') + '</li>';
       lista.hidden = false; input.setAttribute('aria-expanded', 'true');

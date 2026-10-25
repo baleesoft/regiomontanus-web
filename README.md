@@ -55,6 +55,9 @@ public/                ← ez a tartalom kerül fel FTP-vel a tárhelyre
                        csillagai szerint, J2000; generált)
   js/allocsillagok.js  a Windows-os program 737 állócsillaga (név, nómenklatúra, csillagkép latinul és magyarul)
   js/tarolo.js         beállítások, legutóbbi képletek, munkamenet (localStorage)
+  js/nyelv.js          a felület nyelve: magyar (alap) / angol (`?lang=en`, a választás megmarad); a megjelenő
+                       szöveget fordítja (MutationObserver) a lang/<nyelv>.js szótárával; a data-nofordit részek kimaradnak
+  lang/en.js           az angol szótár (generált: tools/i18n/build-lang.py)
   fonts/               asztrológiai jelek: Noto Sans Symbols / Symbols 2 részhalmaz (SIL OFL 1.1, OFL.txt) –
                        a 3. és 4. a választható Uránusz- és Plútó-jelek (⛢, ⯓, ⯖), az 5. a fényszögjelek ⊥ ⫠ ⫫ ∠
                        (Noto Sans Math);
@@ -69,7 +72,16 @@ tools/
   build-csillagkepek.py  a js/csillagkepek.js előállítása (astropy; IAU-csillagképhatárok, Roman 1987, CDS VI/42;
                        az alakzatok a d3-celestial vonalas ábráiból, a csillagképek csillagai a Swiss Ephemeris sefstars.txt-jéből:
                        `python3 tools/build-csillagkepek.py <d3-celestial/data> <sefstars.txt>`)
+  i18n/en_szotar.py    az angol felület szótára (pontos szövegek + {0}-s mintázatok); `python3 tools/i18n/build-lang.py`
+                       → public/lang/en.js; a szakkifejezések: i18n/FOGALMAK.md
 ```
+
+## Nyelvek
+
+A felület magyarul indul; angolul: `app/index.html?lang=en` vagy a menüsor jobb végén a nyelvválasztó (HU / EN).
+A választás a böngészőben megmarad. Angolul is magyar marad: a képletnevek és más felhasználói adatok, a horoszkópolvasó
+szövegei, a Jegyek és játszmák és a Születési értesítő kártya. Új szöveg a felületen: a magyar szöveg maga a kulcs –
+ha nincs a szótárban, magyarul jelenik meg (a `tools/i18n/en_szotar.py`-be kell felvenni).
 
 ## Billentyűk
 

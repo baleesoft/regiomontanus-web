@@ -442,6 +442,8 @@
     return I.ELOTAG[k.fajta] + ' ' + n;
   }
   function cim(k) { return k.fajta ? '<-> ' + K.cim(k.adat) + ' - ' + kulsoNev(k) : K.cim(k.adat); }
+  /** a képlet neve HTML-ben: felhasználói adat, ezért nem fordítjuk (az „Aktuális égi állás” igen) */
+  function cimHtml(k) { var s = R.esc(cim(k)); return !k.fajta && k.adat.tipus === 'aktualis' ? s : '<span data-nofordit>' + s + '</span>'; }
   /** A státuszsor és a csempe típusfelirata (GetActivePageStringTypeToStatBar) */
   function tipusNev(k) {
     if (k.rogzitett) return k.rogzitett.tipus;
@@ -523,7 +525,9 @@
     var a = k.adat;
     // a Windows-os fül-súgó szerint: név, születési idő, hely, majd az életkor (GetKora + „é”)
     var ek = a.tipus !== 'aktualis' ? K.eletkor(a) : -1;
-    $('st1').textContent = K.cim(a) + (inkognito() && a.tipus !== 'aktualis' ? '' : ' ' + idoStr(a) + (K.helyNev(a) ? ' ' + K.helyNev(a) : '') +
+    // a név (felhasználói adat) külön elemben: a felület fordítása nem érinti
+    $('st1').innerHTML = (a.tipus === 'aktualis' ? '<span>' + R.esc(K.cim(a)) + '</span>' : '<span data-nofordit>' + R.esc(K.cim(a)) + '</span>') +
+      R.esc(inkognito() && a.tipus !== 'aktualis' ? '' : ' ' + idoStr(a) + (K.helyNev(a) ? ' ' + K.helyNev(a) : '') +
       (ek >= 0 && ek < 150 && !beall.kerek.eletkorRejt ? ' · ' + ek + ' é' : ''));
     $('st2').textContent = tipusNev(k);
     if (k.fajta) {
@@ -555,7 +559,7 @@
     hova.innerHTML = '<main class="mozaik r' + r + '" aria-label="Munkaasztal">' + l.map(function (i) {
       var k = kepletek[i];
       return '<section class="csempe' + (i === aktiv ? ' aktiv' : '') + '" data-i="' + i + '" aria-label="' + R.esc(cim(k)) + '">' +
-        '<div class="fej"><b>' + R.esc(cim(k)) + (k.valtozott && k.adat.tipus !== 'aktualis' ? ' *' : '') + '</b> ' + tipusCimke(k) +
+        '<div class="fej"><b>' + cimHtml(k) + (k.valtozott && k.adat.tipus !== 'aktualis' ? ' *' : '') + '</b> ' + tipusCimke(k) +
         '<span class="tolt"></span>' +
         '<button type="button" class="kisgomb" data-tett="nagyit" aria-label="Kinagyítás" title="Kinagyítás (dupla kattintás)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>' +
         '<button type="button" class="kisgomb" data-tett="bezar" aria-label="Bezárás" title="Bezárás (Alt+W)"><svg viewBox="0 0 24 24" aria-hidden="true" style="stroke:#6b665d"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
@@ -573,7 +577,7 @@
       '<button type="button" class="gomb" data-tett="megnyit">Megnyitás (Ctrl+O)</button>' +
       '<button type="button" class="gomb" data-tett="aktualis">Aktuális égi állás</button></div>' +
       (l.length ? '<h2>Legutóbbi képletek</h2><ul>' + l.map(function (x, i) {
-        return '<li><button type="button" data-legutobbi="' + i + '">' + R.esc(K.cim(x.adat)) + '<small>' + (inkognito() ? '' : R.esc(idoStr(x.adat))) +
+        return '<li><button type="button" data-legutobbi="' + i + '"><span data-nofordit>' + R.esc(K.cim(x.adat)) + '</span><small>' + (inkognito() ? '' : R.esc(idoStr(x.adat))) +
           (x.fajlnev ? (inkognito() ? '' : ' · ') + R.esc(x.fajlnev) : '') + '</small></button></li>';
       }).join('') + '</ul>' : '') + '</div>';
   }
@@ -581,9 +585,9 @@
     var k = akt();
     hova.innerHTML = (kepletek.length < 2 ? '' : '<nav class="belyegek" aria-label="Megnyitott képletek">' + kepletek.map(function (x, i) {
       return '<button type="button" data-valt="' + i + '" aria-current="' + (i === aktiv) + '"><span class="mini">' + x.mini + '</span>' +
-        '<span class="ln"><b>' + R.esc(cim(x)) + '</b><small>' + R.esc(tipusNev(x)) + '</small></span></button>';
+        '<span class="ln"><b>' + cimHtml(x) + '</b><small>' + R.esc(tipusNev(x)) + '</small></span></button>';
     }).join('') + '</nav>') +
-      '<main class="reszlet" aria-label="Részletes nézet" style="--kerek-arany:' + (aranyKorlat(beall.reszletArany) * 100).toFixed(1) + '%"><section class="fo-kerek"><div class="fej"><b>' + R.esc(cim(k)) + '</b> ' +
+      '<main class="reszlet" aria-label="Részletes nézet" style="--kerek-arany:' + (aranyKorlat(beall.reszletArany) * 100).toFixed(1) + '%"><section class="fo-kerek"><div class="fej"><b>' + cimHtml(k) + '</b> ' +
       tipusCimke(k) + '<span class="tolt"></span>' + (!k.fajta && fk('csatolmany') ? '<button type="button" class="gomb" data-tett="oldalsav" aria-pressed="' + (beall.oldalsav !== false) +
         '" title="Oldalsáv elrejtése/mutatása (fénykép, csatolmányok, jegyzet)">Oldalsáv</button>' : '') +
       (!k.fajta && k.adat.tipus !== 'aktualis' ? '<button type="button" class="gomb" data-tett="szemely" aria-pressed="' +
@@ -830,7 +834,7 @@
     if (l.hidden) return;
     l.innerHTML = (kepletek.length ? kepletek.map(function (k, i) {
       return '<button type="button" role="menuitem" data-valt="' + i + '" aria-current="' + (i === aktiv) + '"><span class="mini">' + k.mini + '</span>' +
-        '<span class="ln"><b>' + R.esc(cim(k)) + '</b><small>' + R.esc(tipusNev(k)) + ' · ' + R.esc(datumSor(k)) + '</small></span></button>';
+        '<span class="ln"><b>' + cimHtml(k) + '</b><small>' + R.esc(tipusNev(k)) + ' · ' + R.esc(datumSor(k)) + '</small></span></button>';
     }).join('') : '<div class="ures">Nincs megnyitott képlet.</div>') +
       '<div class="lab">Váltás billentyűzetről: Alt+1 … Alt+9</div>';
   }
@@ -1197,6 +1201,7 @@
       b.type = 'button'; b.setAttribute('role', x.radio ? 'menuitemradio' : x.pipa ? 'menuitemcheckbox' : 'menuitem');
       var pipa = x.pipa ? x.pipa() : false;
       if (x.pipa) b.setAttribute('aria-checked', String(pipa));
+      if (typeof x.t === 'string') b.setAttribute('data-t', x.t);
       b.innerHTML = '<span class="pipa" aria-hidden="true">' + (pipa ? (x.radio ? '•' : '✓') : '') + '</span><span>' + R.esc(typeof x.c === 'function' ? x.c() : x.c) + '</span>' +
         (x.b ? '<span class="bill">' + x.b + '</span>' : '') + (x.al ? '<span class="nyil" aria-hidden="true">▸</span>' : '') +
         (x.f ? '<span class="fazis">' + FAZIS[x.f] + '</span>' : '');
@@ -1608,7 +1613,7 @@
   });
   function olvTipZar() { clearTimeout(olvIdozito); if (olvTip) olvTip.hidden = true; }
   function olvTipMutat(ev, html) {
-    if (!olvTip) { olvTip = document.createElement('div'); olvTip.className = 'olv-tip'; olvTip.setAttribute('role', 'tooltip'); document.body.appendChild(olvTip); }
+    if (!olvTip) { olvTip = document.createElement('div'); olvTip.className = 'olv-tip'; olvTip.setAttribute('role', 'tooltip'); olvTip.setAttribute('data-nofordit', ''); document.body.appendChild(olvTip); }
     olvTip.innerHTML = html; olvTip.hidden = false;
     var w = olvTip.offsetWidth, h = olvTip.offsetHeight, x = ev.clientX + 14, y = ev.clientY + 16;
     if (x + w > innerWidth - 8) x = Math.max(8, ev.clientX - w - 14);
@@ -1619,7 +1624,7 @@
     var a = document.createElement('div');
     a.className = 'olv-ablak'; a.setAttribute('role', 'dialog'); a.setAttribute('aria-label', cim0);
     a.innerHTML = '<div class="olv-fej"><b>' + R.esc(cim0) + '</b><button type="button" class="kisgomb" data-masol title="Másolás a vágólapra" aria-label="Másolás"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="1"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg></button>' +
-      '<button type="button" class="kisgomb" data-zar title="Bezárás (Esc)" aria-label="Bezárás"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div class="olv-torzs">' + olvHtml(szoveg) + '</div>';
+      '<button type="button" class="kisgomb" data-zar title="Bezárás (Esc)" aria-label="Bezárás"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div class="olv-torzs" data-nofordit>' + olvHtml(szoveg) + '</div>';
     var n = document.querySelectorAll('.olv-ablak').length;
     a.style.left = (60 + n * 24) + 'px'; a.style.top = (120 + n * 24) + 'px';
     document.body.appendChild(a);
@@ -2144,7 +2149,7 @@
     if (!alloLista) {
       alloLista = A.mind().sort(function (x, y) { return x.nev.localeCompare(y.nev, 'hu'); });
       tb.innerHTML = alloLista.map(function (c, i) {
-        return '<tr data-i="' + i + '" data-id="' + c.id + '" aria-selected="false"><td>' + R.esc(c.nev) + '</td><td>' + R.esc(c.nomen) +
+        return '<tr data-nofordit data-i="' + i + '" data-id="' + c.id + '" aria-selected="false"><td>' + R.esc(c.nev) + '</td><td>' + R.esc(c.nomen) +
           '</td><td>' + R.esc(c.latin) + '</td><td>' + R.esc(c.hun) + '</td></tr>';
       }).join('');
       $('aFsz').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(function (k) {
@@ -2418,6 +2423,11 @@
     beall.elrendezes = +b.getAttribute('data-r'); nezet = 'mozaik'; beallMent(); render();
   });
   $('listaGomb').addEventListener('click', function () { listaValt(); });
+  // a felület nyelve (nyelv.js): váltáskor újratöltés ?lang= paraméterrel; a munkamenet megmarad
+  if (R.Nyelv) {
+    $('nyelvVal').value = R.Nyelv.kod;
+    $('nyelvVal').addEventListener('change', function () { munkamenetMent(); R.Nyelv.valt(this.value); });
+  }
   $('lista').addEventListener('click', function (e) {
     var b = e.target.closest('[data-valt]'); if (!b) return;
     listaValt(false); aktival(+b.getAttribute('data-valt'));

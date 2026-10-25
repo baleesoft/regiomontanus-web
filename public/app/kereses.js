@@ -139,8 +139,8 @@
     var a = t.adat;
     return '<div class="ker-sor" role="option" aria-selected="' + !!t.kijelolt + '" data-i="' + i + '">' +
       (sorszam ? '<span class="c0">' + t.sorszam + '</span>' : '') +
-      '<span class="c1">' + R.esc(a.nev) + '</span><span class="c2">' + R.esc(R.datumStr(a.ev, a.ho, a.nap, a.ora, a.perc).replace(' ', '   ')) + '</span>' +
-      '<span class="c3">' + R.esc(t.nev) + '</span><span class="c4">' + R.esc(t.ut) + '</span></div>';
+      '<span class="c1" data-nofordit>' + R.esc(a.nev) + '</span><span class="c2">' + R.esc(R.datumStr(a.ev, a.ho, a.nap, a.ora, a.perc).replace(' ', '   ')) + '</span>' +
+      '<span class="c3" data-nofordit>' + R.esc(t.nev) + '</span><span class="c4" data-nofordit>' + R.esc(t.ut) + '</span></div>';
   }
   function listaRajzol() {
     var l = $('[data-k="lista"]');

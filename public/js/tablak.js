@@ -81,7 +81,7 @@
       var p = e.elemPl[id], d = A.adat(id), j = R.jegyben(p.lon), l = fsz1[id] || [];
       return '<tr data-allo="' + id + '"><td>' + esc(d[0]) + '</td><td>' + esc(A.jele(id)) + '</td>' +
         '<td class="t-allo-fsz">' + l.map(esc).join('<br>') + '</td>' +
-        '<td>' + esc(d[1]) + '</td><td>' + esc(d[2]) + '</td><td>' + esc(d[3]) + '</td>' +
+        '<td>' + esc(d[1]) + '</td><td>' + esc(d[2]) + '</td><td data-nofordit>' + esc(d[3]) + '</td>' +
         '<td>' + R.JEGYEK[j.j] + '</td><td class="t-gl">' + R.jegyGlif(j.j) + '</td>' +
         '<td class="t-num">' + R.fokStr(j.fok) + '</td><td class="t-num">' + (p.house || '') + '</td></tr>';
     });
