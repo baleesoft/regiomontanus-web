@@ -279,7 +279,7 @@
     var RV = AS ? AS.gyuruk.reduce(function (s, g) { return s + g.szel * r + G_AS; }, R_AS0) + G_AS : R;
     // data-r-alap: a kerék szokásos (asztroszkóp nélküli) kiterjedése – a nyomtatás ehhez igazítja a méretet
     var svg = el('svg', { viewBox: [-RV, -RV, 2 * RV, 2 * RV].join(' '), xmlns: NS, role: 'img', 'data-r-alap': R,
-      'aria-label': 'Képletkerék', 'font-family': TXT, style: 'width:100%;height:auto;display:block' });
+      'aria-label': 'Képletábra', 'font-family': TXT, style: 'width:100%;height:auto;display:block' });
     el('rect', { x: -RV, y: -RV, width: 2 * RV, height: 2 * RV, fill: '#fff' }, svg);
     if (AS) asztroszkop();
     function asztroszkop() {

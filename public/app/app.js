@@ -372,7 +372,7 @@
       var kd = T.kerekAdat(k.e);
       kd.jegyzetJelek = nyomtatFelul || !fk('jegyzet') ? null : k.jegyzetKulcsok || (k.jegyzetKulcsok = R.Jegyzet.jelek(k));
       var svg = RegioKerek.rajzol(hova, kd, kerekBeall(k));
-      svg.setAttribute('aria-label', 'Képletkerék: ' + cim(k));
+      svg.setAttribute('aria-label', 'Képletábra: ' + cim(k));
       return svg;
     }
     hova.innerHTML = k.hiba ? '<div class="hiba">Hiba: ' + R.esc(k.hiba) + '</div>' : '<div class="betolt">számítás…</div>';
@@ -586,18 +586,18 @@
       tipusCimke(k) + '<span class="tolt"></span>' + (!k.fajta && fk('csatolmany') ? '<button type="button" class="gomb" data-tett="oldalsav" aria-pressed="' + (beall.oldalsav !== false) +
         '" title="Oldalsáv elrejtése/mutatása (fénykép, csatolmányok, jegyzet)">Oldalsáv</button>' : '') +
       (!k.fajta && k.adat.tipus !== 'aktualis' ? '<button type="button" class="gomb" data-tett="szemely" aria-pressed="' +
-        !!k.szemely + '" title="Csak az énállapotok (énjelölő planéták és együttállóik) a keréken">Személyiségrajz</button>' : '') + (k.fajta ? '<div class="csoport" role="group" aria-label="Megjelenítés">' +
+        !!k.szemely + '" title="Csak az énállapotok (énjelölő planéták és együttállóik) az ábrán">Személyiségrajz</button>' : '') + (k.fajta ? '<div class="csoport" role="group" aria-label="Megjelenítés">' +
         '<button type="button" data-tett="egymason" aria-pressed="' + (k.mod !== 'egymasmellett') + '">Egymáson</button>' +
         '<button type="button" data-tett="egymasmellett" aria-pressed="' + (k.mod === 'egymasmellett') + '">Egymás mellett</button></div>' : '') +
       (document.body.classList.contains('kerek-max')
         ? '<button type="button" class="gomb" data-tett="teljesKepernyo" aria-pressed="' + !!document.fullscreenElement + '" title="A böngésző saját sávjai nélkül (F11)">' +
           (document.fullscreenElement ? 'Kilépés a teljes képernyőből' : 'Teljes képernyő') + '</button>' +
           '<button type="button" class="gomb fo" data-tett="nagyKerekValt" title="Vissza a táblákhoz és a menühöz (Esc)">Kicsinyítés (Esc)</button>'
-        : '<button type="button" class="gomb" data-tett="nagyKerekValt" title="Csak a kerék, a teljes ablakban (a menü, az eszköztár és a táblák nélkül)">⤢ Nagy kerék</button>' +
+        : '<button type="button" class="gomb" data-tett="nagyKerekValt" title="Csak az ábra, a teljes ablakban (a menü, az eszköztár és a táblák nélkül)">⤢ Nagy ábra</button>' +
           '<button type="button" class="gomb fo" data-tett="vissza">Vissza a mozaikhoz (Esc)</button>') + '</div>' +
       '<div class="torzs"><div class="kerek"></div>' + (oldalsavVan(k) ? oldalsavHtml(k) : '') + '</div></section>' +
       '<div class="elvalaszto" role="separator" tabindex="0" aria-orientation="vertical" aria-controls="tablaTart" ' +
-      'aria-label="A kerék és a táblák szélességének állítása" aria-valuemin="30" aria-valuemax="80" aria-valuenow="' +
+      'aria-label="Az ábra és a táblák szélességének állítása" aria-valuemin="30" aria-valuemax="80" aria-valuenow="' +
       Math.round(aranyKorlat(beall.reszletArany) * 100) + '" title="Húzd oldalra (vagy ←/→); dupla kattintás: alapméret"></div>' +
       '<aside class="tablak" aria-label="Táblák"><div class="fulek" role="tablist">' + fulek().map(function (f) {
         return '<button type="button" role="tab" data-ful="' + f[0] + '" aria-selected="' + (ful === f[0]) + '"' +
@@ -1117,8 +1117,8 @@
     ['Személyes adatok elrejtése – be/ki', 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c1-4 4-6 8-6s7 2 8 6', 'inkognito', inkognito],
     ['Állócsillagok – be/ki', 'M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.6l-5.3 2.8 1.2-6-4.5-4.1 6-.7z', 'allo', function () { return !!beall.allo.megj; }],
     ['Chiron és a kisbolygók – be/ki', 'M7 5a2 2 0 1 0 .01 0M16 7a3 3 0 1 0 .01 0M10 15a2.5 2.5 0 1 0 .01 0', 'aszteroidak', function () { return beall.kerek.asteroids; }],
-    ['Asztroszkóp: csillagképek a kerék körül – be/ki', 'M12 9a3 3 0 1 0 .01 0M4.6 8A8.5 8.5 0 0 1 10 3.7M14 3.7A8.5 8.5 0 0 1 19.4 8M20.5 12a8.5 8.5 0 0 1-2.6 6.1M15 20a8.5 8.5 0 0 1-6 0M6.1 18.1A8.5 8.5 0 0 1 3.5 12', 'asztro', function () { return !!beall.kerek.asztro; }],
-    ['Naksatrák (27 holdház) a kerék körül – be/ki', 'M14 4a8 8 0 1 0 6 13A6.5 6.5 0 0 1 14 4zM18 3l.8 1.7 1.7.8-1.7.8L18 8l-.8-1.7-1.7-.8 1.7-.8z', 'naksatra', function () { return !!beall.kerek.naksatra; }], 0,
+    ['Asztroszkóp: csillagképek az ábra körül – be/ki', 'M12 9a3 3 0 1 0 .01 0M4.6 8A8.5 8.5 0 0 1 10 3.7M14 3.7A8.5 8.5 0 0 1 19.4 8M20.5 12a8.5 8.5 0 0 1-2.6 6.1M15 20a8.5 8.5 0 0 1-6 0M6.1 18.1A8.5 8.5 0 0 1 3.5 12', 'asztro', function () { return !!beall.kerek.asztro; }],
+    ['Naksatrák (27 holdház) az ábra körül – be/ki', 'M14 4a8 8 0 1 0 6 13A6.5 6.5 0 0 1 14 4zM18 3l.8 1.7 1.7.8-1.7.8L18 8l-.8-1.7-1.7-.8 1.7-.8z', 'naksatra', function () { return !!beall.kerek.naksatra; }], 0,
     ['Aktuális égi állás', 'M12 8a4 4 0 1 0 .01 0M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2', 'aktualis'],
     ['Planéta az Ascendensen – énállapotok perspektívája', 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 .01 0', 'enallPersp'],
     ['Kos 0° képlet', 'M12 21V10a5 5 0 0 0-9-3M12 10a5 5 0 0 1 9-3', 'kos0'],
