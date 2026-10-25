@@ -9,6 +9,7 @@ Kimenet: public/js/csillagkepek.js
   ekl:   az ekliptika menti csillagképek (a Nap útja), [rövidítés, kezdő hosszúság] – a következő elejéig tart
   kulso: [rövidítés, magyar név, legkisebb |β| (fok), [[λ0, λ1], …]] – a |β| ≤ 60° sávban elfoglalt hosszúság-ívek
   tejut: [[λ0, λ1], …] – az ekliptika azon szakaszai, ahol a galaktikus szélesség |b| ≤ 10°
+  zona:  {rövidítés: [λ0, λ1]} – az ekliptika 13 csillagképe az állatöv ±8°-os sávjában (IAU-határok; kissé egymásra lógnak)
   alak:  {rövidítés: [λ0, λ1]} – a csillagkép-alakzat (a vonalas ábra csillagai) által lefedett legkisebb ív; forrás:
          d3-celestial constellations.lines.json (BSD-3, Olaf Frohn) – a Kígyó két része külön (SerCap, SerCau)
 
@@ -92,6 +93,18 @@ for a in sorted(set(k.ravel())):
 c = SkyCoord(lon=lam * u.deg, lat=np.zeros_like(lam) * u.deg, frame=ECL)
 tejut = ivek(np.abs(c.transform_to(Galactic()).b.deg) <= 10, 0.01)
 
+# 3b. az ekliptika csillagképei az állatöv ±8°-os sávjában (0,05° × 0,5°)
+ZB = 8
+Lz = np.arange(0, 360, 0.05) + 0.025
+Bz = np.arange(-ZB, ZB + 1e-9, 0.5)
+LLz, BBz = np.meshgrid(Lz, Bz)
+kz, _ = csk(LLz.ravel(), BBz.ravel())
+kz = kz.reshape(LLz.shape)
+zona = {}
+for a in ekl_nevek:
+    iv = ivek((kz == a).any(axis=0), 0.05)
+    zona[a] = max(iv, key=lambda x: (x[1] - x[0]) % 360)   # az ekliptika csillagképei egyetlen ívben
+
 # 4. az alakzatok kiterjedése: a vonalas ábra csúcsainak ekliptikai hosszúsága → a legnagyobb rés kihagyásával a lefedő ív
 import math, sys
 EPS = math.radians(23.4392911)
@@ -126,11 +139,13 @@ with open(ki, 'w', encoding='utf-8') as f:
     f.write('/*\n * csillagkepek.js – az asztroszkóp adatai (tools/build-csillagkepek.py generálja, kézzel ne szerkeszd).\n'
             ' * IAU-csillagképhatárok (Delporte 1930; Roman 1987, CDS VI/42), ekliptikai hosszúság, J2000.\n'
             ' * ekl: [rövidítés, kezdet]; kulso: [rövidítés, név, legkisebb |β|, ívek]; tejut: ívek (|b| ≤ 10°);\n'
+            ' * zona: {rövidítés: [λ0, λ1]} – az ekliptika csillagképei az állatöv ±8°-os sávjában (IAU-határok);\n'
             ' * alak: {rövidítés: [λ0, λ1]} – az alakzat csillagai által lefedett ív (d3-celestial, BSD-3, (c) 2015 Olaf Frohn). Licenc: AGPL-3.0.\n */\n')
     f.write('(function (global) {\n  \'use strict\';\n  var R = global.Regio = global.Regio || {};\n')
     f.write('  R.CSILLAGKEPEK = {\n    nev: ' + json.dumps(NEV, ensure_ascii=False) + ',\n')
     f.write('    ekl: ' + json.dumps(ekl) + ',\n')
     f.write('    kulso: [\n' + ',\n'.join('      ' + json.dumps(x, ensure_ascii=False) for x in kulso) + '\n    ],\n')
     f.write('    tejut: ' + json.dumps(tejut) + ',\n')
+    f.write('    zona: ' + json.dumps(zona, separators=(',', ':')) + ',\n')
     f.write('    alak: ' + json.dumps(alak, separators=(',', ':')) + '\n  };\n})(typeof window !== \'undefined\' ? window : globalThis);\n')
 print(len(ekl), 'ekliptikai,', len(kulso), 'külső csillagkép; Tejút:', tejut)

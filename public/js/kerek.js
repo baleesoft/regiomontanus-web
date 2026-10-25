@@ -130,8 +130,9 @@
   }
   /**
    * @param {Object} as – { eltolas: fok (precesszió − ajánamsa), mod: 'kep' | 'sav' | 'zod13', sav: fok, tejut: bool,
-   *   kiterj: 'alak' (a csillagkép-alakzat csillagai által lefedett ív – rés és átfedés is lehet) | 'iau' (a hivatalos határok:
-   *   az ekliptika menti sor hézag nélkül összeér), atfed: bool (áttetszően egymásra lóghatnak, legfeljebb 3–4 sorban) }
+   *   kiterj: 'zona' (alap: a hivatalos határok az állatöv ±8°-os sávjában – hézag nélkül, a szomszédok kissé egymásra lógnak) |
+   *   'iau' (a hivatalos határok pontosan az ekliptikán: hézag és átfedés nélkül) | 'alak' (a csillagkép-alakzat csillagai által
+   *   lefedett ív – rés és átfedés is lehet); a többi csillagkép az első kettőnél az IAU-határok szerint, atfed: bool (áttetszően egymásra lóghatnak, legfeljebb 3–4 sorban) }
    *   'zod13': csak az ekliptika 13 csillagképe (13 csillagképes zodiákus) az IAU-határok szerint, a jegyek elemszíneivel
    * @returns {{gyuruk: Array}|null} – a gyűrűk belülről kifelé
    */
@@ -146,7 +147,7 @@
     }) });
     if (!as || !D) return gy.length ? { gyuruk: gy } : null;
     var e = +as.eltolas || 0, eklNev = {}, lista = [], sorok = [];
-    var alakE = as.kiterj !== 'iau' && !!D.alak, atfedE = as.atfed !== false;
+    var kiterj = as.kiterj || 'zona', alakE = kiterj === 'alak' && !!D.alak, zonaE = kiterj === 'zona' && !!D.zona, atfedE = as.atfed !== false;
     var ekl = D.ekl.map(function (x, i) {
       eklNev[x[0]] = true;
       var l0 = fokNorm(x[1] + e), l1 = fokNorm(D.ekl[(i + 1) % D.ekl.length][1] + e);
@@ -158,13 +159,13 @@
       return { gyuruk: gy };
     }
     // az alakzat szerinti kiterjedés: az ekliptika csillagképei is a csillagaik által lefedett ívvel
-    var alakIv = function (a) {
-      var v = D.alak && D.alak[a]; if (!v) return null;
+    var alakIv = function (a, T) {
+      var v = (T || D.alak) && (T || D.alak)[a]; if (!v) return null;
       var l0 = fokNorm(v[0] + e), l1 = fokNorm(v[1] + e);
       return { l0: l0, l1: l1, h: hossz(l0, l1) };
     };
-    if (alakE) ekl = ekl.map(function (x) {
-      var v = alakIv(x.a); if (!v) return x;
+    if (alakE || zonaE) ekl = ekl.map(function (x) {
+      var v = alakIv(x.a, zonaE ? D.zona : D.alak); if (!v) return x;
       return { a: x.a, n: x.n, l0: v.l0, l1: v.l1, h: v.h, ekl: true };
     });
     var sav = Math.min(30, Math.max(0, +as.sav || 10));
@@ -185,17 +186,24 @@
     });
     lista.sort(function (p, q) { return q.h - p.h || (p.a < q.a ? -1 : 1); });
     if (atfedE) {
-      // áttetszően egymásra lógva: legfeljebb 3 (minden csillagképnél 4) sor; mindegyik oda kerül, ahol nem fed át,
-      // ha nincs ilyen és van még hely, új sorba, különben oda, ahol a legkevésbé fed át
-      var MAX = as.mod === 'sav' ? 4 : 3;
-      ekl.concat(lista, tej).forEach(function (x) {
+      // áttetszően egymásra lógva: az ekliptika csillagképei a belső sorban (az átfedésük sötétebben látszik), a többi legfeljebb
+      // 2 (minden csillagképnél 3) további sorban – mindegyik oda, ahol nem fed át, ha nincs ilyen és van még hely, új sorba,
+      // különben oda, ahol a legkevésbé fed át
+      var MAX = as.mod === 'sav' ? 4 : 3, belso = [], kiszorult = [];
+      // amelyiket egy előtte lévő (az ekliptika mentén) nagyrészt eltakarna (pl. a Kígyótartót a Skorpió sávja), az kijjebb kerül
+      ekl.forEach(function (x) {
+        var fed = belso.reduce(function (s0, y) { return s0 + kozos(x, y); }, 0);
+        (fed > x.h * 0.5 ? kiszorult : belso).push(x);
+      });
+      sorok.push(belso);
+      kiszorult.concat(lista, tej).forEach(function (x) {
         var leg = -1, legA = Infinity;
-        for (var i = 0; i < sorok.length; i++) {
+        for (var i = 1; i < sorok.length; i++) {
           var a = sorok[i].reduce(function (s0, y) { return s0 + kozos(x, y); }, 0);
           if (a === 0) { leg = i; legA = 0; break; }
           if (a < legA) { legA = a; leg = i; }
         }
-        if (legA > 0 && sorok.length < MAX) { sorok.push([x]); return; }
+        if ((leg < 0 || legA > 0) && sorok.length < MAX) { sorok.push([x]); return; }
         sorok[leg].push(x);
       });
     } else {
