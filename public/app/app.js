@@ -982,6 +982,8 @@
     egbolt: function () { var k = akt(); if (k) egboltNyit(k); },
     suti: function () { if (R.Suti) R.Suti.beallit(); },
     naksatra: function () { beall.kerek.naksatra = !beall.kerek.naksatra; beallMent(); render(); },
+    stilusRegio: function () { beall.kerek.stilus = 'regio'; beallMent(); render(); },
+    stilusPlacidus: function () { beall.kerek.stilus = 'placidus'; beallMent(); render(); },
     // az ábra stílusa: Regiomontanus ↔ Placidus (később több stílusnál körbe)
     stilus: function () {
       var L = RegioKerek.STILUSOK.map(function (x) { return x[0]; }), i = L.indexOf(beall.kerek.stilus || 'regio');
@@ -1076,6 +1078,14 @@
         return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(function (id) { return { c: R.nev(id) + '-perspektíva', t: 'persp' + id }; })
           .concat(['-', { c: 'Drakonikus-perspektíva', t: 'persp10' }, '-', { c: 'Énállapotok perspektívája', t: 'enallPersp' }]);
       } }, { c: 'Kos 0° képlet', t: 'kos0' }, '-',
+      // az ábra körüli rétegek és a kinézet (az eszköztárról ide kerültek – Balázs kérése, 2026-10-25)
+      { c: 'Az ábra megjelenítése', al: function () {
+        var st = beall.kerek.stilus || 'regio';
+        return [{ c: 'Asztroszkóp (csillagképek az ábra körül)', t: 'asztro', pipa: function () { return !!beall.kerek.asztro; } },
+          { c: 'Naksatrák (27 holdház) az ábra körül', t: 'naksatra', pipa: function () { return !!beall.kerek.naksatra; } }, '-',
+          { c: 'Regiomontanus-stílus', t: 'stilusRegio', radio: true, pipa: function () { return st === 'regio'; } },
+          { c: 'Placidus-stílus', t: 'stilusPlacidus', radio: true, pipa: function () { return st === 'placidus'; } }];
+      } },
       { c: 'Égbolt-nézet (3D)…', t: 'egbolt' }, '-',
       { c: 'Horoszkópolvasó aktiválása', b: 'Ctrl+Q', t: 'olvasoBe', pipa: function () { return olvasoBe; } }, '-', { c: 'Aktuális égi állások', t: 'aktualis' }, '-', { c: 'Keresés', t: 'kereses' }] },
     { c: 'Progressziók', l: [
@@ -1120,33 +1130,29 @@
     ['Mind bezár', 'M4 7h12v13H4zM8 4h12v12M7 11l6 6M13 11l-6 6', 'mindBezar'], 0,
     ['Horoszkóp mentése képként', 'M3 6h18v13H3zM6 16l4-4 3 3 3-3 3 3', 'kep'],
     ['Nyomtatás (Ctrl+P)', 'M7 9V4h10v5M7 17H4v-7h16v7h-3M7 14h10v6H7z', 'nyomtat'], 0,
-    ['Planéták (Ctrl+B)', 'M4 5h16v14H4zM4 10h16M10 5v14', 'planetak'],
-    ['Házak (Ctrl+H)', 'M12 3v18M3 12h18M6 6l12 12M18 6L6 18', 'hazak'],
-    ['Fényszögek (Ctrl+F)', 'M4 20h16M4 20V4M4 14h6v6M4 8h12v12', 'fenyszogek'],
+    ['Planéták (Ctrl+B)', 'M17 12a5 5 0 1 1-10 0a5 5 0 1 1 10 0M2.13 15.59A10.5 3.4 -20 0 0 21.87 8.41M2.13 15.59A10.5 3.4 -20 0 1 6.08 11.02M21.87 8.41A10.5 3.4 -20 0 0 15.9 7.44', 'planetak'],
+    ['Házak (Ctrl+H)', 'M3 11.5L12 4l9 7.5M5.5 9.5V20h13V9.5M10 20v-5.5h4V20', 'hazak'],
+    ['Fényszögek (Ctrl+F)', 'M12 2v2M10.4 5.6a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0-3.2 0M11.3 7.1L6.5 20.5M12.7 7.1l4.8 13.4M6.5 20.5l-.6 1.3M17.5 20.5l.6 1.3', 'fenyszogek'],
     ['Életstratégia, járatlan út (Ctrl+J)', 'M4 4h16v16H4zM4 9h16M4 14h16M9 4v16M14 4v16', 'eletstrat'],
-    ['Énállapotok – be/ki (személyiségrajz)', 'M12 4l8 14H4z', 'szemely', function () { return !!(akt() && akt().szemely); }],
+    ['Énállapotok – be/ki (személyiségrajz)', 'M5 4l14 8-14 8z', 'szemely', function () { return !!(akt() && akt().szemely); }],
     ['Személyes adatok elrejtése – be/ki', 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c1-4 4-6 8-6s7 2 8 6', 'inkognito', inkognito],
-    ['Állócsillagok – be/ki', 'M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.6l-5.3 2.8 1.2-6-4.5-4.1 6-.7z', 'allo', function () { return !!beall.allo.megj; }],
-    ['Chiron és a kisbolygók – be/ki', 'M7 5a2 2 0 1 0 .01 0M16 7a3 3 0 1 0 .01 0M10 15a2.5 2.5 0 1 0 .01 0', 'aszteroidak', function () { return beall.kerek.asteroids; }],
-    ['Asztroszkóp: csillagképek az ábra körül – be/ki', 'M12 9a3 3 0 1 0 .01 0M4.6 8A8.5 8.5 0 0 1 10 3.7M14 3.7A8.5 8.5 0 0 1 19.4 8M20.5 12a8.5 8.5 0 0 1-2.6 6.1M15 20a8.5 8.5 0 0 1-6 0M6.1 18.1A8.5 8.5 0 0 1 3.5 12', 'asztro', function () { return !!beall.kerek.asztro; }],
-    ['Naksatrák (27 holdház) az ábra körül – be/ki', 'M14 4a8 8 0 1 0 6 13A6.5 6.5 0 0 1 14 4zM18 3l.8 1.7 1.7.8-1.7.8L18 8l-.8-1.7-1.7-.8 1.7-.8z', 'naksatra', function () { return !!beall.kerek.naksatra; }],
-    ['Az ábra stílusa: Regiomontanus / Placidus (váltás)', 'M12 3a9 9 0 1 0 .01 0M12 3v18M3.5 9.5L12 12l8.5-2.5M17 4.5l-2.5 3', 'stilus', function () { return (beall.kerek.stilus || 'regio') !== 'regio'; }], 0,
-    ['Aktuális égi állás', 'M12 8a4 4 0 1 0 .01 0M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2', 'aktualis'],
-    ['Planéta az Ascendensen – énállapotok perspektívája', 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 .01 0', 'enallPersp'],
-    ['Kos 0° képlet', 'M12 21V10a5 5 0 0 0-9-3M12 10a5 5 0 0 1 9-3', 'kos0'],
-    ['Égbolt-nézet (3D): a képlet a valódi égen', 'M12 3a9 9 0 1 0 .01 0M3.5 10.5c5 2 12 2 17 0M7 6.5h.01M16 15h.01M9 17h.01M17 7.5h.01', 'egbolt'], 0,
+    ['Állócsillagok – be/ki', 'M9 3.8L10.64 7.74L14.9 8.08L11.65 10.86L12.64 15.02L9 12.79L5.36 15.02L6.35 10.86L3.1 8.08L7.36 7.74ZM18.2 2.3L19.05 4.34L21.24 4.51L19.57 5.94L20.08 8.09L18.2 6.94L16.32 8.09L16.83 5.94L15.16 4.51L17.35 4.34ZM17.5 13.2L18.51 15.62L21.11 15.83L19.13 17.53L19.73 20.07L17.5 18.71L15.27 20.07L15.87 17.53L13.89 15.83L16.49 15.62Z', 'allo', function () { return !!beall.allo.megj; }],
+    ['Chiron és a kisbolygók – be/ki', 'M12 3v6.5M4.5 13h5L12 10.5l2.5 2.5h5M6 16l6 5 6-5', 'aszteroidak', function () { return beall.kerek.asteroids; }],
+    ['Aktuális égi állás', 'M12 3a9 9 0 1 1 0 18a9 9 0 1 1 0-18M12 7v5l3.5 2', 'aktualis'],
+    ['Planéta az Ascendensen – perspektívák (legördülő)', 'M12 3L4 16.9A16 16 0 0 0 20 16.9ZM6.4 15.4A13 13 0 0 0 17.6 15.4M12 3l2.4 16.2M13.4 6.2h5.2v2.4h-5.2z', 'enallPersp', null, perspLista],
+    ['Kos 0° képlet', 'M12 21V10a5 5 0 0 0-9-3M12 10a5 5 0 0 1 9-3', 'kos0'], 0,
     ['Összevetés (szinasztria)', 'M9 6a6 6 0 1 0 .01 0M15 6a6 6 0 1 0 .01 0', 'szin'], 0,
-    ['Primer (1° = 1 év) direkciók', 'M4 12h14M13 6l6 6-6 6', 'pd'],
+    ['Primer (1° = 1 év) direkciók', 'M12 3v18M9 21h6M12 5h6.5l2.2 2.5-2.2 2.5H12M12 12.5H5.5l-2.2 2.5 2.2 2.5H12', 'pd'],
     ['Progressziós Hold', 'M15 3a9 9 0 1 0 6 15A7 7 0 0 1 15 3z', 'ph'],
-    ['Tranzitok', 'M12 3a9 9 0 1 0 .01 0M3 12h18', 'tranzit'], 0,
-    ['Szolár-képlet', 'M12 7a5 5 0 1 0 .01 0M12 11.5v1', 'sol'], 0,
-    ['Revolúciók…', 'M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5', 'rev'], 0,
+    ['Tranzitok', 'M3.5 12a8.5 8.5 0 1 0 2.5-6L3.5 8.5M3.5 4v4.5H8M12 7.5V12l3 2', 'tranzit'], 0,
+    ['Szolár-képlet', 'M12 8a4 4 0 1 0 .01 0M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2', 'sol'], 0,
+    ['Revolúciók…', 'M4 6h16v14H4zM4 10h16M8 3.5v4M16 3.5v4M8 13.5h.01M12 13.5h.01M16 13.5h.01M8 16.8h.01M12 16.8h.01', 'rev'], 0,
     ['Képletléptető (Ctrl+L)', 'M5 12h14M5 12l4-4M5 12l4 4M19 12l-4-4M19 12l-4 4', 'lepteto', function () { return lepNyitva; }],
     ['Progresszióléptető', 'M4 18l6-6-6-6M12 18l6-6-6-6', 'progrLepteto', function () { return lepNyitva && !!(akt() && akt().fajta); }], 0,
     ['Segítség a program használatához', 'M12 3a9 9 0 1 0 .01 0M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 1-1 1.7M12 17h.01', 'segitseg'], 0,
     ['Humanisztikus Asztrológia Iskola', 'M2 9l10-5 10 5-10 5zM6 11v5c3 2 9 2 12 0v-5', 'iskola'], 0,
-    ['Jegyek és játszmák', 'M4 7h10v14H4zM10 3h10v14', 'jj'],
-    ['Születési értesítő', 'M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 11c0 5.5-7 10-7 10z', 'sze'], 0,
+    ['Jegyek és játszmák', 'M3 8.5h8.5v8.5H3zM12.5 5.5H21V14h-8.5zM4.70 10.80a.6 .6 0 1 0 1.2 0a.6 .6 0 1 0-1.2 0M6.65 12.75a.6 .6 0 1 0 1.2 0a.6 .6 0 1 0-1.2 0M8.60 14.70a.6 .6 0 1 0 1.2 0a.6 .6 0 1 0-1.2 0M14.20 7.80a.6 .6 0 1 0 1.2 0a.6 .6 0 1 0-1.2 0M18.10 7.80a.6 .6 0 1 0 1.2 0a.6 .6 0 1 0-1.2 0M14.20 11.70a.6 .6 0 1 0 1.2 0a.6 .6 0 1 0-1.2 0M18.10 11.70a.6 .6 0 1 0 1.2 0a.6 .6 0 1 0-1.2 0', 'jj'],
+    ['Születési értesítő', 'M12 2.8a3 3 0 1 1 0 6a3 3 0 1 1 0-6M8.5 10.5h7c1 0 1.5.8 1.5 1.8V17a5 5 0 0 1-10 0v-4.7c0-1 .5-1.8 1.5-1.8zM7 14.5l10-2M7.4 18.4l9.2-2.6', 'sze'], 0,
     ['Horoszkópolvasó – be/ki (Ctrl+Q)', 'M4 5h16v11H9l-5 4z', 'olvaso', function () { return olvasoBe; }], 0,
     ['Keresés a képletek közt', 'M10 4a6 6 0 1 0 .01 0M15 15l6 6', 'kereses'],
     ['Megnyitás névre kereséssel', 'M4 6h10M4 12h7M4 18h7M17 11a3 3 0 1 0 .01 0M19.5 15.5L22 18', 'gyorsKeres']
@@ -1157,8 +1163,8 @@
     $('ikonok').innerHTML = ESZKOZ.map(function (e, i) {
       if (e === 0) return '<span class="sep" aria-hidden="true"></span>';
       var fz = typeof e[2] === 'number', cim = e[0] + (fz ? ' – ' + FAZIS[e[2]] : '');
-      return '<button type="button" class="ikon" data-eszk="' + i + '" aria-label="' + R.esc(cim) + '" title="' + R.esc(cim) + '"' +
-        (e[3] ? ' aria-pressed="false"' : '') + '><svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + e[1] + '"/></svg></button>';
+      return '<button type="button" class="ikon' + (e[4] ? ' legordulo' : '') + '" data-eszk="' + i + '" aria-label="' + R.esc(cim) + '" title="' + R.esc(cim) + '"' +
+        (e[3] ? ' aria-pressed="false"' : '') + (e[4] ? ' aria-haspopup="true" aria-expanded="false"' : '') + '><svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + e[1] + '"/></svg></button>';
     }).join('');
     if (jobb) jobbAthelyez();
   }
@@ -1232,7 +1238,31 @@
     nyitottMenu = i;
     if (fokusz) { var b = ul.querySelector('button:not(:disabled)') || ul.querySelector('button'); if (b) b.focus(); }
   }
+  /** az eszköztár legördülő gombjának menüje (pl. Planéta az Ascendensen) – a főmenük elemeivel azonos */
+  var eszkMenu = null;
+  function eszkMenuZar() {
+    if (!eszkMenu) return;
+    if (eszkMenu.parentNode) eszkMenu.parentNode.removeChild(eszkMenu);
+    eszkMenu._gomb.setAttribute('aria-expanded', 'false'); eszkMenu = null;
+  }
+  function eszkMenuNyit(gomb, lista) {
+    var volt = eszkMenu && eszkMenu._gomb === gomb;
+    menuZar(); eszkMenuZar();
+    if (volt) return;
+    var ul = menuLista(lista), r = gomb.getBoundingClientRect();
+    ul.classList.add('eszk-menu'); ul._gomb = gomb;
+    ul.style.left = Math.max(4, Math.min(r.left, innerWidth - 274)) + 'px'; ul.style.top = (r.bottom + 2) + 'px';
+    document.body.appendChild(ul); eszkMenu = ul; gomb.setAttribute('aria-expanded', 'true');
+    var f = ul.querySelector('button:not(:disabled)'); if (f) f.focus();
+  }
+  /** a perspektívák listája (eszköztár: „Planéta az Ascendensen”) */
+  function perspLista() {
+    return [{ c: 'Mindegyik énállapot-planéta (énállapotok perspektívája)', t: 'enallPersp' }, '-']
+      .concat([0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(function (id) { return { c: R.nev(id) + '-perspektíva', t: 'persp' + id }; }))
+      .concat(['-', { c: 'Drakonikus-perspektíva', t: 'persp10' }]);
+  }
   function menuZar() {
+    eszkMenuZar();
     if (nyitottMenu === null) return;
     var mf = $('menusor').querySelector('[data-m="' + nyitottMenu + '"]');
     var ul = mf.querySelector('.menu'); if (ul) mf.removeChild(ul);
@@ -1250,16 +1280,17 @@
       gombok[i].focus();
     } else if (e.key === 'ArrowRight') {
       if (i >= 0 && gombok[i].getAttribute('aria-haspopup')) { e.preventDefault(); e.stopPropagation(); gombok[i].click(); var s = gombok[i].parentNode.querySelector('.menu button:not(:disabled)'); if (s) s.focus(); }
-      else if (!ul.parentNode.closest('.menu')) { e.preventDefault(); e.stopPropagation(); menuNyit((nyitottMenu + 1) % MENU.length, true); }
+      else if (!ul.parentNode.closest('.menu') && nyitottMenu !== null) { e.preventDefault(); e.stopPropagation(); menuNyit((nyitottMenu + 1) % MENU.length, true); }
     } else if (e.key === 'ArrowLeft') {
       e.preventDefault(); e.stopPropagation();
       var szulo = ul.parentNode;
       if (szulo.closest('.menu')) { var gb = szulo.firstChild; alMenuZar(szulo.parentNode); gb.focus(); }
-      else menuNyit((nyitottMenu - 1 + MENU.length) % MENU.length, true);
+      else if (nyitottMenu !== null) menuNyit((nyitottMenu - 1 + MENU.length) % MENU.length, true);
     } else if (e.key === 'Escape') {
       e.preventDefault(); e.stopPropagation();
       var sz = ul.parentNode;
       if (sz.closest('.menu')) { var g = sz.firstChild; alMenuZar(sz.parentNode); g.focus(); }
+      else if (eszkMenu && eszkMenu === ul) { var eg = eszkMenu._gomb; eszkMenuZar(); eg.focus(); }
       else { var m = nyitottMenu; menuZar(); $('menusor').querySelector('[data-m="' + m + '"] > button').focus(); }
     } else if (e.key === 'Tab') { menuZar(); }
   }
@@ -2337,6 +2368,7 @@
       return;
     }
     if (e.key === 'Escape') {
+      if (eszkMenu) { eszkMenuZar(); return; }
       if (nyitottMenu !== null) { menuZar(); return; }
       if (!$('lista').hidden) { listaValt(false); $('listaGomb').focus(); return; }
       if (!beviteliMezo(e.target) && fokuszTorol()) return;
@@ -2345,6 +2377,7 @@
     }
   });
   document.addEventListener('mousedown', function (e) {
+    if (eszkMenu && !e.target.closest('.eszk-menu, button.legordulo')) eszkMenuZar();
     if (nyitottMenu !== null && !e.target.closest('.menusor')) menuZar();
     if (!$('lista').hidden && !e.target.closest('#lista, #listaGomb')) listaValt(false);
   });
@@ -2376,7 +2409,9 @@
   jobbAthelyez();
   $('ikonok').addEventListener('click', function (e) {
     var b = e.target.closest('button[data-eszk]'); if (!b || b.disabled) return;
-    vegrehajt(ESZKOZ[+b.getAttribute('data-eszk')][2]);
+    var x = ESZKOZ[+b.getAttribute('data-eszk')];
+    if (x[4]) { e.stopPropagation(); eszkMenuNyit(b, x[4]()); return; }
+    vegrehajt(x[2]);
   });
   $('racs').addEventListener('click', function (e) {
     var b = e.target.closest('button[data-r]'); if (!b) return;

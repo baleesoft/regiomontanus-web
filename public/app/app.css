@@ -46,6 +46,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .menu { position: absolute; top: 100%; left: 0; min-width: 260px; margin: 0; padding: 3px 0; list-style: none;
   background: #fff; border: 1px solid #a9a296; box-shadow: 0 6px 18px rgba(0, 0, 0, .18); z-index: 31; }
 .menu .menu { top: -4px; left: 100%; }
+.menu.eszk-menu { position: fixed; z-index: 60; }
+/* legördülő eszköztár-gomb: kis háromszög a jobb alsó sarokban */
+.ikon.legordulo { position: relative; }
+.ikon.legordulo::after { content: ''; position: absolute; right: 1px; bottom: 2px; border: 3px solid transparent; border-top-color: var(--accent); border-bottom: 0; }
 .menu li { position: relative; }
 .menu li.sep { height: 1px; margin: 3px 6px; background: var(--line); }
 .menu button { width: 100%; display: flex; align-items: center; gap: 8px; padding: 4px 12px 4px 8px; border: 0; background: transparent;
