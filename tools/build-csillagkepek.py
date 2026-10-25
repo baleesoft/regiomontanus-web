@@ -9,8 +9,10 @@ Kimenet: public/js/csillagkepek.js
   ekl:   az ekliptika menti csillagképek (a Nap útja), [rövidítés, kezdő hosszúság] – a következő elejéig tart
   kulso: [rövidítés, magyar név, legkisebb |β| (fok), [[λ0, λ1], …]] – a |β| ≤ 60° sávban elfoglalt hosszúság-ívek
   tejut: [[λ0, λ1], …] – az ekliptika azon szakaszai, ahol a galaktikus szélesség |b| ≤ 10°
+  alak:  {rövidítés: [λ0, λ1]} – a csillagkép-alakzat (a vonalas ábra csillagai) által lefedett legkisebb ív; forrás:
+         d3-celestial constellations.lines.json (BSD-3, Olaf Frohn) – a Kígyó két része külön (SerCap, SerCau)
 
-Használat: pip install astropy; python3 tools/build-csillagkepek.py
+Használat: pip install astropy; python3 tools/build-csillagkepek.py <d3-celestial/data>
 A kliens a képlet időpontjára a precesszióval (IAU 2006, p_A) tolja el; sziderikus zodiákusnál az ajánamsával vissza.
 """
 import json, os
@@ -90,14 +92,45 @@ for a in sorted(set(k.ravel())):
 c = SkyCoord(lon=lam * u.deg, lat=np.zeros_like(lam) * u.deg, frame=ECL)
 tejut = ivek(np.abs(c.transform_to(Galactic()).b.deg) <= 10, 0.01)
 
+# 4. az alakzatok kiterjedése: a vonalas ábra csúcsainak ekliptikai hosszúsága → a legnagyobb rés kihagyásával a lefedő ív
+import math, sys
+EPS = math.radians(23.4392911)
+
+
+def ekl_lon(ra, dec):
+    a, d = math.radians(ra % 360), math.radians(dec)
+    x, y, z = math.cos(d) * math.cos(a), math.cos(d) * math.sin(a), math.sin(d)
+    return math.degrees(math.atan2(y * math.cos(EPS) + z * math.sin(EPS), x)) % 360
+
+
+def lefedo(ls):
+    ls = sorted(ls)
+    res = [(ls[(i + 1) % len(ls)] - ls[i]) % 360 for i in range(len(ls))]
+    i = max(range(len(ls)), key=lambda k: res[k])
+    return [round(ls[(i + 1) % len(ls)], 2), round(ls[i], 2)]
+
+
+alak = {}
+d3 = sys.argv[1] if len(sys.argv) > 1 else None
+if d3:
+    with open(os.path.join(d3, 'constellations.lines.json'), encoding='utf-8') as f:
+        for ft in json.load(f)['features']:
+            pts = [p for ln in ft['geometry']['coordinates'] for p in ln]
+            a = ft['id']
+            if a == 'Ser':
+                a = 'SerCap' if sum(p[0] % 360 for p in pts) / len(pts) < 255 else 'SerCau'
+            alak[a] = lefedo([ekl_lon(*p) for p in pts])
+
 ki = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'public', 'js', 'csillagkepek.js')
 with open(ki, 'w', encoding='utf-8') as f:
     f.write('/*\n * csillagkepek.js – az asztroszkóp adatai (tools/build-csillagkepek.py generálja, kézzel ne szerkeszd).\n'
             ' * IAU-csillagképhatárok (Delporte 1930; Roman 1987, CDS VI/42), ekliptikai hosszúság, J2000.\n'
-            ' * ekl: [rövidítés, kezdet]; kulso: [rövidítés, név, legkisebb |β|, ívek]; tejut: ívek (|b| ≤ 10°). Licenc: AGPL-3.0.\n */\n')
+            ' * ekl: [rövidítés, kezdet]; kulso: [rövidítés, név, legkisebb |β|, ívek]; tejut: ívek (|b| ≤ 10°);\n'
+            ' * alak: {rövidítés: [λ0, λ1]} – az alakzat csillagai által lefedett ív (d3-celestial, BSD-3, (c) 2015 Olaf Frohn). Licenc: AGPL-3.0.\n */\n')
     f.write('(function (global) {\n  \'use strict\';\n  var R = global.Regio = global.Regio || {};\n')
     f.write('  R.CSILLAGKEPEK = {\n    nev: ' + json.dumps(NEV, ensure_ascii=False) + ',\n')
     f.write('    ekl: ' + json.dumps(ekl) + ',\n')
     f.write('    kulso: [\n' + ',\n'.join('      ' + json.dumps(x, ensure_ascii=False) for x in kulso) + '\n    ],\n')
-    f.write('    tejut: ' + json.dumps(tejut) + '\n  };\n})(typeof window !== \'undefined\' ? window : globalThis);\n')
+    f.write('    tejut: ' + json.dumps(tejut) + ',\n')
+    f.write('    alak: ' + json.dumps(alak, separators=(',', ':')) + '\n  };\n})(typeof window !== \'undefined\' ? window : globalThis);\n')
 print(len(ekl), 'ekliptikai,', len(kulso), 'külső csillagkép; Tejút:', tejut)

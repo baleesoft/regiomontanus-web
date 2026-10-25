@@ -213,7 +213,8 @@
       jegyek: b.jegyek, analog: b.analog, hazHatar: b.hazHatar, hazSzam: b.hazSzam, arab: b.arab, tengelyek: b.tengelyek,
       mcIc: beall.hsys === 'A' && !kos0, planetDeg: b.planetDeg, meret: b.meret,
       fokKulso: b.fokKulso, fokBelso: b.fokBelso, fokFsz: b.fokFsz, fokKulon: b.fokKulon,
-      asztroszkop: b.asztro && k.e ? { eltolas: asztroEltolas(k.e), mod: b.asztroMod, sav: b.asztroSav, tejut: b.asztroTejut } : null,
+      asztroszkop: b.asztro && k.e ? { eltolas: asztroEltolas(k.e), mod: b.asztroMod, sav: b.asztroSav, tejut: b.asztroTejut,
+        kiterj: b.asztroKiterj || 'alak', atfed: b.asztroAtfed !== false } : null,
       naksatra: b.naksatra && k.e ? { kezdet: nakKezdet(k.e) } : null,
       colors: ff || { fire: sz.fire, earth: sz.earth, air: sz.air, water: sz.water, aspectBg: sz.aspectBg, aspect: '#000000' } };
   }
@@ -1939,6 +1940,7 @@
       Array.prototype.forEach.call(d.querySelectorAll('input[name="mStilus"]'), function (r) { r.checked = r.value === (kr.stilus || 'regio'); });
       Array.prototype.forEach.call(d.querySelectorAll('input[name="mAsztroMod"]'), function (r) { r.checked = r.value === (kr.asztroMod || 'kep'); });
       $('mAsztroSav').value = +kr.asztroSav || 10;
+      Array.prototype.forEach.call(d.querySelectorAll('input[name="mAsztroKiterj"]'), function (r) { r.checked = r.value === (kr.asztroKiterj || 'alak'); });
       // Nyomtatás és Exportálás: a nyomtatási ablakkal közös beállítások (beall.nyomtatas)
       var ny = x.nyomtatas || {};
       Array.prototype.forEach.call(d.querySelectorAll('input[data-ny2]'), function (c) {
@@ -1967,6 +1969,7 @@
       kr.meret = isFinite(m) && m > 0 ? Math.round(Math.min(2, Math.max(0.5, m)) * 10) / 10 : 1;
       r = d.querySelector('input[name="mAsztroMod"]:checked'); if (r) kr.asztroMod = r.value;
       r = d.querySelector('input[name="mStilus"]:checked'); if (r) kr.stilus = r.value;
+      r = d.querySelector('input[name="mAsztroKiterj"]:checked'); if (r) kr.asztroKiterj = r.value;
       m = +String($('mAsztroSav').value).replace(',', '.'); kr.asztroSav = isFinite(m) && m > 0 ? Math.round(Math.min(30, Math.max(1, m))) : 10;
       Array.prototype.forEach.call(d.querySelectorAll('input[data-b]'), function (c) { beall[c.getAttribute('data-b')] = c.checked; });
       beall.nyomtatas = beall.nyomtatas || {};

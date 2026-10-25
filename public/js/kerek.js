@@ -123,10 +123,17 @@
   function pad2h(x) { var t = x.toString(16); return t.length < 2 ? '0' + t : t; }
   function hossz(a, b) { var h = fokNorm(b - a); return h === 0 ? 360 : h; }
   function atfed(x, y) { return fokNorm(y.l0 - x.l0) < x.h + 1 || fokNorm(x.l0 - y.l0) < y.h + 1; }
+  /** két ív közös része fokban (1° hézaggal) */
+  function kozos(x, y) {
+    var d1 = fokNorm(y.l0 - x.l0), d2 = fokNorm(x.l0 - y.l0);
+    return Math.max(0, Math.min(x.h + 1, d1 + y.h + 1) - d1, Math.min(y.h + 1, d2 + x.h + 1) - d2);
+  }
   /**
-   * @param {Object} as – { eltolas: fok (precesszió − ajánamsa), mod: 'kep' | 'sav' | 'zod13', sav: fok, tejut: bool }
-   *   'zod13': csak az ekliptika 13 csillagképe (13 csillagképes zodiákus), a jegyek elemszíneivel
-   * @returns {{ekl: Array, sorok: Array}|null} – az ekliptika menti sor és a többi csillagkép sorokba rendezve
+   * @param {Object} as – { eltolas: fok (precesszió − ajánamsa), mod: 'kep' | 'sav' | 'zod13', sav: fok, tejut: bool,
+   *   kiterj: 'alak' (a csillagkép-alakzat csillagai által lefedett ív – rés és átfedés is lehet) | 'iau' (a hivatalos határok:
+   *   az ekliptika menti sor hézag nélkül összeér), atfed: bool (áttetszően egymásra lóghatnak, legfeljebb 3–4 sorban) }
+   *   'zod13': csak az ekliptika 13 csillagképe (13 csillagképes zodiákus) az IAU-határok szerint, a jegyek elemszíneivel
+   * @returns {{gyuruk: Array}|null} – a gyűrűk belülről kifelé
    */
   function asztroTerv(as, nak) {
     var D = global.Regio && global.Regio.CSILLAGKEPEK, gy = [];
@@ -139,75 +146,132 @@
     }) });
     if (!as || !D) return gy.length ? { gyuruk: gy } : null;
     var e = +as.eltolas || 0, eklNev = {}, lista = [], sorok = [];
+    var alakE = as.kiterj !== 'iau' && !!D.alak, atfedE = as.atfed !== false;
     var ekl = D.ekl.map(function (x, i) {
       eklNev[x[0]] = true;
       var l0 = fokNorm(x[1] + e), l1 = fokNorm(D.ekl[(i + 1) % D.ekl.length][1] + e);
-      return { a: x[0], n: D.nev[x[0]], l0: l0, l1: l1, h: hossz(l0, l1), ekl: true };
+      return { a: x[0], n: D.nev[x[0]], l0: l0, l1: l1, h: hossz(l0, l1), ekl: true, eklSzak: true };
     });
     if (as.mod === 'zod13') {
       ekl.forEach(function (x) { x.szin = AS_ELEM[x.a] === undefined ? AS_OPH : elemSzin(AS_ELEM[x.a], as.colors); });
       gy.push({ szel: 0.09, telt: true, lista: ekl });
       return { gyuruk: gy };
     }
-    ekl.forEach(function (x, i) { x.szin = AS_SZIN[i % AS_SZIN.length]; });
-    gy.push({ szel: 0.075, lista: ekl });
+    // az alakzat szerinti kiterjedés: az ekliptika csillagképei is a csillagaik által lefedett ívvel
+    var alakIv = function (a) {
+      var v = D.alak && D.alak[a]; if (!v) return null;
+      var l0 = fokNorm(v[0] + e), l1 = fokNorm(v[1] + e);
+      return { l0: l0, l1: l1, h: hossz(l0, l1) };
+    };
+    if (alakE) ekl = ekl.map(function (x) {
+      var v = alakIv(x.a); if (!v) return x;
+      return { a: x.a, n: x.n, l0: v.l0, l1: v.l1, h: v.h, ekl: true };
+    });
     var sav = Math.min(30, Math.max(0, +as.sav || 10));
     D.kulso.forEach(function (x) {
-      if (as.mod === 'sav' ? eklNev[x[0]] || x[2] > sav : AS_KEP.indexOf(x[0]) < 0) return;
+      // az ekliptika csillagképei egyszer szerepelnek (az ekliptika menti sorban)
+      if (eklNev[x[0]] || (as.mod === 'sav' ? x[2] > sav : AS_KEP.indexOf(x[0]) < 0)) return;
+      var v = alakE ? alakIv(x[0]) : null;
+      if (v) { lista.push({ a: x[0], n: x[1], l0: v.l0, l1: v.l1, h: v.h }); return; }
       x[3].forEach(function (iv) {
         var l0 = fokNorm(iv[0] + e), l1 = fokNorm(iv[1] + e);
         lista.push({ a: x[0], n: x[1], l0: l0, l1: l1, h: hossz(l0, l1) });
       });
     });
+    var tej = [];
     if (as.tejut !== false) D.tejut.forEach(function (iv) {
       var l0 = fokNorm(iv[0] + e), l1 = fokNorm(iv[1] + e);
-      lista.push({ a: 'Tejút', n: 'Tejút', l0: l0, l1: l1, h: hossz(l0, l1), tejut: true });
+      tej.push({ a: 'Tejút', n: 'Tejút', l0: l0, l1: l1, h: hossz(l0, l1), tejut: true });
     });
-    // sorokba rendezés: a hosszabbak előbb, mindegyik az első olyan sorba, ahol nem fed át (1° hézaggal)
     lista.sort(function (p, q) { return q.h - p.h || (p.a < q.a ? -1 : 1); });
-    lista.forEach(function (x) {
-      for (var i = 0; i < sorok.length; i++) if (sorok[i].every(function (y) { return !atfed(x, y); })) { sorok[i].push(x); return; }
-      sorok.push([x]);
-    });
+    if (atfedE) {
+      // áttetszően egymásra lógva: legfeljebb 3 (minden csillagképnél 4) sor; mindegyik oda kerül, ahol nem fed át,
+      // ha nincs ilyen és van még hely, új sorba, különben oda, ahol a legkevésbé fed át
+      var MAX = as.mod === 'sav' ? 4 : 3;
+      ekl.concat(lista, tej).forEach(function (x) {
+        var leg = -1, legA = Infinity;
+        for (var i = 0; i < sorok.length; i++) {
+          var a = sorok[i].reduce(function (s0, y) { return s0 + kozos(x, y); }, 0);
+          if (a === 0) { leg = i; legA = 0; break; }
+          if (a < legA) { legA = a; leg = i; }
+        }
+        if (legA > 0 && sorok.length < MAX) { sorok.push([x]); return; }
+        sorok[leg].push(x);
+      });
+    } else {
+      // átfedés nélkül: az ekliptika menti sor külön, a többi az első olyan sorba, ahol nem fed át (1° hézaggal)
+      sorok.push(ekl);
+      lista.concat(tej).forEach(function (x) {
+        for (var i = 1; i < sorok.length; i++) if (sorok[i].every(function (y) { return !atfed(x, y); })) { sorok[i].push(x); return; }
+        sorok.push([x]);
+      });
+    }
     sorok.forEach(function (s, si) {
       s.sort(function (p, q) { return p.l0 - q.l0; });
-      s.forEach(function (x, i) { x.szin = x.tejut ? AS_TEJUT : AS_SZIN[(i + 2 * si + 1) % AS_SZIN.length]; });
-      gy.push({ szel: 0.075, lista: s });
+      s.forEach(function (x, i) { x.szin = x.tejut ? AS_TEJUT : AS_SZIN[(i + 2 * si + (si ? 1 : 0)) % AS_SZIN.length]; });
+      gy.push({ szel: 0.075, lista: s, atfed: atfedE });
     });
     return { gyuruk: gy };
   }
 
-  /** az asztroszkóp gyűrűi R_AS0-tól kifelé (mindkét stílusnál) */
+  /** az asztroszkóp gyűrűi R_AS0-tól kifelé (mindkét stílusnál); AS.skala: előtte fokskála (kör + kifelé mutató beosztás) */
+  var AS_SKALA = 400 / 36;
   function asztroRajz(svg, AS, pont, r, R_AS0, G_AS) {
     var gA = el('g', { 'class': 'asztroszkop' }, svg), gDef = el('defs', {}, gA), id0 = 'as' + (++asSzaml) + '_', n = 0;
     var f = function (p) { return p[0].toFixed(2) + ',' + p[1].toFixed(2); };
     var hely = function (l) { var fj = fokNorm(l) - jegy(l) * 30, fo = Math.floor(fj), pc = Math.floor((fj - fo) * 60);
       return JNEV[jegy(l)] + ' ' + fo + '°' + pad2(pc) + '′'; };
+    if (AS.skala) {
+      // fokskála az asztroszkóp belső szélén, hogy leolvasható legyen, hol kezdődik és végződik egy-egy csillagkép
+      var t = '';
+      for (var d = 0; d < 360; d++) {
+        var hh = d % 30 === 0 ? AS_SKALA : d % 10 === 0 ? AS_SKALA * 0.75 : d % 5 === 0 ? AS_SKALA * 0.55 : AS_SKALA * 0.35;
+        var t1 = pont(d, R_AS0), t2 = pont(d, R_AS0 + hh);
+        t += 'M' + f(t1) + 'L' + f(t2);
+      }
+      el('circle', { r: R_AS0, fill: 'none', stroke: '#555', 'stroke-width': 0.8, 'class': 'as-skala' }, gA);
+      el('path', { d: t, stroke: '#555', 'stroke-width': 0.7, fill: 'none', 'class': 'as-skala' }, gA);
+      R_AS0 += AS_SKALA + G_AS;
+    }
+    var gL = el('g', { 'class': 'as-feliratok' });   // a feliratok a sávok fölött (a végén kerül a helyére)
     function iv(x, r1, gyuru) {
       var W_AS = gyuru.szel * r, telt = gyuru.telt, szin = x.szin;
       var r2 = r1 + W_AS, l1 = x.l0 + x.h, nagy = x.h > 180 ? 1 : 0, h360 = x.h >= 359.99;
       if (h360) l1 = x.l0 + 359.99;
       var g = el('g', { 'class': 'csk' + (x.tejut ? ' tejut' : ''), 'data-csk': x.a }, gA);
       el('path', { d: 'M' + f(pont(x.l0, r2)) + 'A' + r2 + ',' + r2 + ' 0 ' + nagy + ' 0 ' + f(pont(l1, r2)) + 'L' + f(pont(l1, r1)) +
-        'A' + r1 + ',' + r1 + ' 0 ' + nagy + ' 1 ' + f(pont(x.l0, r1)) + 'Z', fill: szin, 'fill-opacity': telt ? 1 : 0.4,
+        'A' + r1 + ',' + r1 + ' 0 ' + nagy + ' 1 ' + f(pont(x.l0, r1)) + 'Z', fill: szin, 'fill-opacity': telt ? 1 : gyuru.atfed ? 0.32 : 0.4,
         stroke: telt ? '#fff' : szin, 'stroke-opacity': telt ? 1 : 0.85, 'stroke-width': telt ? 1.5 : 1.2 }, g);
       cim(g, (x.cim || x.n + (x.tejut ? '' : ' (' + (x.a.indexOf('Ser') === 0 ? 'Ser' : x.a) + ')') +
-        (x.ekl ? ' – az ekliptikán' : '')) + ': ' + hely(x.l0) + ' – ' + hely(l1));
-      // felirat az ív közepén, a felső félkörben balról jobbra (óramutató szerint), az alsóban a másik irányban
-      var rm = r1 + W_AS / 2, kozep = x.l0 + x.h / 2, fent = pont(kozep, rm)[1] < 0, ivh = rm * x.h * Math.PI / 180;
-      var fs = gyuru.fs || W_AS * 0.6, t = x.n;
-      if (t.length * fs * 0.56 > ivh * 0.92) {
-        var fs2 = ivh * 0.92 / (t.length * 0.56);
+        (x.eklSzak ? ' – az ekliptikán' : '')) + ': ' + hely(x.l0) + ' – ' + hely(l1));
+      // felirat az íven, a felső félkörben balról jobbra (óramutató szerint), az alsóban a másik irányban; egymásra lógó
+      // sávoknál ott, ahol nem ütközik az ugyanabban a sorban már kiírt felirattal
+      var rm = r1 + W_AS / 2, ivh = rm * x.h * Math.PI / 180;
+      var fs = gyuru.fs || W_AS * 0.6, tx = x.n;
+      if (tx.length * fs * 0.56 > ivh * 0.92) {
+        var fs2 = ivh * 0.92 / (tx.length * 0.56);
         if (fs2 >= fs * (gyuru.min || 0.55)) fs = fs2;
         else if (x.cim) fs = fs2;   // naksatra: rövidítés helyett kisebb betű
-        else { t = x.tejut ? '' : x.a.indexOf('Ser') === 0 ? 'Ser' : x.a; fs = Math.min(fs, ivh * 0.92 / (Math.max(1, t.length) * 0.56)); }
+        else { tx = x.tejut ? '' : x.a.indexOf('Ser') === 0 ? 'Ser' : x.a; fs = Math.min(fs, ivh * 0.92 / (Math.max(1, tx.length) * 0.56)); }
       }
-      if (!t || fs < W_AS * 0.24) return;
-      var pid = id0 + (n++), a0 = fent ? l1 : x.l0, a1 = fent ? x.l0 : l1;
-      el('path', { id: pid, d: 'M' + f(pont(a0, rm)) + 'A' + rm + ',' + rm + ' 0 ' + nagy + ' ' + (fent ? 1 : 0) + ' ' + f(pont(a1, rm)) }, gDef);
-      var tx = el('text', { 'font-size': fs.toFixed(1), fill: telt ? (vilagos(szin) ? '#000' : '#fff') : sotet(szin), stroke: 'none', dy: (fs * 0.35).toFixed(1), 'pointer-events': 'none' }, g);
-      var tp = el('textPath', { href: '#' + pid, startOffset: '50%', 'text-anchor': 'middle' }, tx);
-      tp.textContent = t;
+      if (!tx || fs < W_AS * 0.24) return;
+      var fel = tx.length * fs * 0.56 / 2 / rm * 180 / Math.PI, kozep = null;   // a felirat fél szélessége fokban
+      var cimek = gyuru.cimek || (gyuru.cimek = []);
+      [0.5, 0.32, 0.68, 0.18, 0.82].some(function (q) {
+        var c = x.l0 + x.h * q;
+        if (c - fel < x.l0 - 0.05 || c + fel > x.l0 + x.h + 0.05) return false;
+        if (cimek.some(function (m) { return Math.abs(fokNorm(c - m[0] + 180) - 180) < fel + m[1] + 0.6; })) return false;
+        kozep = c; return true;
+      });
+      if (kozep === null) return;
+      cimek.push([fokNorm(kozep), fel]);
+      var fent = pont(kozep, rm)[1] < 0, pid = id0 + (n++), b0 = kozep - fel, b1 = kozep + fel, nagyC = 2 * fel > 180 ? 1 : 0;
+      var a0 = fent ? b1 : b0, a1 = fent ? b0 : b1;
+      el('path', { id: pid, d: 'M' + f(pont(a0, rm)) + 'A' + rm + ',' + rm + ' 0 ' + nagyC + ' ' + (fent ? 1 : 0) + ' ' + f(pont(a1, rm)) }, gDef);
+      var te = el('text', { 'font-size': fs.toFixed(1), fill: telt ? (vilagos(szin) ? '#000' : '#fff') : sotet(szin), stroke: 'none',
+        dy: (fs * 0.35).toFixed(1), 'pointer-events': 'none', 'data-csk': x.a }, gL);
+      var tp = el('textPath', { href: '#' + pid, startOffset: '50%', 'text-anchor': 'middle' }, te);
+      tp.textContent = tx;
     }
     var r1 = R_AS0;
     AS.gyuruk.forEach(function (gyuru) {
@@ -215,9 +279,16 @@
       if (gyuru.min) gyuru.fs = gyuru.lista.reduce(function (m, x) {
         return Math.min(m, (r1 + gyuru.szel * r / 2) * x.h * Math.PI / 180 * 0.92 / (x.n.length * 0.56));
       }, gyuru.szel * r * 0.6);
-      gyuru.lista.forEach(function (x) { iv(x, r1, gyuru); });
+      gyuru.cimek = [];
+      // a hosszabb ívek felirata előbb kap helyet
+      gyuru.lista.slice().sort(function (p, q) { return q.h - p.h; }).forEach(function (x) { iv(x, r1, gyuru); });
       r1 += gyuru.szel * r + G_AS;
     });
+    gA.appendChild(gL);
+  }
+  /** az asztroszkóp teljes külső sugara */
+  function asztroKulso(AS, r, R_AS0, G_AS) {
+    return AS.gyuruk.reduce(function (s, g) { return s + g.szel * r + G_AS; }, R_AS0 + (AS.skala ? AS_SKALA + G_AS : 0)) + G_AS;
   }
 
   /**
@@ -319,9 +390,10 @@
     if (SZ) {
       o.cuspLabels = false;
       var enVan = o.selfMarkers && k.selfMarkers && k.selfMarkers.length, nemP = enVan && k.selfMarkers.some(function (m) { return m.type !== 'P'; });
-      R_AS0 = r + G_AS + (enVan ? 3 + sEn * (nemP ? 3.7 : 1.8) : 2);
-    }
-    var RV = AS ? AS.gyuruk.reduce(function (s, g) { return s + g.szel * r + G_AS; }, R_AS0) + G_AS : R;
+      // a zodiákuskör külső szélén kifelé fokbeosztás (AS_SKALA), azon kívül az énjelölők, utánuk a gyűrűk
+      R_AS0 = r + G_AS + AS_SKALA + (enVan ? 3 + sEn * (nemP ? 3.7 : 1.8) : 2);
+    } else if (AS) AS.skala = true;   // bi-keréknél a fokskála a gyűrűk belső szélén
+    var RV = AS ? asztroKulso(AS, r, R_AS0, G_AS) : R;
     // data-r-alap: a kerék szokásos (asztroszkóp nélküli) kiterjedése – a nyomtatás ehhez igazítja a méretet
     var svg = el('svg', { viewBox: [-RV, -RV, 2 * RV, 2 * RV].join(' '), xmlns: NS, role: 'img', 'data-r-alap': R,
       'aria-label': 'Képletábra', 'font-family': TXT, style: 'width:100%;height:auto;display:block' });
@@ -376,6 +448,8 @@
     if (o.fokBelso !== false) fokVonalak(R_ZOD_BELSO, 1, false, 0);
     // a zodiákuskör külső széle befelé – több képletnél mindig (DrawDegreeLines(0, −iSub))
     if (o.outerTicks || o.fokKulso) fokVonalak(r, -1, false, 0);
+    // asztroszkópnál (egy képlet) a zodiákuskör külső szélén kifelé is, hogy a csillagképek határa leolvasható legyen
+    if (SZ) fokVonalak(r, 1, true, AS_SKALA);
     // a fényszögkör (Placidus-stílusnál a planéták köre) belső oldalán, befelé; a jegyhatárnál r/24
     if (o.fokFsz) fokVonalak(FP ? R_FSZ_PL : R_FSZ, -1, true, r / 24);
 
@@ -664,7 +738,7 @@
       var enPlanetak = k.selfMarkers.filter(function (m) { return m.type === 'P'; }).map(function (m) { return m.id; });
       var poz = {}; k.planets.forEach(function (p) { poz[p.id] = p; });
       k.selfMarkers.forEach(function (m, enIndex) {
-        var ra, sz, rr = SZ ? r + 3 + sEn : r + pxJelolo * 1.85, nev, plusz = SZ ? sEn * 1.9 : pxJelolo * 0.8;
+        var ra, sz, rr = SZ ? r + 3 + AS_SKALA + sEn : r + pxJelolo * 1.85, nev, plusz = SZ ? sEn * 1.9 : pxJelolo * 0.8;
         if (m.type === 'P') {
           if (hely[m.id] === undefined) return;
           var origRA = Math.round(poz[m.id].lon), ujRA = Math.round(hely[m.id]);
@@ -891,7 +965,8 @@
 
     if (o.asztroszkop) o.asztroszkop.colors = o.colors;
     var AS = asztroTerv(o.asztroszkop, o.naksatra), G_AS = r * 0.01, R_AS0 = RV0 + G_AS;
-    var RV = AS ? AS.gyuruk.reduce(function (s, g) { return s + g.szel * r + G_AS; }, R_AS0) + G_AS : RV0;
+    if (AS) AS.skala = true;   // fokskála a gyűrűk belső szélén
+    var RV = AS ? asztroKulso(AS, r, R_AS0, G_AS) : RV0;
     var svg = el('svg', { viewBox: [-RV, -RV, 2 * RV, 2 * RV].join(' '), xmlns: NS, role: 'img', 'data-r-alap': RV0, 'data-stilus': 'placidus',
       'aria-label': 'Képletábra', 'font-family': TXT, style: 'width:100%;height:auto;display:block' });
     el('rect', { x: -RV, y: -RV, width: 2 * RV, height: 2 * RV, fill: bg }, svg);

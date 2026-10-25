@@ -51,7 +51,8 @@ public/                ← ez a tartalom kerül fel FTP-vel a tárhelyre
   js/egbolt.js         égbolt-nézet („mini Stellarium”): a képlet planétái a valódi égen, forgatható gömbön (Canvas 2D,
                        sztereografikus vetítés); nézőpont Föld / Nap / planéta, ekliptika- vagy horizont-keret
   js/egbolt-adat.js    az égbolt adatai (generált, lustán töltődik): 5044 csillag 6m-ig, csillagképvonalak, -határok, -nevek
-  js/csillagkepek.js   az asztroszkóp adatai: a csillagképek ekliptikai hosszúság-ívei (IAU-határok, J2000; generált)
+  js/csillagkepek.js   az asztroszkóp adatai: a csillagképek ekliptikai hosszúság-ívei (IAU-határok és az alakzatok
+                       csillagai szerint, J2000; generált)
   js/allocsillagok.js  a Windows-os program 737 állócsillaga (név, nómenklatúra, csillagkép latinul és magyarul)
   js/tarolo.js         beállítások, legutóbbi képletek, munkamenet (localStorage)
   fonts/               asztrológiai jelek: Noto Sans Symbols / Symbols 2 részhalmaz (SIL OFL 1.1, OFL.txt) –
@@ -65,7 +66,8 @@ tools/
   genref.py            referenciaértékek a natív swetest-ből
   browsertest.py       a próbaoldal ellenőrzése headless böngészőben
   build-egbolt.py      a js/egbolt-adat.js előállítása a d3-celestial (BSD-3) adataiból (`npm pack d3-celestial`)
-  build-csillagkepek.py  a js/csillagkepek.js előállítása (astropy; IAU-csillagképhatárok, Roman 1987, CDS VI/42)
+  build-csillagkepek.py  a js/csillagkepek.js előállítása (astropy; IAU-csillagképhatárok, Roman 1987, CDS VI/42;
+                       az alakzatok a d3-celestial vonalas ábráiból: `python3 tools/build-csillagkepek.py <d3-celestial/data>`)
 ```
 
 ## Billentyűk
@@ -87,6 +89,6 @@ tools/build-wasm.sh            # alapértelmezés: aloistr/swisseph c69c14a (2.1
 AGPL-3.0 (lásd `LICENSE`). A `public/fonts/` betűkészletei a Noto Project munkái, SIL Open Font License 1.1
 (`public/fonts/OFL.txt`). A Swiss Ephemeris © Astrodienst AG, AGPL-3.0 / Swiss Ephemeris Professional
 License kettős licenccel: <https://www.astro.com/swisseph/>. A csillagképhatárok az IAU hivatalos határai (Delporte 1930;
-Roman 1987, CDS VI/42) – közkincs. Az égbolt-nézet csillag- és csillagképadatai a d3-celestial-ből származnak:
+Roman 1987, CDS VI/42) – közkincs. Az égbolt-nézet csillag- és csillagképadatai, valamint az asztroszkóp alakzat-kiterjedései a d3-celestial-ből származnak:
 Copyright (c) 2015, Olaf Frohn, BSD-3-Clause (`public/js/egbolt-adat.LICENSE`); eredeti források: XHIP (Anderson & Francis 2012),
 IAU, Davenhall & Leggett (1989).
