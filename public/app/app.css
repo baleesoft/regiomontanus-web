@@ -651,11 +651,16 @@ svg.fokusz line.hazcsucs.fk-be { stroke: #c0161d; stroke-width: 2.4; }
 .egb-ido label { display: inline-flex; align-items: center; gap: 4px; }
 
 /* Nagy kerék (⤢): csak a kerék a teljes ablakban */
-body.kerek-max .cimsor, body.kerek-max .fosor, body.kerek-max .eszkoztar, body.kerek-max .lepteto, body.kerek-max .belyegek,
+/* a bekapcsolt képletléptető látszik (a fejlécben a megnyitott képletek közötti váltó) */
+body.kerek-max .cimsor, body.kerek-max .fosor, body.kerek-max .eszkoztar, body.kerek-max .belyegek,
 body.kerek-max .tablak, body.kerek-max .elvalaszto, body.kerek-max .oldalsav { display: none !important; }
 body.kerek-max .reszlet { grid-template-columns: minmax(0, 1fr) !important; padding: 4px; }
 body.kerek-max .reszlet .fo-kerek .kerek { padding: 4px; }
 body.kerek-max .reszlet .fo-kerek .fej { padding: 3px 8px; }
+body.kerek-max .lepteto { padding: 3px 10px; }
+.kepvalto { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink2); }
+.kepvalto select { max-width: 340px; height: 28px; font: inherit; color: var(--ink); border: 1px solid var(--line); border-radius: 3px; background: #fff; }
+@media (max-width: 760px) { .kepvalto span { display: none; } .kepvalto select { max-width: 52vw; } }
 /* alacsony ablak (pl. 1920×1080 kijelző 150%-os Windows-nagyítással ≈ 600 px magas): tömörebb fejrészek */
 @media (max-height: 780px) and (min-width: 761px) {
   .cimsor { padding: 3px 12px; }

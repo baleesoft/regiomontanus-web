@@ -591,7 +591,11 @@
         '<button type="button" data-tett="egymason" aria-pressed="' + (k.mod !== 'egymasmellett') + '">Egymáson</button>' +
         '<button type="button" data-tett="egymasmellett" aria-pressed="' + (k.mod === 'egymasmellett') + '">Egymás mellett</button></div>' : '') +
       (document.body.classList.contains('kerek-max')
-        ? '<button type="button" class="gomb" data-tett="teljesKepernyo" aria-pressed="' + !!document.fullscreenElement + '" title="A böngésző saját sávjai nélkül (F11)">' +
+        // nagy ábránál a menüsor rejtve: a megnyitott képletek közötti váltó itt, a fejlécben
+        ? (kepletek.length > 1 ? '<label class="kepvalto"><span>Képlet:</span><select data-kepvalto aria-label="Megnyitott képletek">' + kepletek.map(function (x, i) {
+            return '<option value="' + i + '"' + (i === aktiv ? ' selected' : '') + '>' + (i + 1) + '. ' + R.esc(cim(x)) + ' – ' + R.esc(tipusNev(x)) + '</option>';
+          }).join('') + '</select></label>' : '') +
+          '<button type="button" class="gomb" data-tett="teljesKepernyo" aria-pressed="' + !!document.fullscreenElement + '" title="A böngésző saját sávjai nélkül (F11)">' +
           (document.fullscreenElement ? 'Kilépés a teljes képernyőből' : 'Teljes képernyő') + '</button>' +
           '<button type="button" class="gomb fo" data-tett="nagyKerekValt" title="Vissza a táblákhoz és a menühöz (Esc)">Kicsinyítés (Esc)</button>'
         : '<button type="button" class="gomb" data-tett="nagyKerekValt" title="Csak az ábra, a teljes ablakban (a menü, az eszköztár és a táblák nélkül)">⤢ Nagy ábra</button>' +
@@ -2419,6 +2423,10 @@
   $('lepPlay').addEventListener('click', function () {
     var k = akt(); if (!k) return;
     if (jatek && jatek.k === k) jatekAll(); else jatekIndit(k);
+  });
+  // nagy ábra: a fejléc képletváltója
+  $('asztal').addEventListener('change', function (e) {
+    if (e.target.matches && e.target.matches('[data-kepvalto]')) aktival(+e.target.value, true);
   });
   $('lepPlayIv').addEventListener('change', function () {
     beall.jatekIv = +this.value; beallMent();
