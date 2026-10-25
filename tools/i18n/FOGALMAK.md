@@ -13,7 +13,7 @@ cserélni (keresés a régi angol szóra), majd: `python3 tools/i18n/build-lang.
 | énállapotok perspektívája | **ego-state perspective** | | |
 | személyiségrajz | **personality profile** | personality sketch | |
 | életstratégia | **life strategy** | | |
-| járt út / járatlan út | **trodden path / untrodden path** | walked / unwalked path; the road taken / not taken | A Delphi-kódban „WalkedUnWalkedPath”. |
+| járt út / járatlan út | **walked path / unwalked path** | trodden / untrodden path; the road taken / not taken | Elfogadva (Balázs, 2026-10-25); a Delphi-kódban is „WalkedUnWalkedPath”. |
 | ferális | **feral** | | Szó szerinti; az angol szakirodalomban a „feral planet” ismeretlen, magyarázatra szorulhat. |
 | izolált | **isolated** | unaspected | Az „unaspected” az angol asztrológiában bevett, de csak ha a jelentés pontosan egyezik. |
 | házúr | **house ruler** | lord of the house | |
