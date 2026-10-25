@@ -214,7 +214,7 @@
       mcIc: beall.hsys === 'A' && !kos0, planetDeg: b.planetDeg, meret: b.meret,
       fokKulso: b.fokKulso, fokBelso: b.fokBelso, fokFsz: b.fokFsz, fokKulon: b.fokKulon,
       asztroszkop: b.asztro && k.e ? { eltolas: asztroEltolas(k.e), mod: b.asztroMod, sav: b.asztroSav, tejut: b.asztroTejut,
-        kiterj: b.asztroKiterj || 'zona', atfed: b.asztroAtfed !== false } : null,
+        kiterj: b.asztroKiterj || 'csill', atfed: b.asztroAtfed !== false } : null,
       naksatra: b.naksatra && k.e ? { kezdet: nakKezdet(k.e) } : null,
       colors: ff || { fire: sz.fire, earth: sz.earth, air: sz.air, water: sz.water, aspectBg: sz.aspectBg, aspect: '#000000' } };
   }
@@ -1940,7 +1940,7 @@
       Array.prototype.forEach.call(d.querySelectorAll('input[name="mStilus"]'), function (r) { r.checked = r.value === (kr.stilus || 'regio'); });
       Array.prototype.forEach.call(d.querySelectorAll('input[name="mAsztroMod"]'), function (r) { r.checked = r.value === (kr.asztroMod || 'kep'); });
       $('mAsztroSav').value = +kr.asztroSav || 10;
-      Array.prototype.forEach.call(d.querySelectorAll('input[name="mAsztroKiterj"]'), function (r) { r.checked = r.value === (kr.asztroKiterj || 'zona'); });
+      Array.prototype.forEach.call(d.querySelectorAll('input[name="mAsztroKiterj"]'), function (r) { r.checked = r.value === (kr.asztroKiterj || 'csill'); });
       // Nyomtatás és Exportálás: a nyomtatási ablakkal közös beállítások (beall.nyomtatas)
       var ny = x.nyomtatas || {};
       Array.prototype.forEach.call(d.querySelectorAll('input[data-ny2]'), function (c) {

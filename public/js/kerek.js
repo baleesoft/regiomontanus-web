@@ -130,7 +130,8 @@
   }
   /**
    * @param {Object} as – { eltolas: fok (precesszió − ajánamsa), mod: 'kep' | 'sav' | 'zod13', sav: fok, tejut: bool,
-   *   kiterj: 'zona' (alap: a hivatalos határok az állatöv ±8°-os sávjában – hézag nélkül, a szomszédok kissé egymásra lógnak) |
+   *   kiterj: 'csill' (alap: a csillagkép csillagai közül az első és az utolsó ekliptikai hosszúsága, a Swiss Ephemeris
+   *   csillagkatalógusa szerint – egy másik program asztroszkópja is így számol) | 'zona' (a hivatalos határok az állatöv ±8°-os sávjában – hézag nélkül, a szomszédok kissé egymásra lógnak) |
    *   'iau' (a hivatalos határok pontosan az ekliptikán: hézag és átfedés nélkül) | 'alak' (a csillagkép-alakzat csillagai által
    *   lefedett ív – rés és átfedés is lehet); a többi csillagkép az első kettőnél az IAU-határok szerint, atfed: bool (áttetszően egymásra lóghatnak, legfeljebb 3–4 sorban) }
    *   'zod13': csak az ekliptika 13 csillagképe (13 csillagképes zodiákus) az IAU-határok szerint, a jegyek elemszíneivel
@@ -147,7 +148,9 @@
     }) });
     if (!as || !D) return gy.length ? { gyuruk: gy } : null;
     var e = +as.eltolas || 0, eklNev = {}, lista = [], sorok = [];
-    var kiterj = as.kiterj || 'zona', alakE = kiterj === 'alak' && !!D.alak, zonaE = kiterj === 'zona' && !!D.zona, atfedE = as.atfed !== false;
+    var kiterj = as.kiterj || 'csill', zonaE = kiterj === 'zona' && !!D.zona, atfedE = as.atfed !== false;
+    // a csillagkép teljes ívét adó tábla: a katalógus csillagai, ill. az alakzat csillagai (különben az IAU-határok)
+    var TAB = kiterj === 'csill' ? D.csill : kiterj === 'alak' ? D.alak : null, alakE = !!TAB;
     var ekl = D.ekl.map(function (x, i) {
       eklNev[x[0]] = true;
       var l0 = fokNorm(x[1] + e), l1 = fokNorm(D.ekl[(i + 1) % D.ekl.length][1] + e);
@@ -160,12 +163,12 @@
     }
     // az alakzat szerinti kiterjedés: az ekliptika csillagképei is a csillagaik által lefedett ívvel
     var alakIv = function (a, T) {
-      var v = (T || D.alak) && (T || D.alak)[a]; if (!v) return null;
+      var v = (T || TAB) && (T || TAB)[a]; if (!v) return null;
       var l0 = fokNorm(v[0] + e), l1 = fokNorm(v[1] + e);
       return { l0: l0, l1: l1, h: hossz(l0, l1) };
     };
     if (alakE || zonaE) ekl = ekl.map(function (x) {
-      var v = alakIv(x.a, zonaE ? D.zona : D.alak); if (!v) return x;
+      var v = alakIv(x.a, zonaE ? D.zona : TAB); if (!v) return x;
       return { a: x.a, n: x.n, l0: v.l0, l1: v.l1, h: v.h, ekl: true };
     });
     var sav = Math.min(30, Math.max(0, +as.sav || 10));

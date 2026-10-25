@@ -9,11 +9,13 @@ Kimenet: public/js/csillagkepek.js
   ekl:   az ekliptika menti csillagképek (a Nap útja), [rövidítés, kezdő hosszúság] – a következő elejéig tart
   kulso: [rövidítés, magyar név, legkisebb |β| (fok), [[λ0, λ1], …]] – a |β| ≤ 60° sávban elfoglalt hosszúság-ívek
   tejut: [[λ0, λ1], …] – az ekliptika azon szakaszai, ahol a galaktikus szélesség |b| ≤ 10°
+  csill: {rövidítés: [λ0, λ1]} – a csillagkép csillagai közül az első és az utolsó ekliptikai hosszúsága (a Swiss Ephemeris
+         csillagkatalógusa, sefstars.txt; a lefedő legkisebb ív) – a Kígyó két része külön (RA < 17h: feje)
   zona:  {rövidítés: [λ0, λ1]} – az ekliptika 13 csillagképe az állatöv ±8°-os sávjában (IAU-határok; kissé egymásra lógnak)
   alak:  {rövidítés: [λ0, λ1]} – a csillagkép-alakzat (a vonalas ábra csillagai) által lefedett legkisebb ív; forrás:
          d3-celestial constellations.lines.json (BSD-3, Olaf Frohn) – a Kígyó két része külön (SerCap, SerCau)
 
-Használat: pip install astropy; python3 tools/build-csillagkepek.py <d3-celestial/data>
+Használat: pip install astropy; python3 tools/build-csillagkepek.py <d3-celestial/data> <sefstars.txt>
 A kliens a képlet időpontjára a precesszióval (IAU 2006, p_A) tolja el; sziderikus zodiákusnál az ajánamsával vissza.
 """
 import json, os
@@ -134,11 +136,38 @@ if d3:
                 a = 'SerCap' if sum(p[0] % 360 for p in pts) / len(pts) < 255 else 'SerCau'
             alak[a] = lefedo([ekl_lon(*p) for p in pts])
 
+# 5. a csillagkatalógus csillagai csillagképenként (a nómenklatúra vége a csillagkép rövidítése: ,alTau / ,41Ari / ,alCMa)
+import re
+csill = {}
+sef = sys.argv[2] if len(sys.argv) > 2 else None
+if sef:
+    volt, cs_l = set(), {}
+    with open(sef, encoding='latin-1') as f:
+        for ln in f:
+            if ln.startswith('#') or ln.count(',') < 13:
+                continue
+            p = [x.strip() for x in ln.split(',')]
+            m = re.match(r'^[^,]*?([A-Z][A-Za-z]{2})$', p[1])
+            if not m or m.group(1) not in NEV and m.group(1) != 'Ser' or p[1] in volt:
+                continue
+            volt.add(p[1])
+            try:
+                ra = (float(p[3]) + float(p[4]) / 60 + float(p[5]) / 3600) * 15
+                dec = (-1 if p[6].startswith('-') else 1) * (abs(float(p[6])) + float(p[7]) / 60 + float(p[8]) / 3600)
+            except ValueError:
+                continue
+            a = m.group(1)
+            if a == 'Ser':
+                a = 'SerCap' if ra < 255 else 'SerCau'
+            cs_l.setdefault(a, []).append(ekl_lon(ra, dec))
+    csill = {a: lefedo(v) for a, v in cs_l.items()}
+
 ki = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'public', 'js', 'csillagkepek.js')
 with open(ki, 'w', encoding='utf-8') as f:
     f.write('/*\n * csillagkepek.js – az asztroszkóp adatai (tools/build-csillagkepek.py generálja, kézzel ne szerkeszd).\n'
             ' * IAU-csillagképhatárok (Delporte 1930; Roman 1987, CDS VI/42), ekliptikai hosszúság, J2000.\n'
             ' * ekl: [rövidítés, kezdet]; kulso: [rövidítés, név, legkisebb |β|, ívek]; tejut: ívek (|b| ≤ 10°);\n'
+            ' * csill: {rövidítés: [λ0, λ1]} – a csillagkép csillagai közül az első és az utolsó (Swiss Ephemeris sefstars.txt, AGPL);\n'
             ' * zona: {rövidítés: [λ0, λ1]} – az ekliptika csillagképei az állatöv ±8°-os sávjában (IAU-határok);\n'
             ' * alak: {rövidítés: [λ0, λ1]} – az alakzat csillagai által lefedett ív (d3-celestial, BSD-3, (c) 2015 Olaf Frohn). Licenc: AGPL-3.0.\n */\n')
     f.write('(function (global) {\n  \'use strict\';\n  var R = global.Regio = global.Regio || {};\n')
@@ -146,6 +175,7 @@ with open(ki, 'w', encoding='utf-8') as f:
     f.write('    ekl: ' + json.dumps(ekl) + ',\n')
     f.write('    kulso: [\n' + ',\n'.join('      ' + json.dumps(x, ensure_ascii=False) for x in kulso) + '\n    ],\n')
     f.write('    tejut: ' + json.dumps(tejut) + ',\n')
+    f.write('    csill: ' + json.dumps(csill, separators=(',', ':')) + ',\n')
     f.write('    zona: ' + json.dumps(zona, separators=(',', ':')) + ',\n')
     f.write('    alak: ' + json.dumps(alak, separators=(',', ':')) + '\n  };\n})(typeof window !== \'undefined\' ? window : globalThis);\n')
 print(len(ekl), 'ekliptikai,', len(kulso), 'külső csillagkép; Tejút:', tejut)

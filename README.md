@@ -67,7 +67,8 @@ tools/
   browsertest.py       a próbaoldal ellenőrzése headless böngészőben
   build-egbolt.py      a js/egbolt-adat.js előállítása a d3-celestial (BSD-3) adataiból (`npm pack d3-celestial`)
   build-csillagkepek.py  a js/csillagkepek.js előállítása (astropy; IAU-csillagképhatárok, Roman 1987, CDS VI/42;
-                       az alakzatok a d3-celestial vonalas ábráiból: `python3 tools/build-csillagkepek.py <d3-celestial/data>`)
+                       az alakzatok a d3-celestial vonalas ábráiból, a csillagképek csillagai a Swiss Ephemeris sefstars.txt-jéből:
+                       `python3 tools/build-csillagkepek.py <d3-celestial/data> <sefstars.txt>`)
 ```
 
 ## Billentyűk
