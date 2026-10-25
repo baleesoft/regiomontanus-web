@@ -794,8 +794,7 @@
    * F/i/R, jegyzetjelek, horoszkópolvasó, kiemelés) ugyanazokkal az osztályokkal és data-attribútumokkal, mint a
    * Regiomontanus-stílusban. Összevetésnél a zodiákus sáv, benne a jegyek; a külső kör planétái a sávon kívül.
    */
-  var PL_SZIN = { 0: '#16168c', 1: '#16961e', 2: '#16168c', 3: '#16168c', 4: '#16961e', 5: '#16961e', 6: '#8a1a8a',
-    7: '#16168c', 8: '#16168c', 9: '#e01818' };
+  var PL_SZIN = '#16168c';   // minden planéta egyszínű sötétkék (Balázs döntése, 2026-10-25)
   var PF_SZIN = { 1: '#16168c', 2: '#c81e1e', 3: '#a3402b', 4: '#a3402b', 5: '#a3402b', 6: '#2a8a2a', 7: '#2a8a2a',
     8: '#5a5abe', 9: '#5a5abe', 10: '#8a1a8a', 11: '#8a1a8a', 12: '#8a1a8a' };
   var PF_VONAL = { 4: '6 4', 5: '6 4', 6: '7 4', 7: '2 3', 8: '2 3', 9: '2 3', 10: '5 3', 11: '5 3', 12: '5 3' };
@@ -825,7 +824,7 @@
   function rajzolPlacidus(hova, k, o, kulso) {
     var ff = !!o.feketeFeher, bg = o.nyomtat || ff ? '#ffffff' : PLACIDUS_HATTER;
     var KEK = ff ? '#000' : '#2323b0', VKEK = ff ? '#000' : '#3a3ac6', FEK = '#000';
-    var plSzin = function (id) { return ff ? '#000' : PL_SZIN[id] || '#16168c'; };
+    var plSzin = function () { return ff ? '#000' : PL_SZIN; };
     var fSzin = function (a) { return ff ? '#000' : PF_SZIN[a] || '#000'; };
     var PLJ = {}, pj;
     for (pj in PLANETA) PLJ[pj] = PLANETA[pj];
