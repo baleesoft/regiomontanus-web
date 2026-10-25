@@ -14,8 +14,8 @@ cserélni (keresés a régi angol szóra), majd: `python3 tools/i18n/build-lang.
 | személyiségrajz | **personality profile** | personality sketch | |
 | életstratégia | **life strategy** | | |
 | járt út / járatlan út | **walked path / unwalked path** | trodden / untrodden path; the road taken / not taken | Elfogadva (Balázs, 2026-10-25); a Delphi-kódban is „WalkedUnWalkedPath”. |
-| ferális | **feral** | | Szó szerinti; az angol szakirodalomban a „feral planet” ismeretlen, magyarázatra szorulhat. |
-| izolált | **isolated** | unaspected | Az „unaspected” az angol asztrológiában bevett, de csak ha a jelentés pontosan egyezik. |
+| ferális | **unaspected (planet)** | feral | Elfogadva (Balázs, 2026-10-25): a bevett angol szakszó. |
+| izolált | **isolated** | | Elfogadva (Balázs, 2026-10-25). |
 | házúr | **house ruler** | lord of the house | |
 | bezárt jegy / ház | **intercepted sign / house** | | Bevett angol szakszó. |
 | Jegyek és játszmák | **Signs and Games (Jegyek és játszmák)** | | Könyvcím: a magyar cím zárójelben marad. A kártya maga magyar marad. |
