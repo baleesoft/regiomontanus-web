@@ -95,7 +95,7 @@ SZAVAK.update({
     'A primer (1° = 1 év) direkciós képlet önálló képletként': 'The primary (1° = 1 year) directed chart as a separate chart',
     'Megjelenítés': 'Display', 'Fényszög orbisok': 'Aspect orbs', 'Színek és szimbólumok': 'Colours and symbols', 'Egyebek': 'Miscellaneous',
     'Születési képletek importálása': 'Import birth charts', 'Település adatok szerkesztése': 'Edit place data', 'később': 'later',
-    'Program-alapinformációk': 'Program information', 'Tippek és trükkök': 'Tips and tricks', 'Névjegy': 'About',
+    'Program-alapinformációk': 'Program information', 'Tippek és trükkök': 'Tips and tricks', 'Névjegy': 'About', 'Regiomontanus – Névjegy': 'Regiomontanus – About', 'Váltás erre a képletre (középső kattintás: bezárás)': 'Switch to this chart (middle click: close)',
     'A program névjegye': 'About the program', 'Adatvédelem és sütik…': 'Privacy and cookies…', 'Regiomontanus a Facebookon': 'Regiomontanus on Facebook',
     'Jegyzetek a horoszkóp elemeihez': 'Notes on chart elements', 'Jegyzet az aktuális képlethez': 'Note on the current chart',
     'Jegyzet az aktuális születési képlethez': 'Note on the current birth chart',

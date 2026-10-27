@@ -25,17 +25,19 @@ button, input, select, textarea { font: inherit; color: inherit; }
 [hidden] { display: none !important; }
 .app { height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
 /* rögzített keret: felül címsor, menü, eszköztár, léptető; alul státuszsor – csak a munkaasztal görög */
-.cimsor, .fosor, .eszkoztar, .lepteto, .statusz { flex: 0 0 auto; }
+.fosor, .eszkoztar, .lepteto, .statusz { flex: 0 0 auto; }
 /* a menüsor jobb végén a megnyitott képletek és az elrendezés (így az eszköztár egy sorral kevesebb) */
 .fosor { display: flex; align-items: center; flex-wrap: wrap; background: var(--menu); border-bottom: 1px solid var(--line); position: relative; z-index: 30; }
 .fosor .menusor { flex: 0 1 auto; border-bottom: 0; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 /* címsor */
-.cimsor { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: var(--accent); color: #fff; min-width: 0; }
-.cimsor b { font-weight: 600; }
-.cimsor .nev { opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-.cimsor .ver { margin-left: auto; font-size: 11px; opacity: .7; white-space: nowrap; }
+.fosor .logo { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; margin: 0 2px 0 6px; padding: 3px 6px; border: 1px solid transparent;
+  border-radius: 2px; background: transparent; color: var(--accent); cursor: pointer; font: inherit; }
+.fosor .logo:hover { background: var(--sel); border-color: #9db6d8; }
+.fosor .logo svg { width: 18px; height: 18px; fill: none; stroke: var(--accent); stroke-width: 1.8; }
+.fosor .logo b { font-weight: 600; }
+@media (max-width: 1199px) { .fosor .logo b { display: none; } .fosor .logo { margin-left: 4px; padding: 3px 4px; } }
 
 /* menüsor */
 .menusor { display: flex; flex-wrap: wrap; gap: 2px; padding: 2px 6px; background: var(--menu); border-bottom: 1px solid var(--line);
@@ -87,6 +89,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   #listaGomb .hosszu { display: none; }
   #listaGomb .rovid { display: inline; }
 }
+@media (max-width: 1199px) { .menusor > .mf > button { padding-left: 7px; padding-right: 7px; } }
 @media (max-width: 1000px) {
   .menusor > .mf > button { padding: 4px 7px; }
   #listaGomb { gap: 3px; padding-left: 6px; padding-right: 4px; }
@@ -145,7 +148,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .mozaik { display: grid; gap: 12px; padding: 12px; align-content: start; grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-auto-rows: max(300px, calc(100cqh - 24px)); }
 .mozaik.r1 { grid-template-columns: minmax(0, 1fr); }
-.mozaik.r4 { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: max(260px, calc((100cqh - 36px) / 2)); }
+.mozaik.r4 { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: max(180px, calc((100cqh - 36px) / 2)); }
 @media (min-width: 1700px) { .mozaik.r4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .csempe { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: #fff; border: 1px solid var(--line); cursor: pointer; }
 .csempe.aktiv { border: 2px solid var(--accent); box-shadow: 0 0 0 3px var(--sel); }
@@ -161,7 +164,18 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .kisgomb:hover { border-color: #9db6d8; background: #f4f8fd; }
 .csempe .kerek { flex: 1 1 0; display: flex; align-items: center; justify-content: center; padding: 8px; min-height: 0; background: #fff; }
 .csempe .kerek > svg { width: 100%; height: 100% !important; }
-.csempe .lab { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 6px 10px; border-top: 1px solid var(--line2); font-size: 12px; color: var(--ink2); background: var(--panel); }
+/* az adatsor (dátum, hely, életstratégia) a fejlécben, a név és a típus után; ami nem fér ki, levágva (teljesen: buborékban) */
+.csempe .fej .lab { flex: 0 4 auto; min-width: 0; display: flex; gap: 14px; margin-left: 6px; font-size: 12px; color: var(--ink2); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; }
+.csempe .fej > b { flex: 0 0 auto; max-width: 45%; }
+.csempe .fej .lab > span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.csempe .fej .lab > span:first-child { flex: 0 1 auto; }
+.csempe .fej .lab > span:last-child { flex: 0 1 auto; }
+.csempe .fej .tolt { flex: 1 0 0; }
+@media (max-width: 760px) {
+  .csempe .fej { flex-wrap: wrap; }
+  .csempe .fej .lab { order: 9; flex-basis: 100%; margin-left: 0; flex-wrap: wrap; white-space: normal; gap: 2px 14px; }
+}
 .betolt { color: var(--muted); padding: 40px 10px; text-align: center; }
 .hiba { color: var(--bad); padding: 20px 10px; text-align: center; }
 .figy { color: var(--warn); }
@@ -179,13 +193,22 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 /* részletes nézet */
 .belyegek { flex: 0 0 auto; display: flex; gap: 8px; padding: 8px 12px 0; overflow-x: auto; }
-.belyegek button { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; padding: 4px 10px 4px 4px; border: 1px solid var(--line);
-  background: #fff; border-radius: 3px; font-size: 12px; cursor: pointer; }
-.belyegek button[aria-current="true"] { border: 2px solid var(--accent); background: var(--sel); }
+.belyegek .belyeg { flex: 0 0 auto; display: flex; align-items: stretch; border: 1px solid var(--line); background: #fff; border-radius: 3px; }
+.belyegek .belyeg.akt { border: 2px solid var(--accent); background: var(--sel); }
+.belyegek .belyeg > button[data-valt] { display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 4px; border: 0; background: transparent;
+  font-size: 12px; cursor: pointer; text-align: left; }
+.belyegek .belyeg-x { flex: 0 0 auto; width: 26px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0;
+  border-left: 1px solid var(--line2); background: transparent; cursor: pointer; border-radius: 0 3px 3px 0; }
+.belyegek .belyeg-x svg { width: 12px; height: 12px; fill: none; stroke: #6b665d; stroke-width: 2.2; }
+.belyegek .belyeg-x:hover { background: #fbe9e7; }
+.belyegek .belyeg-x:hover svg { stroke: var(--bad); }
+.belyegek .belyeg > button[data-valt]:hover { background: #f4f8fd; }
+.belyegek .belyeg.akt > button[data-valt]:hover { background: transparent; }
 /* táblagépen, kis vagy alacsony kijelzőn egysoros bélyegek kis ábrával (állóban és fekvőben egyformán) */
 @media (max-width: 1366px), (max-height: 860px) and (min-width: 761px) {
   .belyegek { padding: 4px 12px 0; gap: 6px; }
-  .belyegek button { padding: 2px 8px 2px 2px; gap: 6px; }
+  .belyegek .belyeg > button[data-valt] { padding: 2px 4px 2px 2px; gap: 6px; }
+  .belyegek .belyeg-x { width: 22px; }
   .belyegek .mini, .belyegek .mini svg { width: 24px; height: 24px; }
   .belyegek .ln { flex-direction: row; align-items: baseline; gap: 6px; white-space: nowrap; }
 }
@@ -680,7 +703,7 @@ svg.fokusz line.hazcsucs.fk-be { stroke: #c0161d; stroke-width: 2.4; }
 
 /* Nagy kerék (⤢): csak a kerék a teljes ablakban */
 /* a bekapcsolt képletléptető látszik (a fejlécben a megnyitott képletek közötti váltó) */
-body.kerek-max .cimsor, body.kerek-max .fosor, body.kerek-max .eszkoztar, body.kerek-max .belyegek,
+body.kerek-max .fosor, body.kerek-max .eszkoztar, body.kerek-max .belyegek,
 body.kerek-max .tablak, body.kerek-max .elvalaszto, body.kerek-max .oldalsav { display: none !important; }
 body.kerek-max .reszlet { grid-template-columns: minmax(0, 1fr) !important; padding: 4px; }
 body.kerek-max .reszlet .fo-kerek .kerek { padding: 4px; }
@@ -691,8 +714,7 @@ body.kerek-max .lepteto { padding: 3px 10px; }
 @media (max-width: 760px) { .kepvalto span { display: none; } .kepvalto select { max-width: 52vw; } }
 /* alacsony ablak (pl. 1920×1080 kijelző 150%-os Windows-nagyítással ≈ 600 px magas): tömörebb fejrészek */
 @media (max-height: 780px) and (min-width: 761px) {
-  .cimsor { padding: 3px 12px; }
-  .menusor > .mf > button { padding: 2px 9px; }
+  .menusor > .mf > button { padding-top: 2px; padding-bottom: 2px; }
   .eszkoztar { padding: 1px 8px; }
   .ikon { width: 27px; height: 27px; }
   .ikon svg { width: 16px; height: 16px; }

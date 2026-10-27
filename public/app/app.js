@@ -512,7 +512,7 @@
   function renderCim() {
     var k = akt();
     $('cimNev').textContent = k ? '– ' + cim(k) + (k.valtozott && k.adat.tipus !== 'aktualis' ? ' *' : '') : '';
-    document.title = k ? cim(k) + ' – Regiomontanus' : 'Regiomontanus';
+    document.title = k ? cim(k) + (k.valtozott && k.adat.tipus !== 'aktualis' ? ' *' : '') + ' – Regiomontanus' : 'Regiomontanus';
     $('db').textContent = kepletek.length;
     Array.prototype.forEach.call($('racs').querySelectorAll('button'), function (b) {
       b.setAttribute('aria-pressed', String(+b.getAttribute('data-r') === beall.elrendezes && nezet === 'mozaik'));
@@ -559,10 +559,12 @@
       var k = kepletek[i];
       return '<section class="csempe' + (i === aktiv ? ' aktiv' : '') + '" data-i="' + i + '" aria-label="' + R.esc(cim(k)) + '">' +
         '<div class="fej"><b>' + cimHtml(k) + (k.valtozott && k.adat.tipus !== 'aktualis' ? ' *' : '') + '</b> ' + tipusCimke(k) +
+        // az adatsor a fejlécben (alacsony kijelzőn is kifér a 4-es mozaik; Balázs kérése, 2026-10-27)
+        '<span class="lab" title="' + R.esc(datumSor(k)) + '"><span>' + R.esc(datumSor(k)) + '</span><span>' + infoSor(k) + '</span></span>' +
         '<span class="tolt"></span>' +
         '<button type="button" class="kisgomb" data-tett="nagyit" aria-label="Kinagyítás" title="Kinagyítás (dupla kattintás)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>' +
         '<button type="button" class="kisgomb" data-tett="bezar" aria-label="Bezárás" title="Bezárás (Alt+W)"><svg viewBox="0 0 24 24" aria-hidden="true" style="stroke:#6b665d"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
-        '</div><div class="kerek"></div><div class="lab"><span>' + R.esc(datumSor(k)) + '</span><span>' + infoSor(k) + '</span></div></section>';
+        '</div><div class="kerek"></div></section>';
     }).join('') + '</main>';
     Array.prototype.forEach.call(hova.querySelectorAll('.csempe'), function (s) {
       kerekRajzol(s.querySelector('.kerek'), kepletek[+s.getAttribute('data-i')]);
@@ -583,10 +585,14 @@
   function renderReszlet(hova) {
     var k = akt();
     hova.innerHTML = (kepletek.length < 2 ? '' : '<nav class="belyegek" aria-label="Megnyitott képletek">' + kepletek.map(function (x, i) {
-      return '<button type="button" data-valt="' + i + '" aria-current="' + (i === aktiv) + '"><span class="mini">' + x.mini + '</span>' +
-        '<span class="ln"><b>' + cimHtml(x) + '</b><small>' + R.esc(tipusNev(x)) + '</small></span></button>';
+      return '<div class="belyeg' + (i === aktiv ? ' akt' : '') + '"><button type="button" data-valt="' + i + '" aria-current="' + (i === aktiv) +
+        '" title="Váltás erre a képletre (középső kattintás: bezárás)"><span class="mini">' + x.mini + '</span>' +
+        '<span class="ln"><b>' + cimHtml(x) + (x.valtozott && x.adat.tipus !== 'aktualis' ? ' *' : '') + '</b><small>' + R.esc(tipusNev(x)) + '</small></span></button>' +
+        '<button type="button" class="belyeg-x" data-bezar-i="' + i + '" title="Bezárás" aria-label="Bezárás">' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>';
     }).join('') + '</nav>') +
-      '<main class="reszlet" aria-label="Részletes nézet" style="--kerek-arany:' + (aranyKorlat(beall.reszletArany) * 100).toFixed(1) + '%"><section class="fo-kerek"><div class="fej"><b>' + cimHtml(k) + '</b> ' +
+      '<main class="reszlet" aria-label="Részletes nézet" style="--kerek-arany:' + (aranyKorlat(beall.reszletArany) * 100).toFixed(1) + '%"><section class="fo-kerek"><div class="fej"><b>' + cimHtml(k) +
+      (k.valtozott && k.adat.tipus !== 'aktualis' ? ' *' : '') + '</b> ' +
       tipusCimke(k) + '<span class="tolt"></span>' + (!k.fajta && fk('csatolmany') ? '<button type="button" class="gomb" data-tett="oldalsav" aria-pressed="' + (beall.oldalsav !== false) +
         '" title="Oldalsáv elrejtése/mutatása (fénykép, csatolmányok, jegyzet)">Oldalsáv</button>' : '') +
       (!k.fajta && k.adat.tipus !== 'aktualis' ? '<button type="button" class="gomb" data-tett="szemely" aria-pressed="' +
@@ -2456,6 +2462,12 @@
     beall.elrendezes = +b.getAttribute('data-r'); nezet = 'mozaik'; beallMent(); render();
   });
   $('listaGomb').addEventListener('click', function () { listaValt(); });
+  $('logoGomb').addEventListener('click', function () { vegrehajt('nevjegy'); });
+  // a bélyegen középső kattintás: bezárás (mint a böngészőfüleknél)
+  $('asztal').addEventListener('auxclick', function (e) {
+    var v = e.button === 1 && e.target.closest('.belyegek [data-valt]');
+    if (v) { e.preventDefault(); bezar(+v.getAttribute('data-valt')); }
+  });
   // a felület nyelve (nyelv.js): váltáskor újratöltés ?lang= paraméterrel; a munkamenet megmarad
   if (R.Nyelv) {
     $('nyelvVal').value = R.Nyelv.kod;
@@ -2482,6 +2494,7 @@
       }
       vegrehajt(tt); return;
     }
+    var bx = e.target.closest('[data-bezar-i]'); if (bx) { bezar(+bx.getAttribute('data-bezar-i')); return; }
     var v = e.target.closest('[data-valt]'); if (v) { aktival(+v.getAttribute('data-valt')); return; }
     var f = e.target.closest('[data-ful]');
     if (f) {
